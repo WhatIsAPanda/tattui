@@ -1,4 +1,3 @@
 # tattui
 
 tatto modeling
-🤪
