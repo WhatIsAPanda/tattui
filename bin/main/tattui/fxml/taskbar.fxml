@@ -15,7 +15,7 @@
          <graphic>
             <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true">
                <image>
-                  <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/tattui.png" />
+                  <Image url="@../icons/tattui.png" />
                </image>
             </ImageView>
          </graphic>
@@ -29,7 +29,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/gallery.png" />
+                        <Image url="@../icons/gallery.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -41,7 +41,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/explore.png" />
+                        <Image url="@../icons/explore.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -50,7 +50,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/mapon.png" />
+                        <Image url="@../icons/mapon.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -59,7 +59,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/manon.png" />
+                        <Image url="@../icons/568345.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -68,7 +68,7 @@
       </VBox>
       <ImageView fitHeight="100.0" fitWidth="40.0" pickOnBounds="true">
          <image>
-            <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/Stencils/sigal.png" />
+            <Image url="@../icons/sigal.png" />
          </image>
       </ImageView>
       <VBox alignment="BOTTOM_CENTER" spacing="10.0" VBox.vgrow="ALWAYS">
@@ -83,7 +83,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/settings.png" />
+                        <Image url="@../icons/login.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -92,7 +92,7 @@
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
                      <image>
-                        <Image url="@../../Users/fbook/OneDrive%20-%20Cal%20Poly/Desktop/Projects/login.png" />
+                        <Image url="@../icons/settings.png" />
                      </image>
                   </ImageView>
                </graphic>

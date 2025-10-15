@@ -1,10 +1,10 @@
-package yourpackage;
+package tattui.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 
-public class InstagramSidebarController {
+public class SidebarController {
 
     @FXML private ImageView logo;
     @FXML private Button homeBtn;

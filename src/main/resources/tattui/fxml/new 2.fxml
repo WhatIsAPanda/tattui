@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="yourpackage.InstagramSidebarController"
+      alignment="TOP_CENTER"
+      spacing="20"
+      style="-fx-background-color: white; -fx-border-color: #dbdbdb; -fx-border-width: 0 1 0 0;"
+      prefWidth="100"
+      prefHeight="500"
+      padding="20">
+
+    <ImageView fx:id="logo"
+               fitWidth="40"
+               fitHeight="40"
+               pickOnBounds="true"
+               preserveRatio="true">
+        <image>
+            <Image url="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"/>
+        </image>
+    </ImageView>
+
+    <Button fx:id="homeBtn" text="🏠" prefWidth="50" prefHeight="50"
+            style="-fx-background-color: transparent; -fx-font-size: 18;"/>
+    <Button fx:id="searchBtn" text="🔍" prefWidth="50" prefHeight="50"
+            style="-fx-background-color: transparent; -fx-font-size: 18;"/>
+    <Button fx:id="reelsBtn" text="🎞️" prefWidth="50" prefHeight="50"
+            style="-fx-background-color: transparent; -fx-font-size: 18;"/>
+    <Button fx:id="shopBtn" text="🛍️" prefWidth="50" prefHeight="50"
+            style="-fx-background-color: transparent; -fx-font-size: 18;"/>
+    <Button fx:id="profileBtn" text="👤" prefWidth="50" prefHeight="50"
+            style="-fx-background-color: transparent; -fx-font-size: 18;"/>
+
+</VBox>
