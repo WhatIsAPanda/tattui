@@ -7,7 +7,7 @@ It has been standardized so everyone can clone, build, and run with minimal setu
 
 ## Current State
 - Build tool: **Gradle (via wrapper)** -- no Maven
-- Target JDK: **21** (enforced by Gradle toolchain, no manual install required)
+- Target JDK: **21** (enforced by Gradle toolchain, auto-downloaded if not installed)
 - Pure JavaFX (no Gluon or external dependencies).
 - Cleaned out generated/IDE files (`bin/`, `.gradle/`) from version control.
 - `.gitignore` added to prevent clutter (IDE configs, build outputs, caches).
