@@ -13,7 +13,7 @@ public class Main extends Application {
         // Load Root.fxml from classpath
         Parent root = FXMLLoader.load(getClass().getResource("/tattui/fxml/Root.fxml"));
 
-        Scene scene = new Scene(root, 120, 600); // width, height
+        Scene scene = new Scene(root, 600, 600); // width, height
         stage.setScene(scene);
         stage.setTitle("Tattui Sidebar");
         stage.show();
