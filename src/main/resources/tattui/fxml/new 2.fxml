@@ -6,15 +6,18 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="yourpackage.InstagramSidebarController"
+
       alignment="TOP_CENTER"
       spacing="20"
       style="-fx-background-color: white; -fx-border-color: #dbdbdb; -fx-border-width: 0 1 0 0;"
       prefWidth="100"
-      prefHeight="500"
-      padding="20">
+      prefHeight="500">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
 
-    <ImageView fx:id="logo"
+
+<ImageView fx:id="logo"
                fitWidth="40"
                fitHeight="40"
                pickOnBounds="true"
