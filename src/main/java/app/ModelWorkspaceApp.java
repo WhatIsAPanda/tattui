@@ -1,25 +1,26 @@
 package app;
 
-import app.boundary.ModelWorkspaceBoundary;
-import app.controller.ModelWorkspaceController;
+import app.controller.WorkspaceController;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.util.Objects;
 
 /**
- * Entry point that wires the boundary and controller layers together.
+ * Convenience launcher that presents only the workspace view.
  */
 public class ModelWorkspaceApp extends Application {
-    private final ModelWorkspaceController controller = new ModelWorkspaceController();
-    private final ModelWorkspaceBoundary boundary = new ModelWorkspaceBoundary(controller);
 
     @Override
-    public void start(Stage stage) {
-        controller.initialize(stage);
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(ModelWorkspaceApp.class.getResource("/app/Workspace.fxml"));
+        Parent root = loader.load();
 
-        var root = boundary.build(stage);
+        WorkspaceController controller = loader.getController();
+
         Scene scene = new Scene(root, 1280, 800, true);
         scene.getStylesheets().add(
             Objects.requireNonNull(ModelWorkspaceApp.class.getResource("/app/styles.css")).toExternalForm()
@@ -27,9 +28,9 @@ public class ModelWorkspaceApp extends Application {
 
         stage.setTitle("3D Model Workspace");
         stage.setScene(scene);
-        stage.show();
 
-        controller.loadInitialModel();
+        controller.attachStage(stage);
+        stage.show();
     }
 
     public static void main(String[] args) {

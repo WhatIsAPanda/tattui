@@ -1,8 +1,9 @@
 package app.controller;
 
-import app.ObjLoader;
 import app.entity.ModelManipulator;
 import app.entity.Tattoo;
+import app.utils.ObjLoader;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
@@ -10,6 +11,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
+import javafx.fxml.FXML;
 import javafx.scene.AmbientLight;
 import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
@@ -34,6 +36,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -72,7 +75,7 @@ import java.util.function.Consumer;
 /**
  * Application controller that encapsulates the workspace behaviour and state.
  */
-public class ModelWorkspaceController {
+public class WorkspaceController {
     private static final double TARGET_HEIGHT = 1700.0;
     private static final double MIN_DISTANCE = 300.0;
     private static final double MAX_DISTANCE = 6000.0;
@@ -107,6 +110,7 @@ public class ModelWorkspaceController {
 
     private static final String DEFAULT_MODEL_FILENAME = "human.obj";
     private static final String DEFAULT_MODEL_RESOURCE = "/models/human.obj";
+    private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", "human.obj");
 
     private static final List<String> PROPORTION_KEYS = List.of(
         "Head Size",
@@ -119,16 +123,6 @@ public class ModelWorkspaceController {
         "Leg Length",
         "Leg Thickness"
     );
-
-    private static final String BUTTON_STYLE = """
-        -fx-background-color: linear-gradient(to bottom, #38bdf8, #0ea5e9);
-        -fx-text-fill: white;
-        -fx-background-radius: 8;
-        -fx-padding: 8 16;
-        -fx-font-weight: 600;
-        -fx-effect: dropshadow(gaussian, rgba(14,165,233,0.35), 6, 0, 0, 2);
-    """;
-    private static final String SLIDER_STYLE = "-fx-accent: #38bdf8;";
 
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
     private final Map<String, Slider> proportionControls = new LinkedHashMap<>();
@@ -144,6 +138,25 @@ public class ModelWorkspaceController {
     private LightingPreset lightingPreset = LightingPreset.TOP_DOWN;
 
     private final Group root3D = new Group(modelRoot);
+
+    @FXML
+    private BorderPane rootPane;
+    @FXML
+    private HBox toolbarBox;
+    @FXML
+    private Button loadModelButton;
+    @FXML
+    private Button resetViewButton;
+    @FXML
+    private ComboBox<LightingPreset> lightingCombo;
+    @FXML
+    private ScrollPane controlScroll;
+    @FXML
+    private VBox controlsContainer;
+    @FXML
+    private StackPane viewerPane;
+
+    private boolean bootstrapped;
 
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
     private final DoubleProperty yaw = new SimpleDoubleProperty(30.0);
@@ -181,13 +194,48 @@ public class ModelWorkspaceController {
     private double lastMouseX;
     private double lastMouseY;
 
-    public ModelWorkspaceController() {
+    public WorkspaceController() {
         initializePartGroups();
         configureCamera();
     }
 
-    public void initialize(Stage stage) {
+    @FXML
+    private void initialize() {
+        setupToolbar();
+        setupControlPanel();
+        setupViewer();
+
+        Platform.runLater(() -> {
+            if (subScene != null) {
+                subScene.requestFocus();
+            }
+        });
+    }
+
+    public void attachStage(Stage stage) {
+        if (stage == null) {
+            return;
+        }
         this.primaryStage = stage;
+        if (!bootstrapped) {
+            bootstrapped = true;
+            loadInitialModel();
+        }
+        Platform.runLater(() -> {
+            if (subScene != null) {
+                subScene.requestFocus();
+            }
+        });
+    }
+
+    private Stage resolveStage() {
+        if (primaryStage != null) {
+            return primaryStage;
+        }
+        if (rootPane != null && rootPane.getScene() != null && rootPane.getScene().getWindow() instanceof Stage stage) {
+            return stage;
+        }
+        return null;
     }
 
     private void initializePartGroups() {
@@ -204,35 +252,34 @@ public class ModelWorkspaceController {
         overallScaleGroup.scaleZProperty().bind(overallScale);
     }
 
-    public HBox createToolbar(Stage stage) {
-        Button loadButton = new Button("Load Model");
-        loadButton.setOnAction(evt -> showLoadDialog(stage));
-        loadButton.setStyle(BUTTON_STYLE);
-
-        Button resetButton = new Button("Reset View");
-        resetButton.setOnAction(evt -> resetView());
-        resetButton.setStyle(BUTTON_STYLE);
-
-        Label lightingLabel = new Label("Lighting:");
-
-        ComboBox<LightingPreset> lightingBox = new ComboBox<>(FXCollections.observableArrayList(LightingPreset.values()));
-        lightingBox.setValue(lightingPreset);
-        lightingBox.valueProperty().addListener((obs, oldV, newV) -> {
-            if (newV != null && newV != lightingPreset) {
-                lightingPreset = newV;
-                applyLighting(lightingPreset);
-            }
-        });
-
-        HBox toolbar = new HBox(10, loadButton, resetButton, lightingLabel, lightingBox);
-        toolbar.setPadding(new Insets(10));
-        return toolbar;
+    private void setupToolbar() {
+        if (loadModelButton != null) {
+            loadModelButton.setOnAction(evt -> showLoadDialog(resolveStage()));
+        }
+        if (resetViewButton != null) {
+            resetViewButton.setOnAction(evt -> resetView());
+        }
+        if (lightingCombo != null) {
+            lightingCombo.setItems(FXCollections.observableArrayList(LightingPreset.values()));
+            lightingCombo.setValue(lightingPreset);
+            lightingCombo.valueProperty().addListener((obs, oldV, newV) -> {
+                if (newV != null && newV != lightingPreset) {
+                    lightingPreset = newV;
+                    applyLighting(lightingPreset);
+                }
+            });
+        }
     }
 
-    public ScrollPane createControlPanel(Stage stage) {
-        VBox controls = new VBox(12);
-        controls.setPadding(new Insets(16));
-        controls.setFillWidth(true);
+    private void setupControlPanel() {
+        if (controlsContainer == null) {
+            return;
+        }
+
+        controlsContainer.getChildren().clear();
+        controlsContainer.setSpacing(12);
+        controlsContainer.setPadding(new Insets(16));
+        controlsContainer.setFillWidth(true);
 
         proportionControls.clear();
         for (String label : PROPORTION_KEYS) {
@@ -244,7 +291,7 @@ public class ModelWorkspaceController {
                 applyCurrentProportions();
             });
             proportionControls.put(label, slider);
-            controls.getChildren().add(createLabeledControl(label, slider));
+            controlsContainer.getChildren().add(createLabeledControl(label, slider));
         }
 
         Slider overallSlider = createSlider(OVERALL_MIN, OVERALL_MAX);
@@ -255,14 +302,14 @@ public class ModelWorkspaceController {
             overallScale.set(newVal.doubleValue());
         });
         overallScaleSlider = overallSlider;
-        controls.getChildren().add(createLabeledControl("Overall Scale", overallSlider));
+        controlsContainer.getChildren().add(createLabeledControl("Overall Scale", overallSlider));
 
         Label tattooLabel = new Label("Tattoo Tools");
         loadTattooButton = new Button("Load Tattoo");
-        loadTattooButton.setOnAction(e -> handleLoadTattoo(stage));
-        loadTattooButton.setStyle(BUTTON_STYLE);
+        loadTattooButton.setOnAction(e -> handleLoadTattoo());
 
         tattooSizeSlider = new Slider(0.05, 1.0, 0.20);
+        tattooSizeSlider.getStyleClass().add("workspace-slider");
         tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (selectedTattoo != null) {
                 selectedTattoo.scale = newVal.doubleValue();
@@ -271,6 +318,7 @@ public class ModelWorkspaceController {
         });
 
         tattooOpacitySlider = new Slider(0.3, 1.0, 1.0);
+        tattooOpacitySlider.getStyleClass().add("workspace-slider");
         tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (selectedTattoo != null) {
                 selectedTattoo.alpha = newVal.doubleValue();
@@ -279,6 +327,7 @@ public class ModelWorkspaceController {
         });
 
         tattooRotationSlider = new Slider(-180.0, 180.0, 0.0);
+        tattooRotationSlider.getStyleClass().add("workspace-slider");
         tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (selectedTattoo != null) {
                 selectedTattoo.rotation = newVal.doubleValue();
@@ -286,26 +335,33 @@ public class ModelWorkspaceController {
             }
         });
 
-        controls.getChildren().add(new VBox(6,
+        VBox tattooControls = new VBox(6,
             tattooLabel,
             loadTattooButton,
             createLabeledControl("Tattoo Size", tattooSizeSlider),
             createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
             createLabeledControl("Tattoo Rotation", tattooRotationSlider)
-        ));
+        );
+        tattooControls.setFillWidth(true);
 
-        ScrollPane scrollPane = new ScrollPane(controls);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setPadding(Insets.EMPTY);
+        controlsContainer.getChildren().add(tattooControls);
+
+        if (controlScroll != null) {
+            controlScroll.setFitToWidth(true);
+            controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            controlScroll.setPadding(Insets.EMPTY);
+            if (rootPane != null) {
+                controlScroll.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+                controlScroll.maxWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+            }
+        }
+
         updateTattooControlsState();
-        return scrollPane;
     }
 
     private Slider createSlider(double min, double max) {
         Slider slider = new Slider(min, max, 1.0);
-        slider.setStyle(SLIDER_STYLE);
         slider.getStyleClass().add("workspace-slider");
         slider.setShowTickMarks(false);
         slider.setShowTickLabels(false);
@@ -324,12 +380,12 @@ public class ModelWorkspaceController {
         return box;
     }
 
-    private void handleLoadTattoo(Stage stage) {
+    private void handleLoadTattoo() {
         if (!modelHasUVs || skinCanvas == null) {
             showNoUVMessage();
             return;
         }
-        Stage targetStage = stage != null ? stage : primaryStage;
+        Stage targetStage = resolveStage();
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Tattoo Image");
         chooser.getExtensionFilters().addAll(
@@ -366,12 +422,13 @@ public class ModelWorkspaceController {
         }
     }
 
-    public StackPane createViewer() {
-        StackPane container = new StackPane();
-        container.setStyle("-fx-background-color: #eef3f9;");
+    private void setupViewer() {
+        if (viewerPane == null) {
+            return;
+        }
 
         subScene = new SubScene(root3D, 800, 600, true, SceneAntialiasing.BALANCED);
-        subScene.setFill(Color.web("#eef3f9"));
+        subScene.setFill(Color.web("#b4b4b4ff"));
         subScene.setCamera(camera);
         subScene.setFocusTraversable(true);
 
@@ -381,13 +438,15 @@ public class ModelWorkspaceController {
         applyLighting(lightingPreset);
         softenSpecular(modelRoot);
 
-        container.getChildren().add(subScene);
+        viewerPane.getChildren().setAll(subScene);
         StackPane.setMargin(subScene, Insets.EMPTY);
 
-        subScene.widthProperty().bind(container.widthProperty());
-        subScene.heightProperty().bind(container.heightProperty());
+        subScene.widthProperty().bind(viewerPane.widthProperty());
+        subScene.heightProperty().bind(viewerPane.heightProperty());
 
-        return container;
+        if (rootPane != null) {
+            viewerPane.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.65));
+        }
     }
 
     private void configureCamera() {
@@ -583,6 +642,10 @@ public class ModelWorkspaceController {
     }
 
     private void showLoadDialog(Stage stage) {
+        Stage targetStage = stage != null ? stage : resolveStage();
+        if (targetStage == null) {
+            return;
+        }
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select OBJ Model");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wavefront OBJ", "*.obj"));
@@ -591,7 +654,7 @@ public class ModelWorkspaceController {
             chooser.setInitialDirectory(initial.getParent().toFile());
         }
 
-        java.io.File file = chooser.showOpenDialog(stage);
+        java.io.File file = chooser.showOpenDialog(targetStage);
         if (file != null) {
             loadFromPath(file.toPath());
         }
@@ -601,6 +664,11 @@ public class ModelWorkspaceController {
         Path workingDirModel = Paths.get(System.getProperty("user.dir")).resolve(DEFAULT_MODEL_FILENAME);
         if (Files.exists(workingDirModel)) {
             loadFromPath(workingDirModel);
+            return;
+        }
+
+        if (Files.exists(DEFAULT_MODEL_DEV_PATH)) {
+            loadFromPath(DEFAULT_MODEL_DEV_PATH);
             return;
         }
 

@@ -1,4 +1,4 @@
-package app;
+package app.utils;
 
 import de.javagl.obj.FloatTuple;
 import de.javagl.obj.Obj;
