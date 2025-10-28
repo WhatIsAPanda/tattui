@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.fxml.FXML?>
+
+<HBox xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <fx:include source="taskbar.fxml"/>
+        <fx:include source="viewProfile.fxml"/>
+    </children>
+</HBox>
+

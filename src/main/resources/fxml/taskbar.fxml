@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="TOP_CENTER" style="-fx-border-color: white; -fx-background-color: black; -fx-border-width: 0 1 0 0;" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1">
+   <opaqueInsets>
+      <Insets right="1.0" />
+   </opaqueInsets>
+   <children>
+      <Button accessibleRole="IMAGE_VIEW" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-border-color: white; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
+         <graphic>
+            <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true">
+               <image>
+                  <Image url="@../icons/tattui.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+      <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+         <opaqueInsets>
+            <Insets right="1.0" />
+         </opaqueInsets>
+         <children>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/gallery.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <VBox.margin>
+                  <Insets top="1.0" />
+               </VBox.margin>
+            </Button>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/explore.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-border-color: black;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/mapon.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/568345.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+         </children>
+      </VBox>
+      <ImageView fitHeight="100.0" fitWidth="40.0" pickOnBounds="true">
+         <image>
+            <Image url="@../icons/sigal.png" />
+         </image>
+      </ImageView>
+      <VBox alignment="BOTTOM_CENTER" spacing="10.0" VBox.vgrow="ALWAYS">
+         <padding>
+            <Insets top="10.0" />
+         </padding>
+         <opaqueInsets>
+            <Insets right="1.0" />
+         </opaqueInsets>
+         <children>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/login.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+            <Button accessibleRole="IMAGE_VIEW" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true">
+                     <image>
+                        <Image url="@../icons/settings.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <padding>
+                  <Insets bottom="10.0" />
+               </padding>
+            </Button>
+         </children>
+      </VBox>
+   </children>
+</VBox>

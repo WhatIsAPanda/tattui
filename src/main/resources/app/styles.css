@@ -1,0 +1,25 @@
+.workspace-slider {
+    -fx-padding: 8 0 8 0;
+}
+
+.workspace-slider .track {
+    -fx-background-color: linear-gradient(to right, #bae6fd, #38bdf8);
+    -fx-background-radius: 6;
+    -fx-pref-height: 6;
+}
+
+.workspace-slider .thumb {
+    -fx-background-color: linear-gradient(to bottom, #0ea5e9, #0284c7);
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(14,165,233,0.35), 6, 0.0, 0.0, 2.0);
+    -fx-padding: 10;
+}
+
+.workspace-slider:disabled .thumb {
+    -fx-background-color: linear-gradient(to bottom, #94a3b8, #64748b);
+    -fx-effect: none;
+}
+
+.workspace-slider:disabled .track {
+    -fx-background-color: #cbd5f5;
+}
