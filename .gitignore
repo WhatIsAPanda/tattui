@@ -1,0 +1,71 @@
+# ---- Gradle ----
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle-cache/
+out/
+
+# ---- IntelliJ IDEA / Android Studio ----
+.idea/
+*.iml
+*.ipr
+*.iws
+*.class
+
+# ---- Eclipse ----
+.project
+.classpath
+.settings/
+bin/
+
+# ---- VS Code ----
+.vscode/
+
+# ---- Java ----
+*.log
+*.ctxt
+hs_err_pid*
+replay_pid*
+
+# ---- OS-specific ----
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# Linux
+*~
+
+# ---- Kotlin / JavaFX ----
+*.swp
+*.swo
+*.orig
+*.tmp
+*.bak
+
+# ---- Packaging ----
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# ---- Logs & Reports ----
+logs/
+*.log
+*.out
+*.err
+
+# ---- Build tool files ----
+/target/
+/dist/
+/classes/
+
+# ---- Environment / Misc ----
+.env
+local.properties
+.gradle/9.1.0/checksums/checksums.lock
