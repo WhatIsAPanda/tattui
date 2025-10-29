@@ -35,7 +35,7 @@
                               </Circle>
                               <Label text="\@someTattooArtist">
                                  <font>
-                                    <Font size="20.0" />
+                                    <Font name="Times New Roman" size="20.0" />
                                  </font>
                                  <padding>
                                     <Insets left="5.0" top="10.0" />
@@ -51,6 +51,9 @@
                         <Pane maxWidth="-Infinity" minWidth="-Infinity" prefHeight="142.0" prefWidth="288.0" style="-fx-border-color: #000000;">
                            <children>
                               <Label alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="86.0" prefWidth="288.0" text="someTattooArtist   This is me tattooing some guys arm. Went pretty well." wrapText="true">
+                                 <font>
+                                    <Font name="Times New Roman" size="20.0" />
+                                 </font>
                                  <padding>
                                     <Insets left="10.0" top="10.0" />
                                  </padding>

@@ -528,10 +528,8 @@ public class WorkspaceController {
 
     private void installInteractionHandlers() {
         subScene.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.SECONDARY) {
-                lastMouseX = event.getSceneX();
-                lastMouseY = event.getSceneY();
-            }
+            lastMouseX = event.getSceneX();
+            lastMouseY = event.getSceneY();
         });
 
         subScene.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
@@ -540,44 +538,34 @@ public class WorkspaceController {
             lastMouseX = event.getSceneX();
             lastMouseY = event.getSceneY();
 
-            boolean isShift = event.isShiftDown() || event.isControlDown();
-            if (event.getButton() == MouseButton.PRIMARY && !isShift) {
+            if (event.isControlDown()) {
+                // Ctrl + Drag → rotate model
                 orbit(dx, dy);
-            } else if (event.getButton() == MouseButton.SECONDARY || (event.getButton() == MouseButton.PRIMARY && isShift)) {
-                pan(dx, dy);
+            } else {
+                // Regular Drag → move tattoo
+                if (selectedTattoo != null && modelHasUVs && skinCanvas != null) {
+                    handleTattooDrag(event);
+                } else {
+                    // fallback to pan if no tattoo selected
+                    pan(dx, dy);
+                }
             }
         });
 
         subScene.addEventHandler(ScrollEvent.SCROLL, event -> {
-            if (event.getDeltaY() == 0) {
-                return;
-            }
+            if (event.getDeltaY() == 0) return;
             double delta = event.getDeltaY() * ZOOM_SENSITIVITY;
             distance.set(clamp(distance.get() - delta, MIN_DISTANCE, MAX_DISTANCE));
         });
 
         subScene.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.MIDDLE || (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
+            if (event.getButton() == MouseButton.MIDDLE || 
+                (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
                 resetView();
             }
         });
-
-        subScene.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case SPACE -> resetView();
-                case DIGIT1 -> {
-                    lightingPreset = LightingPreset.TOP_DOWN;
-                    applyLighting(lightingPreset);
-                }
-                case DIGIT2 -> {
-                    lightingPreset = LightingPreset.UNIFORM;
-                    applyLighting(lightingPreset);
-                }
-                default -> {
-                }
-            }
-        });
     }
+
 
     private void installTattooPlacementHandlers() {
         subScene.addEventHandler(MouseEvent.MOUSE_PRESSED, this::handleTattooPress);

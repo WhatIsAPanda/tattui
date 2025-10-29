@@ -1,20 +1,20 @@
 package app.controller;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.application.Platform;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.util.*;
 
+/**
+ * Root controller that manages navigation between multiple FXML pages
+ * (workspace, map, gallery, etc.) and centralizes loading logic.
+ */
 public class RootController {
 
     @FXML private BorderPane rootPane;
@@ -23,25 +23,26 @@ public class RootController {
 
     private WorkspaceController workspaceController;
     private TaskbarController taskbarController;
-    private Parent workspaceView;
-    private Parent mapView;
+
+    // Cache of loaded views
+    private final Map<String, Parent> pageCache = new HashMap<>();
+
+    // FXML path registry
+    private static final Map<String, String> PAGE_PATHS = Map.of(
+        "workspace", "/app/Workspace.fxml",
+        "map", "/app/Map.fxml"
+        // "gallery", "/app/Gallery.fxml"
+    );
 
     @FXML
     public void initialize() {
         loadTaskbar();
-        loadWorkspace();
-        showWorkspacePage();
+        showPage("workspace"); // Default page
 
+        // Handle stage assignment once available
         rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                newScene.windowProperty().addListener((wObs, oldWindow, newWindow) -> {
-                    if (newWindow instanceof Stage stage) {
-                        notifyWorkspaceStage(stage);
-                    }
-                });
-                if (newScene.getWindow() instanceof Stage stage) {
-                    notifyWorkspaceStage(stage);
-                }
+            if (newScene != null && newScene.getWindow() instanceof Stage stage) {
+                notifyWorkspaceStage(stage);
             }
         });
 
@@ -53,38 +54,59 @@ public class RootController {
     }
 
     private void loadTaskbar() {
-        try {
-            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(
-                getClass().getResource("/app/taskbar.fxml")));
-            Parent taskbar = loader.load();
-            taskbarController = loader.getController();
-            if (taskbarController != null) {
-                taskbarController.setNavigator(new TaskbarController.PageNavigator() {
-                    @Override
-                    public void showWorkspace() {
-                        showWorkspacePage();
-                    }
-
-                    @Override
-                    public void showMap() {
-                        showMapPage();
-                    }
-                });
-            }
-            attachContent(taskbarContainer, taskbar);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Unable to load taskbar.fxml", ex);
+        taskbarController = loadController("/app/taskbar.fxml", taskbarContainer, TaskbarController.class);
+        if (taskbarController != null) {
+            taskbarController.setNavigator(new TaskbarController.PageNavigator() {
+                @Override public void showWorkspace() { showPage("workspace"); }
+                @Override public void showMap() { showPage("map"); }
+                // @Override public void showGallery() { showPage("gallery"); }
+            });
         }
     }
 
-    private void loadWorkspace() {
+    /**
+     * Unified page loader — handles caching, loading, and switching.
+     */
+    private void showPage(String key) {
+        String path = PAGE_PATHS.get(key);
+        if (path == null)
+            throw new IllegalArgumentException("Unknown page key: " + key);
+
+        Parent view = pageCache.computeIfAbsent(key, k -> loadView(path));
+
+        attachContent(workspaceContainer, view);
+
+        if ("workspace".equals(key) && workspaceController != null) {
+            Stage stage = currentStage();
+            if (stage != null) workspaceController.attachStage(stage);
+        }
+    }
+
+    /**
+     * Generic loader that attaches a view and returns its controller.
+     */
+    private <T> T loadController(String fxmlPath, Pane target, Class<T> controllerType) {
         try {
-            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(
-                getClass().getResource("/app/Workspace.fxml")));
-            workspaceView = loader.load();
-            workspaceController = loader.getController();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Unable to load Workspace.fxml", ex);
+            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass().getResource(fxmlPath)));
+            Parent view = loader.load();
+            T controller = loader.getController();
+            attachContent(target, view);
+            return controllerType.isInstance(controller) ? controller : null;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load " + fxmlPath, e);
+        }
+    }
+
+    private Parent loadView(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass().getResource(fxmlPath)));
+            Parent view = loader.load();
+            if ("/app/Workspace.fxml".equals(fxmlPath)) {
+                workspaceController = loader.getController();
+            }
+            return view;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load " + fxmlPath, e);
         }
     }
 
@@ -94,43 +116,9 @@ public class RootController {
         }
     }
 
-    private void showWorkspacePage() {
-        if (workspaceView == null) {
-            loadWorkspace();
-        }
-        if (workspaceView != null) {
-            attachContent(workspaceContainer, workspaceView);
-            Stage stage = currentStage();
-            if (stage != null && workspaceController != null) {
-                workspaceController.attachStage(stage);
-            }
-        }
-    }
-
-    private void showMapPage() {
-        if (mapView == null) {
-            mapView = loadMapView();
-        }
-        if (mapView != null) {
-            attachContent(workspaceContainer, mapView);
-        }
-    }
-
-    private Parent loadMapView() {
-        try {
-            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(
-                getClass().getResource("/app/Map.fxml")));
-            return loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Unable to load Map.fxml", ex);
-        }
-    }
-
     private Stage currentStage() {
-        if (rootPane.getScene() == null) {
-            return null;
-        }
-        return rootPane.getScene().getWindow() instanceof Stage stage ? stage : null;
+        if (rootPane.getScene() == null) return null;
+        return rootPane.getScene().getWindow() instanceof Stage s ? s : null;
     }
 
     private void attachContent(Pane parent, Node child) {

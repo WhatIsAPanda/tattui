@@ -31,7 +31,8 @@ dependencies {
 }
 
 application {
-    // 👇 This is the class Gradle will launch for `./gradlew run`
+    applicationDefaultJvmArgs = listOf("--enable-native-access=javafx.graphics")
+   // 👇 This is the class Gradle will launch for `./gradlew run`
     mainClass.set("app.Main")
 }
 

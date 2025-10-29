@@ -11,6 +11,8 @@ public class TaskbarController {
     public interface PageNavigator {
         void showWorkspace();
         void showMap();
+        // void showGallery();
+        // void showProfile();
     }
 
     private PageNavigator navigator;
@@ -32,4 +34,11 @@ public class TaskbarController {
             navigator.showMap();
         }
     }
+    // @FXML
+    // private void handleGalleryClick(ActionEvent event) {
+    //     if (navigator != null) {
+    //         navigator.showGallery();
+    //     }
+    // }
+    // Adding my profile methods button 
 }
