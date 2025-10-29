@@ -1,4 +1,6 @@
 .root {
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
   -fx-base: black;
   -fx-background-color: linear-gradient(to bottom, #000000, #9e9e9e);
   -fx-text-fill: #e2e8f0;
@@ -11,7 +13,7 @@
 }
 
 .button {
-  -fx-background-color: linear-gradient(to bottom, #1f2937, black);
+  -fx-background-color: linear-gradient(to bottom, #4b4b4b, black);
   -fx-text-fill: #f8fafc;
   -fx-border-color: rgba(129, 133, 138, 0.406);
   -fx-border-width: 1;
@@ -20,12 +22,13 @@
 }
 
 .button:hover {
-  -fx-background-color: linear-gradient(to bottom, #2d3748, #111827);
+  -fx-background-color: #c0c0c0;
+  -fx-text-fill: #000000;
 }
 
 .combo-box,
 .text-field {
-  -fx-background-color: #1f2937;
+  -fx-background-color: #4b4b4b;
   -fx-text-fill: #e2e8f0;
   -fx-border-color: rgba(148, 163, 184, 0.3);
   -fx-border-radius: 6;
@@ -48,4 +51,16 @@
 
 .split-pane-divider {
   -fx-background-color: rgba(15, 23, 42, 0.8);
+}
+
+/* .titled-pane, 
+.titled-pane > .content, 
+.vbox, 
+.hbox, 
+.accordion, 
+.scroll-pane {
+  -fx-background-color: transparent;
+} */
+.root, .vbox, .titled-pane, .titled-pane > .content {
+  -fx-background-color: #1a1a1a;
 }

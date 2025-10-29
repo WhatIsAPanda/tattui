@@ -11,6 +11,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
+import javafx.geometry.Pos;
 import javafx.fxml.FXML;
 import javafx.scene.AmbientLight;
 import javafx.scene.DirectionalLight;
@@ -27,6 +28,8 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
@@ -38,6 +41,7 @@ import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -271,38 +275,220 @@ public class WorkspaceController {
         }
     }
 
+    // private void setupControlPanel() {
+    //     if (controlsContainer == null) {
+    //         return;
+    //     }
+
+    //     controlsContainer.getChildren().clear();
+    //     controlsContainer.setSpacing(12);
+    //     controlsContainer.setPadding(new Insets(16));
+    //     controlsContainer.setFillWidth(true);
+
+    //     proportionControls.clear();
+    //     for (String label : PROPORTION_KEYS) {
+    //         Slider slider = createSlider(SLIDER_MIN, SLIDER_MAX);
+    //         slider.valueProperty().addListener((obs, oldVal, newVal) -> {
+    //             if (adjustingSliders) return;
+    //             applyCurrentProportions();
+    //         });
+    //         proportionControls.put(label, slider);
+
+    //         TextField valueField = new TextField(String.format("%.2f", slider.getValue()));
+    //         valueField.setPrefWidth(60);
+    //         // Allow manual edits
+    //         valueField.textProperty().addListener((obs, oldVal, newVal) -> {
+    //             try {
+    //                 double val = Double.parseDouble(newVal);
+    //                 if (val >= SLIDER_MIN && val <= SLIDER_MAX) {
+    //                     slider.setValue(val);
+    //                 }
+    //             } catch (NumberFormatException ignored) {}
+    //         });
+
+    //         // Sync field with slider
+    //         slider.valueProperty().addListener((obs, oldVal, newVal) ->
+    //             valueField.setText(String.format("%.2f", newVal.doubleValue()))
+    //         );
+
+    //         HBox hbox = new HBox(8);
+    //         hbox.setAlignment(Pos.CENTER_LEFT);
+    //         hbox.setFillHeight(true);
+    //         HBox.setHgrow(slider, Priority.ALWAYS);
+
+    //         Label nameLabel = new Label(label);
+    //         nameLabel.setPrefWidth(120); // consistent label width
+    //         hbox.getChildren().addAll(nameLabel, slider, valueField);
+
+    //         controlsContainer.getChildren().add(hbox);
+    //     }
+
+    //     Slider overallSlider = createSlider(OVERALL_MIN, OVERALL_MAX);
+    //     TextField overallField = new TextField(String.format("%.2f", overallSlider.getValue()));
+    //     overallField.setPrefWidth(60);
+    //     overallField.setAlignment(Pos.CENTER_RIGHT);
+    //     overallField.textProperty().addListener((obs, oldVal, newVal) -> {
+    //         try {
+    //             double val = Double.parseDouble(newVal);
+    //             if (val >= OVERALL_MIN && val <= OVERALL_MAX)
+    //                 overallSlider.setValue(val);
+    //         } catch (NumberFormatException ignored) {}
+    //     });
+    //     overallSlider.valueProperty().addListener((obs, o, n) ->
+    //         overallField.setText(String.format("%.2f", n.doubleValue()))
+    //     );
+
+    //     HBox overallBox = new HBox(10);
+    //     overallBox.setAlignment(Pos.CENTER_LEFT);
+    //     overallBox.setFillHeight(true);
+    //     overallBox.setMaxWidth(Double.MAX_VALUE);
+
+    //     Label overallLabel = new Label("Overall Scale");
+    //     overallLabel.setPrefWidth(140);
+    //     overallLabel.setMinWidth(140);
+    //     overallLabel.setAlignment(Pos.CENTER_LEFT);
+
+    //     HBox.setHgrow(overallSlider, Priority.ALWAYS);
+
+    //     overallBox.getChildren().addAll(overallLabel, overallSlider, overallField);
+    //     controlsContainer.getChildren().add(overallBox);
+
+
+    //     Label tattooLabel = new Label("Tattoo Tools");
+    //     loadTattooButton = new Button("Load Tattoo");
+    //     loadTattooButton.setOnAction(e -> handleLoadTattoo());
+
+    //     tattooSizeSlider = new Slider(0.05, 1.0, 0.20);
+    //     tattooSizeSlider.getStyleClass().add("workspace-slider");
+    //     tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+    //         if (selectedTattoo != null) {
+    //             selectedTattoo.scale = newVal.doubleValue();
+    //             repaintTattooTexture();
+    //         }
+    //     });
+
+    //     tattooOpacitySlider = new Slider(0.3, 1.0, 1.0);
+    //     tattooOpacitySlider.getStyleClass().add("workspace-slider");
+    //     tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+    //         if (selectedTattoo != null) {
+    //             selectedTattoo.alpha = newVal.doubleValue();
+    //             repaintTattooTexture();
+    //         }
+    //     });
+
+    //     tattooRotationSlider = new Slider(-180.0, 180.0, 0.0);
+    //     tattooRotationSlider.getStyleClass().add("workspace-slider");
+    //     tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+    //         if (selectedTattoo != null) {
+    //             selectedTattoo.rotation = newVal.doubleValue();
+    //             repaintTattooTexture();
+    //         }
+    //     });
+
+    //     VBox tattooControls = new VBox(6,
+    //         tattooLabel,
+    //         loadTattooButton,
+    //         createLabeledControl("Tattoo Size", tattooSizeSlider),
+    //         createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
+    //         createLabeledControl("Tattoo Rotation", tattooRotationSlider)
+    //     );
+    //     tattooControls.setFillWidth(true);
+
+    //     controlsContainer.getChildren().add(tattooControls);
+
+    //     if (controlScroll != null) {
+    //         controlScroll.setFitToWidth(true);
+    //         controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+    //         controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+    //         controlScroll.setPadding(Insets.EMPTY);
+    //         if (rootPane != null) {
+    //             controlScroll.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+    //             controlScroll.maxWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+    //         }
+    //     }
+
+    //     updateTattooControlsState();
+    // }
+
     private void setupControlPanel() {
-        if (controlsContainer == null) {
-            return;
-        }
+        if (controlsContainer == null) return;
 
         controlsContainer.getChildren().clear();
         controlsContainer.setSpacing(12);
         controlsContainer.setPadding(new Insets(16));
         controlsContainer.setFillWidth(true);
 
+        // ===== Body Proportions Section =====
+        VBox proportionBox = new VBox(8);
+        proportionBox.setFillWidth(true);
         proportionControls.clear();
+
         for (String label : PROPORTION_KEYS) {
             Slider slider = createSlider(SLIDER_MIN, SLIDER_MAX);
             slider.valueProperty().addListener((obs, oldVal, newVal) -> {
-                if (adjustingSliders) {
-                    return;
-                }
+                if (adjustingSliders) return;
                 applyCurrentProportions();
             });
             proportionControls.put(label, slider);
-            controlsContainer.getChildren().add(createLabeledControl(label, slider));
+
+            TextField valueField = new TextField(String.format("%.2f", slider.getValue()));
+            valueField.setPrefWidth(60);
+            valueField.setAlignment(Pos.CENTER_RIGHT);
+
+            // manual edit → update slider
+            valueField.textProperty().addListener((obs, oldVal, newVal) -> {
+                try {
+                    double val = Double.parseDouble(newVal);
+                    if (val >= SLIDER_MIN && val <= SLIDER_MAX)
+                        slider.setValue(val);
+                } catch (NumberFormatException ignored) {}
+            });
+
+            // slider → update field
+            slider.valueProperty().addListener((obs, o, n) ->
+                valueField.setText(String.format("%.2f", n.doubleValue()))
+            );
+
+            Label nameLabel = new Label(label);
+            nameLabel.setPrefWidth(140);
+
+            HBox row = new HBox(10, nameLabel, slider, valueField);
+            row.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(slider, Priority.ALWAYS);
+            proportionBox.getChildren().add(row);
         }
 
+        // overall scale row
         Slider overallSlider = createSlider(OVERALL_MIN, OVERALL_MAX);
-        overallSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (adjustingSliders) {
-                return;
-            }
-            overallScale.set(newVal.doubleValue());
+        TextField overallField = new TextField(String.format("%.2f", overallSlider.getValue()));
+        overallField.setPrefWidth(60);
+        overallField.setAlignment(Pos.CENTER_RIGHT);
+
+        overallField.textProperty().addListener((obs, oldVal, newVal) -> {
+            try {
+                double val = Double.parseDouble(newVal);
+                if (val >= OVERALL_MIN && val <= OVERALL_MAX)
+                    overallSlider.setValue(val);
+            } catch (NumberFormatException ignored) {}
         });
-        overallScaleSlider = overallSlider;
-        controlsContainer.getChildren().add(createLabeledControl("Overall Scale", overallSlider));
+        overallSlider.valueProperty().addListener((obs, o, n) ->
+            overallField.setText(String.format("%.2f", n.doubleValue()))
+        );
+
+        Label overallLabel = new Label("Overall Scale");
+        overallLabel.setPrefWidth(140);
+        HBox overallRow = new HBox(10, overallLabel, overallSlider, overallField);
+        overallRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(overallSlider, Priority.ALWAYS);
+        proportionBox.getChildren().add(overallRow);
+
+        TitledPane proportionPane = new TitledPane("Body Proportions", proportionBox);
+        proportionPane.setExpanded(false); // collapsed by default
+
+
+        // ===== Tattoo Settings Section =====
+        VBox tattooBox = new VBox(8);
+        tattooBox.setFillWidth(true);
 
         Label tattooLabel = new Label("Tattoo Tools");
         loadTattooButton = new Button("Load Tattoo");
@@ -310,55 +496,59 @@ public class WorkspaceController {
 
         tattooSizeSlider = new Slider(0.05, 1.0, 0.20);
         tattooSizeSlider.getStyleClass().add("workspace-slider");
-        tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+        tattooSizeSlider.valueProperty().addListener((obs, o, n) -> {
             if (selectedTattoo != null) {
-                selectedTattoo.scale = newVal.doubleValue();
+                selectedTattoo.scale = n.doubleValue();
                 repaintTattooTexture();
             }
         });
 
         tattooOpacitySlider = new Slider(0.3, 1.0, 1.0);
         tattooOpacitySlider.getStyleClass().add("workspace-slider");
-        tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+        tattooOpacitySlider.valueProperty().addListener((obs, o, n) -> {
             if (selectedTattoo != null) {
-                selectedTattoo.alpha = newVal.doubleValue();
+                selectedTattoo.alpha = n.doubleValue();
                 repaintTattooTexture();
             }
         });
 
         tattooRotationSlider = new Slider(-180.0, 180.0, 0.0);
         tattooRotationSlider.getStyleClass().add("workspace-slider");
-        tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+        tattooRotationSlider.valueProperty().addListener((obs, o, n) -> {
             if (selectedTattoo != null) {
-                selectedTattoo.rotation = newVal.doubleValue();
+                selectedTattoo.rotation = n.doubleValue();
                 repaintTattooTexture();
             }
         });
 
-        VBox tattooControls = new VBox(6,
+        tattooBox.getChildren().addAll(
             tattooLabel,
             loadTattooButton,
             createLabeledControl("Tattoo Size", tattooSizeSlider),
             createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
             createLabeledControl("Tattoo Rotation", tattooRotationSlider)
         );
-        tattooControls.setFillWidth(true);
 
-        controlsContainer.getChildren().add(tattooControls);
+        TitledPane tattooPane = new TitledPane("Tattoo Settings", tattooBox);
+        tattooPane.setExpanded(true); // expanded by default
+
+
+        // ===== Combine Sections =====
+        VBox sectionContainer = new VBox(12, tattooPane, proportionPane);
+        sectionContainer.setFillWidth(true);
+
+        controlsContainer.getChildren().add(sectionContainer);
 
         if (controlScroll != null) {
+            controlScroll.setContent(controlsContainer);
             controlScroll.setFitToWidth(true);
             controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-            controlScroll.setPadding(Insets.EMPTY);
-            if (rootPane != null) {
-                controlScroll.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
-                controlScroll.maxWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
-            }
         }
 
         updateTattooControlsState();
     }
+
 
     private Slider createSlider(double min, double max) {
         Slider slider = new Slider(min, max, 1.0);

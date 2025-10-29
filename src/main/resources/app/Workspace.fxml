@@ -10,48 +10,31 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane"
-            prefHeight="800.0"
-            prefWidth="960.0"
-            xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="app.controller.WorkspaceController"
-            stylesheets="@css/workspace.css">
+<BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="960.0" stylesheets="@css/workspace.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.WorkspaceController">
 
     <top>
-        <HBox fx:id="toolbarBox"
-              alignment="CENTER_LEFT"
-              spacing="10.0"
-              styleClass="toolbar">
+        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="50.0" spacing="10.0" styleClass="toolbar">
             <padding>
-                <Insets top="12.0" right="16.0" bottom="12.0" left="16.0"/>
+                <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
             </padding>
             <children>
-                <Button fx:id="loadModelButton" text="Load Model"/>
-                <Button fx:id="resetViewButton" text="Reset View"/>
-                <Label text="Lighting:"/>
-                <ComboBox fx:id="lightingCombo" prefWidth="150.0"/>
+                <Button fx:id="loadModelButton" text="Load Model" />
+                <Button fx:id="resetViewButton" text="Reset View" />
+                <Label text="Lighting:" />
+                <ComboBox fx:id="lightingCombo" prefWidth="150.0" />
+            <Button fx:id="loadModelButton1" text="Export Model" />
             </children>
         </HBox>
     </top>
 
     <center>
-        <StackPane fx:id="viewerPane"
-                   styleClass="workspace-viewer"
-                   BorderPane.alignment="CENTER"/>
+        <StackPane fx:id="viewerPane" styleClass="workspace-viewer" BorderPane.alignment="CENTER" />
     </center>
 
     <right>
-        <ScrollPane fx:id="controlScroll"
-                    fitToWidth="true"
-                    hbarPolicy="NEVER"
-                    vbarPolicy="AS_NEEDED"
-                    BorderPane.alignment="CENTER">
+        <ScrollPane fx:id="controlScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" BorderPane.alignment="CENTER">
             <content>
-                <VBox fx:id="controlsContainer"
-                      spacing="12.0"
-                      alignment="TOP_LEFT"
-                      styleClass="control-pane"/>
+                <VBox fx:id="controlsContainer" alignment="TOP_LEFT" spacing="12.0" styleClass="control-pane" />
             </content>
         </ScrollPane>
     </right>
