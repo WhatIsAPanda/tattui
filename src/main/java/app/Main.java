@@ -17,7 +17,7 @@ public class Main extends Application {
 
         Scene scene = new Scene(root, 1280, 800);
         scene.getStylesheets().add(
-            Objects.requireNonNull(Main.class.getResource("/app/styles.css")).toExternalForm()
+            Objects.requireNonNull(Main.class.getResource("/app/css/main.css")).toExternalForm()
         );
 
         stage.setTitle("Tattui");
