@@ -8,7 +8,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 
-
 <VBox fx:controller="app.controller.TaskbarController"
       xmlns="http://javafx.com/javafx/8"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -25,15 +24,17 @@
         <!-- Top logo -->
         <StackPane prefHeight="50.0" prefWidth="50.0">
             <children>
-                <Button alignment="CENTER"
+                <Button fx:id="logoButton"
+                        alignment="CENTER"
                         contentDisplay="GRAPHIC_ONLY"
                         mnemonicParsing="false"
                         prefHeight="50.0"
                         prefWidth="50.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 0 0; -fx-border-radius: 0;"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent;"
                         StackPane.alignment="CENTER">
                     <graphic>
-                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
                             <image>
                                 <Image url="@../icons/tattui.png"/>
                             </image>
@@ -49,47 +50,46 @@
 
                 <Line endX="50.0" stroke="WHITE"/>
 
-                <Button mnemonicParsing="false"
-                        onAction="#handleWorkspaceClick"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;">
+                <Button fx:id="workspaceButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/workspace.png"/>
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button mnemonicParsing="false"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;">
-                    <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/gallery.png"/>
-                            </image>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                            <image><Image url="@../icons/workspace.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
 
-                <Button mnemonicParsing="false"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;">
+                <Button fx:id="galleryButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/explore.png"/>
-                            </image>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                            <image><Image url="@../icons/gallery.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
 
-                <Button mnemonicParsing="false"
-                        onAction="#handleMapClick"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;">
+                <Button fx:id="exploreButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/map.png"/>
-                            </image>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                            <image><Image url="@../icons/explore.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="mapButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                    <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                            <image><Image url="@../icons/map.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -98,37 +98,33 @@
 
         <!-- Center symbol -->
         <ImageView fitHeight="100.0" fitWidth="40.0" preserveRatio="true">
-            <image>
-                <Image url="@../icons/sigal.png"/>
-            </image>
+            <image><Image url="@../icons/sigal.png"/></image>
         </ImageView>
 
         <!-- Bottom section -->
         <VBox alignment="BOTTOM_CENTER" spacing="10.0" VBox.vgrow="ALWAYS">
-            <padding>
-                <Insets top="10.0"/>
-            </padding>
+            <padding><Insets top="10.0"/></padding>
             <children>
-                <Button mnemonicParsing="false"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;"
+                <Button fx:id="loginButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;"
                         prefHeight="30.0" prefWidth="30.0">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/login.png"/>
-                            </image>
+                            <image><Image url="@../icons/login.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
 
-                <Button mnemonicParsing="false"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0; -fx-border-radius: 0;"
+                <Button fx:id="settingsButton"
+                        mnemonicParsing="false"
+                        onAction="#handleClick"
+                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;"
                         prefHeight="30.0" prefWidth="30.0">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image>
-                                <Image url="@../icons/settings.png"/>
-                            </image>
+                            <image><Image url="@../icons/settings.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>

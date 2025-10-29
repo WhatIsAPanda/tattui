@@ -2,16 +2,14 @@ package app.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 
-/**
- * Handles navigation events originating from the taskbar buttons.
- */
 public class TaskbarController {
 
     public interface PageNavigator {
         void showWorkspace();
         void showMap();
-        // void showGallery();
+        void showGallery();
         // void showProfile();
     }
 
@@ -21,24 +19,21 @@ public class TaskbarController {
         this.navigator = navigator;
     }
 
-    @FXML
-    private void handleWorkspaceClick(ActionEvent event) {
-        if (navigator != null) {
-            navigator.showWorkspace();
-        }
-    }
+   @FXML
+    private void handleClick(ActionEvent event) {
+        if (navigator == null) return;
+        Object src = event.getSource();
+        if (!(src instanceof Button button)) return;
 
-    @FXML
-    private void handleMapClick(ActionEvent event) {
-        if (navigator != null) {
-            navigator.showMap();
+        switch (button.getId()) {
+            case "workspaceButton" -> navigator.showWorkspace();
+            case "galleryButton" -> navigator.showGallery();
+            case "exploreButton" -> System.out.println("Explore clicked");
+            case "mapButton" -> navigator.showMap();
+            case "loginButton" -> System.out.println("Login clicked");
+            case "settingsButton" -> System.out.println("Settings clicked");
+            case "logoButton" -> System.out.println("Logo clicked");
+            default -> System.out.println("Unhandled button: " + button.getId());
         }
     }
-    // @FXML
-    // private void handleGalleryClick(ActionEvent event) {
-    //     if (navigator != null) {
-    //         navigator.showGallery();
-    //     }
-    // }
-    // Adding my profile methods button 
 }

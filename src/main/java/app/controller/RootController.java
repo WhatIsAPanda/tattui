@@ -30,8 +30,8 @@ public class RootController {
     // FXML path registry
     private static final Map<String, String> PAGE_PATHS = Map.of(
         "workspace", "/app/Workspace.fxml",
-        "map", "/app/Map.fxml"
-        // "gallery", "/app/Gallery.fxml"
+        "map", "/app/Map.fxml",
+        "gallery", "/app/Gallery.fxml"
     );
 
     @FXML
@@ -59,7 +59,7 @@ public class RootController {
             taskbarController.setNavigator(new TaskbarController.PageNavigator() {
                 @Override public void showWorkspace() { showPage("workspace"); }
                 @Override public void showMap() { showPage("map"); }
-                // @Override public void showGallery() { showPage("gallery"); }
+                @Override public void showGallery() { showPage("gallery"); }
             });
         }
     }
