@@ -69,3 +69,4 @@ logs/
 .env
 local.properties
 .gradle/9.1.0/checksums/checksums.lock
+.gradle/9.1.0/checksums/checksums.lock
