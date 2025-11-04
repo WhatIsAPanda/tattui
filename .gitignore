@@ -4,6 +4,9 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 .gradle-cache/
 out/
+gradlew
+gradlew.bat
+gradle 
 
 # ---- IntelliJ IDEA / Android Studio ----
 .idea/
