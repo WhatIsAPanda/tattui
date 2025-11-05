@@ -31,7 +31,9 @@ public class RootController {
     private static final Map<String, String> PAGE_PATHS = Map.of(
         "workspace", "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
-        "gallery", "/app/Gallery.fxml"
+        "gallery", "/app/Gallery.fxml",
+            "profile", "/app/viewMyProfile.fxml",
+            "search", "/app/SearchPage.fxml"
     );
 
     @FXML
@@ -60,6 +62,8 @@ public class RootController {
                 @Override public void showWorkspace() { showPage("workspace"); }
                 @Override public void showMap() { showPage("map"); }
                 @Override public void showGallery() { showPage("gallery"); }
+                @Override public void showProfile() {showPage("profile");}
+                @Override public void showSearch() {showPage("search");}
             });
         }
     }

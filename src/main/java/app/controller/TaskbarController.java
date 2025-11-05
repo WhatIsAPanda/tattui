@@ -10,7 +10,8 @@ public class TaskbarController {
         void showWorkspace();
         void showMap();
         void showGallery();
-        // void showProfile();
+        void showProfile();
+        void showSearch();
     }
 
     private PageNavigator navigator;
@@ -28,9 +29,9 @@ public class TaskbarController {
         switch (button.getId()) {
             case "workspaceButton" -> navigator.showWorkspace();
             case "galleryButton" -> navigator.showGallery();
-            case "exploreButton" -> System.out.println("Explore clicked");
+            case "exploreButton" -> navigator.showSearch();
             case "mapButton" -> navigator.showMap();
-            case "loginButton" -> System.out.println("Login clicked");
+            case "loginButton" -> navigator.showProfile();
             case "settingsButton" -> System.out.println("Settings clicked");
             case "logoButton" -> System.out.println("Logo clicked");
             default -> System.out.println("Unhandled button: " + button.getId());

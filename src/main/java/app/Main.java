@@ -7,13 +7,15 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.Objects;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(Main.class.getResource("/app/Root.fxml"));
+
+        FXMLLoader loader = new FXMLLoader(Main.class.getResource("/app/LoginpagePretty.fxml"));
         Parent root = loader.load();
 
         Scene scene = new Scene(root, 1280, 800);
@@ -30,4 +32,5 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
 }
