@@ -7,7 +7,7 @@ out/
 gradlew
 gradlew.bat
 gradle 
-
+gradle.properties
 # ---- IntelliJ IDEA / Android Studio ----
 .idea/
 *.iml
