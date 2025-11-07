@@ -1,0 +1,1 @@
+package app.boundary; import javafx.scene.control.Alert; public final class Alerts { private Alerts(){} public static void error(String header,String content){ var a=new Alert(Alert.AlertType.ERROR); a.setTitle("Error"); a.setHeaderText(header); a.setContentText(content); a.showAndWait(); } }

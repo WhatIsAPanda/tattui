@@ -1,37 +1,40 @@
 package app.controller;
 
-import app.entity.ModelManipulator;
+import app.controller.workspace.TattooWorkspace;
+import app.controller.workspace.WorkspaceCamera;
 import app.entity.Tattoo;
-import app.utils.ObjLoader;
+import app.loader.ObjLoader;
+import app.model.ModelManipulator;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Point3D;
-import javafx.geometry.Pos;
 import javafx.fxml.FXML;
 import javafx.scene.AmbientLight;
 import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.PerspectiveCamera;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
-import javafx.scene.effect.BlendMode;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -40,8 +43,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -49,18 +52,16 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.SceneAntialiasing;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,11 +76,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 /**
  * Application controller that encapsulates the workspace behaviour and state.
  */
-public class WorkspaceController {
+public final class WorkspaceController {
     private static final double TARGET_HEIGHT = 1700.0;
     private static final double MIN_DISTANCE = 300.0;
     private static final double MAX_DISTANCE = 6000.0;
@@ -87,16 +91,18 @@ public class WorkspaceController {
     private static final double SLIDER_MAX = 1.4;
     private static final double OVERALL_MIN = 0.8;
     private static final double OVERALL_MAX = 1.3;
-    private static final double ZOOM_SENSITIVITY = 2.0;
     private static final double ORBIT_SENSITIVITY = 0.3;
     private static final double PAN_SENSITIVITY = 0.5;
     private static final double PITCH_MIN = -80.0;
     private static final double PITCH_MAX = 80.0;
+    private static final int MAX_TATTOO_HISTORY = 12;
+    public static final String TORSO = "Torso";
+    public static final String WP_SLIDER = "workspace-slider";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
         "Neck",
-        "Torso",
+        TORSO,
         "Pelvis",
         "Upper Arm L",
         "Lower Arm L",
@@ -113,8 +119,8 @@ public class WorkspaceController {
     );
 
     private static final String DEFAULT_MODEL_FILENAME = "human.obj";
-    private static final String DEFAULT_MODEL_RESOURCE = "/models/human.obj";
-    private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", "human.obj");
+    private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
+    private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
 
     private static final List<String> PROPORTION_KEYS = List.of(
         "Head Size",
@@ -135,72 +141,56 @@ public class WorkspaceController {
     private final Group overallScaleGroup = new Group(partRoot);
     private final Group modelRoot = new Group(overallScaleGroup);
 
-    // --- Lighting presets ---
     private enum LightingPreset { TOP_DOWN, UNIFORM }
 
     private final Group lightsLayer = new Group();
-    private LightingPreset lightingPreset = LightingPreset.TOP_DOWN;
+    private LightingPreset lightingPreset = LightingPreset.UNIFORM;
 
     private final Group root3D = new Group(modelRoot);
 
-    @FXML
-    private BorderPane rootPane;
-    @FXML
-    private HBox toolbarBox;
-    @FXML
-    private Button loadModelButton;
-    @FXML
-    private Button resetViewButton;
-    @FXML
-    private ComboBox<LightingPreset> lightingCombo;
-    @FXML
-    private ScrollPane controlScroll;
-    @FXML
-    private VBox controlsContainer;
-    @FXML
-    private StackPane viewerPane;
+    @FXML private BorderPane rootPane;
+    @FXML private HBox toolbarBox;
+    @FXML private Button loadModelButton;
+    @FXML private Button resetViewButton;
+    @FXML private Button exportModelButton;
+    @FXML private ComboBox<LightingPreset> lightingCombo;
+    @FXML private ScrollPane controlScroll;
+    @FXML private VBox controlsContainer;
+    @FXML private StackPane viewerPane;
 
     private boolean bootstrapped;
 
-    private final PerspectiveCamera camera = new PerspectiveCamera(true);
-    private final DoubleProperty yaw = new SimpleDoubleProperty(30.0);
-    private final DoubleProperty pitch = new SimpleDoubleProperty(-20.0);
-    private final DoubleProperty distance = new SimpleDoubleProperty(2000.0);
+    private final javafx.scene.PerspectiveCamera camera = new javafx.scene.PerspectiveCamera(true);
+    private final WorkspaceCamera cameraRig = new WorkspaceCamera(
+        camera, MIN_DISTANCE, MAX_DISTANCE, ORBIT_SENSITIVITY, PAN_SENSITIVITY, PITCH_MIN, PITCH_MAX
+    );
+    private final TattooWorkspace tattooWorkspace = new TattooWorkspace();
     private final DoubleProperty overallScale = new SimpleDoubleProperty(1.0);
 
     private ModelManipulator modelManipulator;
     private Slider overallScaleSlider;
     private Stage primaryStage;
 
-    // Tattoo pipeline
-    private Image baseTexture;
-    private Canvas skinCanvas;
-    private GraphicsContext gc;
-    private WritableImage paintedTexture;
-    private final List<Tattoo> tattoos = new ArrayList<>();
-    private Tattoo selectedTattoo;
-    private Image pendingTattooImage;
-    private final List<PhongMaterial> tattooMaterials = new ArrayList<>();
+    private final ObservableList<TattooPreset> tattooHistory = FXCollections.observableArrayList();
 
     private Button loadTattooButton;
+    private FlowPane tattooHistoryGallery;
+    private ToggleGroup tattooHistoryToggleGroup;
+    private ScrollPane tattooHistoryScroll;
+    private Button applyHistoryButton;
+    private Button deleteTattooButton;
     private Slider tattooSizeSlider;
     private Slider tattooOpacitySlider;
     private Slider tattooRotationSlider;
+    private boolean tattooDragActive;
     private boolean modelHasUVs;
 
-    private Point3D cameraTarget = new Point3D(0, TARGET_HEIGHT * 0.55, 0);
-    private Point3D modelCenter = Point3D.ZERO;
     private Bounds currentBounds;
-
     private SubScene subScene;
     private boolean adjustingSliders;
 
-    private double lastMouseX;
-    private double lastMouseY;
-
     public WorkspaceController() {
         initializePartGroups();
-        configureCamera();
     }
 
     @FXML
@@ -208,7 +198,6 @@ public class WorkspaceController {
         setupToolbar();
         setupControlPanel();
         setupViewer();
-
         Platform.runLater(() -> {
             if (subScene != null) {
                 subScene.requestFocus();
@@ -261,7 +250,10 @@ public class WorkspaceController {
             loadModelButton.setOnAction(evt -> showLoadDialog(resolveStage()));
         }
         if (resetViewButton != null) {
-            resetViewButton.setOnAction(evt -> resetView());
+            resetViewButton.setOnAction(evt -> cameraRig.reset());
+        }
+        if (exportModelButton != null) {
+            exportModelButton.setOnAction(evt -> handleExportModel());
         }
         if (lightingCombo != null) {
             lightingCombo.setItems(FXCollections.observableArrayList(LightingPreset.values()));
@@ -275,151 +267,119 @@ public class WorkspaceController {
         }
     }
 
-
-
     private void setupControlPanel() {
-        if (controlsContainer == null) return;
+        if (controlsContainer == null) {
+            return;
+        }
 
         controlsContainer.getChildren().clear();
         controlsContainer.setSpacing(12);
         controlsContainer.setPadding(new Insets(16));
         controlsContainer.setFillWidth(true);
 
-        // ===== Body Proportions Section =====
-        VBox proportionBox = new VBox(8);
-        proportionBox.setFillWidth(true);
-        proportionControls.clear();
-
-        for (String label : PROPORTION_KEYS) {
-            Slider slider = createSlider(SLIDER_MIN, SLIDER_MAX);
-            slider.valueProperty().addListener((obs, oldVal, newVal) -> {
-                if (adjustingSliders) return;
-                applyCurrentProportions();
-            });
-            proportionControls.put(label, slider);
-
-            TextField valueField = new TextField(String.format("%.2f", slider.getValue()));
-            valueField.setPrefWidth(60);
-            valueField.setAlignment(Pos.CENTER_RIGHT);
-
-            // manual edit → update slider
-            valueField.textProperty().addListener((obs, oldVal, newVal) -> {
-                try {
-                    double val = Double.parseDouble(newVal);
-                    if (val >= SLIDER_MIN && val <= SLIDER_MAX)
-                        slider.setValue(val);
-                } catch (NumberFormatException ignored) {}
-            });
-
-            // slider → update field
-            slider.valueProperty().addListener((obs, o, n) ->
-                valueField.setText(String.format("%.2f", n.doubleValue()))
-            );
-
-            Label nameLabel = new Label(label);
-            nameLabel.setPrefWidth(140);
-
-            HBox row = new HBox(10, nameLabel, slider, valueField);
-            row.setAlignment(Pos.CENTER_LEFT);
-            HBox.setHgrow(slider, Priority.ALWAYS);
-            proportionBox.getChildren().add(row);
-        }
-
-        // overall scale row
-        Slider overallSlider = createSlider(OVERALL_MIN, OVERALL_MAX);
-        TextField overallField = new TextField(String.format("%.2f", overallSlider.getValue()));
-        overallField.setPrefWidth(60);
-        overallField.setAlignment(Pos.CENTER_RIGHT);
-
-        overallField.textProperty().addListener((obs, oldVal, newVal) -> {
-            try {
-                double val = Double.parseDouble(newVal);
-                if (val >= OVERALL_MIN && val <= OVERALL_MAX)
-                    overallSlider.setValue(val);
-            } catch (NumberFormatException ignored) {}
-        });
-        overallSlider.valueProperty().addListener((obs, o, n) ->
-            overallField.setText(String.format("%.2f", n.doubleValue()))
-        );
-
-        Label overallLabel = new Label("Overall Scale");
-        overallLabel.setPrefWidth(140);
-        HBox overallRow = new HBox(10, overallLabel, overallSlider, overallField);
-        overallRow.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(overallSlider, Priority.ALWAYS);
-        proportionBox.getChildren().add(overallRow);
-
-        TitledPane proportionPane = new TitledPane("Body Proportions", proportionBox);
-        proportionPane.setExpanded(false); // collapsed by default
-
-
-        // ===== Tattoo Settings Section =====
-        VBox tattooBox = new VBox(8);
-        tattooBox.setFillWidth(true);
-
-        Label tattooLabel = new Label("Tattoo Tools");
         loadTattooButton = new Button("Load Tattoo");
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
 
+        tattooHistoryToggleGroup = new ToggleGroup();
+        tattooHistoryGallery = new FlowPane();
+        tattooHistoryGallery.setHgap(6);
+        tattooHistoryGallery.setVgap(6);
+        tattooHistoryGallery.setPrefWrapLength(180);
+        tattooHistoryGallery.getStyleClass().add("tattoo-history-gallery");
+
+        tattooHistoryScroll = new ScrollPane(tattooHistoryGallery);
+        tattooHistoryScroll.setFitToWidth(true);
+        tattooHistoryScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        tattooHistoryScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        tattooHistoryScroll.setPrefViewportHeight(120);
+        tattooHistoryScroll.setMaxHeight(150);
+        tattooHistoryScroll.setFocusTraversable(false);
+
+        applyHistoryButton = new Button("Use Selected");
+        applyHistoryButton.setOnAction(e -> applySelectedHistoryTattoo());
+        applyHistoryButton.setMaxWidth(Double.MAX_VALUE);
+
         tattooSizeSlider = new Slider(0.05, 1.0, 0.20);
-        tattooSizeSlider.getStyleClass().add("workspace-slider");
-        tattooSizeSlider.valueProperty().addListener((obs, o, n) -> {
-            if (selectedTattoo != null) {
-                selectedTattoo.scale = n.doubleValue();
-                repaintTattooTexture();
-            }
-        });
+        tattooSizeSlider.getStyleClass().add(WP_SLIDER);
+        tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withScale(newVal.doubleValue())));
 
         tattooOpacitySlider = new Slider(0.3, 1.0, 1.0);
-        tattooOpacitySlider.getStyleClass().add("workspace-slider");
-        tattooOpacitySlider.valueProperty().addListener((obs, o, n) -> {
-            if (selectedTattoo != null) {
-                selectedTattoo.alpha = n.doubleValue();
-                repaintTattooTexture();
-            }
-        });
+        tattooOpacitySlider.getStyleClass().add(WP_SLIDER);
+        tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withAlpha(newVal.doubleValue())));
 
         tattooRotationSlider = new Slider(-180.0, 180.0, 0.0);
-        tattooRotationSlider.getStyleClass().add("workspace-slider");
-        tattooRotationSlider.valueProperty().addListener((obs, o, n) -> {
-            if (selectedTattoo != null) {
-                selectedTattoo.rotation = n.doubleValue();
-                repaintTattooTexture();
-            }
-        });
+        tattooRotationSlider.getStyleClass().add(WP_SLIDER);
+        tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withRotation(newVal.doubleValue())));
 
-        tattooBox.getChildren().addAll(
-            tattooLabel,
+        deleteTattooButton = new Button("Delete Tattoo");
+        deleteTattooButton.setMaxWidth(Double.MAX_VALUE);
+        deleteTattooButton.setOnAction(e -> handleDeleteTattoo());
+
+        Label historyLabel = new Label("Recent Tattoos");
+        VBox historyBox = new VBox(4, historyLabel, tattooHistoryScroll, applyHistoryButton);
+        historyBox.setFillWidth(true);
+
+        VBox tattooControls = new VBox(6,
             loadTattooButton,
+            historyBox,
             createLabeledControl("Tattoo Size", tattooSizeSlider),
             createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
-            createLabeledControl("Tattoo Rotation", tattooRotationSlider)
+            createLabeledControl("Tattoo Rotation", tattooRotationSlider),
+            deleteTattooButton
         );
+        tattooControls.setFillWidth(true);
 
-        TitledPane tattooPane = new TitledPane("Tattoo Settings", tattooBox);
-        tattooPane.setExpanded(true); // expanded by default
+        controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls));
 
+        proportionControls.clear();
+        VBox proportionPanel = new VBox(8);
+        proportionPanel.setFillWidth(true);
+        for (String label : PROPORTION_KEYS) {
+            Slider slider = createSlider(SLIDER_MIN, SLIDER_MAX);
+            slider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (!adjustingSliders) {
+                    applyCurrentProportions();
+                }
+            });
+            proportionControls.put(label, slider);
+            proportionPanel.getChildren().add(createLabeledControl(label, slider));
+        }
+        controlsContainer.getChildren().add(createDropdownPanel("Body Proportions", proportionPanel));
 
-        // ===== Combine Sections =====
-        VBox sectionContainer = new VBox(12, tattooPane, proportionPane);
-        sectionContainer.setFillWidth(true);
-
-        controlsContainer.getChildren().add(sectionContainer);
+        Slider overallSlider = createSlider(OVERALL_MIN, OVERALL_MAX);
+        overallSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!adjustingSliders) {
+                overallScale.set(newVal.doubleValue());
+            }
+        });
+        overallScaleSlider = overallSlider;
+        controlsContainer.getChildren().add(createLabeledControl("Overall Scale", overallSlider));
 
         if (controlScroll != null) {
-            controlScroll.setContent(controlsContainer);
             controlScroll.setFitToWidth(true);
             controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            controlScroll.setPadding(Insets.EMPTY);
+            if (rootPane != null) {
+                controlScroll.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+                controlScroll.maxWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
+            }
         }
 
+        refreshTattooHistoryGallery();
         updateTattooControlsState();
     }
 
+    private void onTattooAdjustment(UnaryOperator<Tattoo> updater) {
+        if (adjustingSliders) {
+            return;
+        }
+        tattooWorkspace.updateSelection(updater);
+    }
 
     private Slider createSlider(double min, double max) {
         Slider slider = new Slider(min, max, 1.0);
-        slider.getStyleClass().add("workspace-slider");
+        slider.getStyleClass().add(WP_SLIDER);
         slider.setShowTickMarks(false);
         slider.setShowTickLabels(false);
         slider.setBlockIncrement(0.05);
@@ -437,8 +397,18 @@ public class WorkspaceController {
         return box;
     }
 
+    private TitledPane createDropdownPanel(String title, Node content) {
+        TitledPane pane = new TitledPane(title, content);
+        pane.setCollapsible(true);
+        pane.setExpanded(false);
+        pane.setFocusTraversable(false);
+        pane.getStyleClass().add("sidebar-titled-pane");
+        pane.setMaxWidth(Double.MAX_VALUE);
+        return pane;
+    }
+
     private void handleLoadTattoo() {
-        if (!modelHasUVs || skinCanvas == null) {
+        if (!modelHasUVs) {
             showNoUVMessage();
             return;
         }
@@ -459,10 +429,36 @@ public class WorkspaceController {
         if (loaded == null) {
             return;
         }
-        pendingTattooImage = loaded;
-        tattoos.clear();
-        selectedTattoo = null;
-        repaintTattooTexture();
+        rememberTattoo(file, loaded);
+        tattooWorkspace.preparePendingTattoo(loaded);
+        updateTattooControlsState();
+    }
+
+    private void handleExportModel() {
+        if (viewerPane == null) {
+            return;
+        }
+        Stage stage = resolveStage();
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Workspace Image");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image", "*.png"));
+        chooser.setInitialFileName("workspace.png");
+        File target = chooser.showSaveDialog(stage);
+        if (target == null) {
+            return;
+        }
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.TRANSPARENT);
+        WritableImage snapshot = viewerPane.snapshot(params, null);
+        if (snapshot == null) {
+            showError("Unable to capture workspace snapshot", new IOException("Snapshot failed"));
+            return;
+        }
+        try {
+            ImageIO.write(convertToBufferedImage(snapshot), "png", target);
+        } catch (IOException ex) {
+            showError("Failed to export workspace image: " + target.getName(), ex);
+        }
     }
 
     private Image loadTattooImage(File file) {
@@ -474,9 +470,103 @@ public class WorkspaceController {
             }
             return image;
         } catch (Exception ex) {
-            showError("Failed to load tattoo image: " + file.getName(), ex instanceof IOException ? (IOException) ex : new IOException(ex));
+            showError("Failed to load tattoo image: " + file.getName(), ex instanceof IOException ioexception ? ioexception : new IOException(ex));
             return null;
         }
+    }
+
+    private void rememberTattoo(File source, Image image) {
+        if (image == null) {
+            return;
+        }
+        String label = source != null ? source.getName() : "Tattoo " + (tattooHistory.size() + 1);
+        TattooPreset preset = new TattooPreset(label, image);
+        tattooHistory.removeIf(existing -> existing.image() == image);
+        tattooHistory.add(0, preset);
+        while (tattooHistory.size() > MAX_TATTOO_HISTORY) {
+            tattooHistory.remove(tattooHistory.size() - 1);
+        }
+        refreshTattooHistoryGallery();
+    }
+
+    private void refreshTattooHistoryGallery() {
+        if (tattooHistoryGallery == null || tattooHistoryToggleGroup == null) {
+            return;
+        }
+        TattooPreset previouslySelected = selectedHistoryPreset();
+        tattooHistoryGallery.getChildren().clear();
+        tattooHistoryToggleGroup.getToggles().clear();
+        Toggle toggleToSelect = null;
+        for (TattooPreset preset : tattooHistory) {
+            ToggleButton button = createHistoryToggle(preset);
+            tattooHistoryGallery.getChildren().add(button);
+            tattooHistoryToggleGroup.getToggles().add(button);
+            if (previouslySelected != null && previouslySelected.equals(preset)) {
+                toggleToSelect = button;
+            }
+        }
+        if (toggleToSelect != null) {
+            toggleToSelect.setSelected(true);
+        } else if (!tattooHistoryToggleGroup.getToggles().isEmpty()) {
+            tattooHistoryToggleGroup.getToggles().get(0).setSelected(true);
+        }
+        updateTattooControlsState();
+    }
+
+    private ToggleButton createHistoryToggle(TattooPreset preset) {
+        ImageView view = new ImageView(preset.image());
+        view.setFitWidth(64);
+        view.setFitHeight(64);
+        view.setPreserveRatio(true);
+        StackPane graphic = new StackPane(view);
+        graphic.getStyleClass().add("tattoo-history-thumb");
+
+        ToggleButton button = new ToggleButton();
+        button.setGraphic(graphic);
+        button.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+        button.setPrefSize(74, 74);
+        button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        button.getStyleClass().add("tattoo-history-toggle");
+        button.setUserData(preset);
+        button.setOnAction(evt -> updateTattooControlsState());
+        return button;
+    }
+
+    private TattooPreset selectedHistoryPreset() {
+        if (tattooHistoryToggleGroup == null) {
+            return null;
+        }
+        Toggle selected = tattooHistoryToggleGroup.getSelectedToggle();
+        if (selected == null) {
+            return null;
+        }
+        Object data = selected.getUserData();
+        return data instanceof TattooPreset preset ? preset : null;
+    }
+
+    private void applySelectedHistoryTattoo() {
+        if (!tattooWorkspace.isPlacementAvailable()) {
+            return;
+        }
+        TattooPreset preset = selectedHistoryPreset();
+        if (preset == null || preset.image() == null) {
+            return;
+        }
+        tattooWorkspace.preparePendingTattoo(preset.image());
+        updateTattooControlsState();
+    }
+
+    private void handleDeleteTattoo() {
+        if (!tattooWorkspace.deleteSelectedTattoo()) {
+            return;
+        }
+        var current = tattooWorkspace.selected();
+        if (current.isPresent()) {
+            syncTattooControls(current.get());
+        } else {
+            syncTattooControls(null);
+        }
+        updateTattooControlsState();
     }
 
     private void setupViewer() {
@@ -506,184 +596,47 @@ public class WorkspaceController {
         }
     }
 
-    private void configureCamera() {
-        camera.setNearClip(0.1);
-        camera.setFarClip(20000);
-        camera.setFieldOfView(35);
-
-        yaw.addListener((obs, oldV, newV) -> updateCameraTransform());
-        pitch.addListener((obs, oldV, newV) -> updateCameraTransform());
-        distance.addListener((obs, oldV, newV) -> updateCameraTransform());
-
-        updateCameraTransform();
-    }
-
-    private void initLightingLayer(Group sceneRoot) {
-        if (!sceneRoot.getChildren().contains(lightsLayer)) {
-            sceneRoot.getChildren().add(lightsLayer); // sibling of the model, no transforms
-        }
-    }
-
-    private AmbientLight amb(double g) {
-        return new AmbientLight(Color.gray(g));
-    }
-
-    private DirectionalLight dir(double g, double x, double y, double z) {
-        DirectionalLight light = new DirectionalLight(Color.gray(g));
-        light.setDirection(new Point3D(x, y, z).normalize());
-        return light;
-    }
-
-    private void applyLighting(LightingPreset preset) {
-        initLightingLayer(root3D);
-        lightsLayer.getChildren().clear();
-
-        switch (preset) {
-            case TOP_DOWN -> lightsLayer.getChildren().addAll(
-                amb(0.25),               // soft fill
-                dir(1.0, 0, -1, 0)       // straight down
-            );
-            case UNIFORM -> lightsLayer.getChildren().addAll(
-                amb(0.70),
-                dir(0.35, -0.35, -1, -0.35), // front-left, slightly above
-                dir(0.25, 0.35, -1, 0.35)    // back-right, slightly above
-            );
-        }
-    }
-
-    private void softenSpecular(Parent root) {
-        traverse(root, node -> {
-            if (node instanceof Shape3D shape) {
-                var material = shape.getMaterial();
-                if (material instanceof PhongMaterial phong) {
-                    phong.setSpecularColor(Color.gray(0.15));
-                    phong.setSpecularPower(16);
-                }
-                shape.setCullFace(CullFace.BACK); // prevent double-lit backfaces
-                shape.setDrawMode(DrawMode.FILL);
-            }
-        });
-    }
-
-    // OPTIONAL: call once after model load if you suspect bad/inside-out normals
-    private void disableBackFaceCullingForAllMeshes() {
-        traverse(modelRoot, n -> {
-            if (n instanceof Shape3D s) {
-                s.setCullFace(CullFace.NONE);
-            }
-        });
-    }
-
-    private void traverse(Node n, Consumer<Node> visitor) {
-        visitor.accept(n);
-        if (n instanceof Parent p) {
-            for (Node c : p.getChildrenUnmodifiable()) {
-                traverse(c, visitor);
-            }
-        }
-    }
-
     private void installInteractionHandlers() {
-        subScene.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            lastMouseX = event.getSceneX();
-            lastMouseY = event.getSceneY();
-        });
-
-        subScene.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-            double dx = event.getSceneX() - lastMouseX;
-            double dy = event.getSceneY() - lastMouseY;
-            lastMouseX = event.getSceneX();
-            lastMouseY = event.getSceneY();
-
-            if (event.isControlDown()) {
-                // Ctrl + Drag → rotate model
-                orbit(dx, dy);
-            } else {
-                // Regular Drag → move tattoo
-                if (selectedTattoo != null && modelHasUVs && skinCanvas != null) {
-                    handleTattooDrag(event);
-                } else {
-                    // fallback to pan if no tattoo selected
-                    pan(dx, dy);
-                }
+        subScene.addEventHandler(MouseEvent.MOUSE_PRESSED, this::handleCameraMousePressed);
+        subScene.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::handleCameraMouseDragged);
+        subScene.addEventHandler(ScrollEvent.SCROLL, cameraRig::handleScroll);
+        subScene.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.MIDDLE || (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
+                cameraRig.reset();
             }
         });
-
-        subScene.addEventHandler(ScrollEvent.SCROLL, event -> {
-            if (event.getDeltaY() == 0) return;
-            double delta = event.getDeltaY() * ZOOM_SENSITIVITY;
-            distance.set(clamp(distance.get() - delta, MIN_DISTANCE, MAX_DISTANCE));
-        });
-
-        subScene.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.MIDDLE || 
-                (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
-                resetView();
+        subScene.setOnKeyPressed(event -> {
+            cameraRig.handleKey(event);
+            if (event.getCode() == KeyCode.DIGIT1) {
+                lightingPreset = LightingPreset.TOP_DOWN;
+                applyLighting(lightingPreset);
+            } else if (event.getCode() == KeyCode.DIGIT2) {
+                lightingPreset = LightingPreset.UNIFORM;
+                applyLighting(lightingPreset);
             }
         });
     }
 
+    private void handleCameraMousePressed(MouseEvent event) {
+        if (tattooDragActive && event.getButton() == MouseButton.PRIMARY) {
+            event.consume();
+            return;
+        }
+        cameraRig.handleMousePressed(event);
+    }
+
+    private void handleCameraMouseDragged(MouseEvent event) {
+        if (tattooDragActive && event.getButton() == MouseButton.PRIMARY) {
+            event.consume();
+            return;
+        }
+        cameraRig.handleMouseDragged(event);
+    }
 
     private void installTattooPlacementHandlers() {
         subScene.addEventHandler(MouseEvent.MOUSE_PRESSED, this::handleTattooPress);
         subScene.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::handleTattooDrag);
-    }
-
-    private void orbit(double dx, double dy) {
-        yaw.set(normalizeAngle(yaw.get() - dx * ORBIT_SENSITIVITY));
-        pitch.set(clamp(pitch.get() - dy * ORBIT_SENSITIVITY, PITCH_MIN, PITCH_MAX));
-    }
-
-    private void pan(double dx, double dy) {
-        Bounds bounds = currentBounds;
-        if (bounds == null) {
-            return;
-        }
-        double factor = distance.get() / 800.0;
-        double newX = cameraTarget.getX() - dx * PAN_SENSITIVITY * factor;
-        double newY = cameraTarget.getY() + dy * PAN_SENSITIVITY * factor;
-        double newZ = cameraTarget.getZ() + dx * PAN_SENSITIVITY * factor * 0.6;
-
-        cameraTarget = clampTarget(new Point3D(newX, newY, newZ), bounds);
-        updateCameraTransform();
-    }
-
-    private void updateCameraTransform() {
-        double clampedDistance = clamp(distance.get(), MIN_DISTANCE, MAX_DISTANCE);
-        if (clampedDistance != distance.get()) {
-            distance.set(clampedDistance);
-        }
-
-        camera.getTransforms().setAll(
-            new Translate(cameraTarget.getX(), cameraTarget.getY(), cameraTarget.getZ()),
-            new Rotate(yaw.get(), Rotate.Y_AXIS),
-            new Rotate(pitch.get(), Rotate.X_AXIS),
-            new Translate(0, 0, -clampedDistance)
-        );
-    }
-
-    private void resetView() {
-        updateCurrentBounds();
-        if (currentBounds == null) {
-            return;
-        }
-
-        double centerX = (currentBounds.getMinX() + currentBounds.getMaxX()) * 0.5;
-        double centerZ = (currentBounds.getMinZ() + currentBounds.getMaxZ()) * 0.5;
-        double floor = currentBounds.getMinY();
-        double height = currentBounds.getHeight();
-        double targetY = floor + height * 0.55;
-
-        modelCenter = new Point3D(centerX, targetY, centerZ);
-        cameraTarget = modelCenter;
-        yaw.set(30.0);
-        pitch.set(-20.0);
-
-        double maxDim = Math.max(currentBounds.getWidth(), Math.max(currentBounds.getHeight(), currentBounds.getDepth()));
-        double fitDistance = maxDim * 1.2 + 350.0;
-        distance.set(clamp(fitDistance, MIN_DISTANCE, MAX_DISTANCE));
-
-        updateCameraTransform();
+        subScene.addEventHandler(MouseEvent.MOUSE_RELEASED, this::handleTattooRelease);
     }
 
     private void showLoadDialog(Stage stage) {
@@ -699,13 +652,187 @@ public class WorkspaceController {
             chooser.setInitialDirectory(initial.getParent().toFile());
         }
 
-        java.io.File file = chooser.showOpenDialog(targetStage);
+        File file = chooser.showOpenDialog(targetStage);
         if (file != null) {
             loadFromPath(file.toPath());
         }
     }
 
-    public void loadInitialModel() {
+    private void initLightingLayer(Group sceneRoot) {
+        if (!sceneRoot.getChildren().contains(lightsLayer)) {
+            sceneRoot.getChildren().add(lightsLayer);
+        }
+    }
+
+    private AmbientLight amb(double g) {
+        return new AmbientLight(Color.gray(g));
+    }
+
+    private DirectionalLight dir(double g, double x, double y, double z) {
+        DirectionalLight light = new DirectionalLight(Color.gray(g));
+        light.setDirection(new javafx.geometry.Point3D(x, y, z).normalize());
+        return light;
+    }
+
+    private void applyLighting(LightingPreset preset) {
+
+    initLightingLayer(root3D);
+
+    lightsLayer.getChildren().clear();
+
+        if (preset == LightingPreset.TOP_DOWN) {
+            lightsLayer.getChildren().addAll(
+                amb(0.25),
+                dir(1.0, 0, -1, 0)
+            );
+        } else if (preset == LightingPreset.UNIFORM) {
+            lightsLayer.getChildren().addAll(
+                amb(0.70),
+                dir(0.35, -0.35, -1, -0.35),
+                dir(0.25, 0.35, -1, 0.35)
+            );
+        }
+    }
+
+    private void softenSpecular(Parent root) {
+        traverse(root, node -> {
+            if (node instanceof Shape3D shape) {
+                var material = shape.getMaterial();
+                if (material instanceof PhongMaterial phong) {
+                    phong.setSpecularColor(Color.gray(0.15));
+                    phong.setSpecularPower(16);
+                }
+                shape.setCullFace(CullFace.BACK);
+                shape.setDrawMode(DrawMode.FILL);
+            }
+        });
+    }
+
+    private void traverse(Node n, Consumer<Node> visitor) {
+        visitor.accept(n);
+        if (n instanceof Parent p) {
+            for (Node c : p.getChildrenUnmodifiable()) {
+                traverse(c, visitor);
+            }
+        }
+    }
+
+    private void handleTattooPress(MouseEvent event) {
+        tattooDragActive = false;
+        if (!tattooWorkspace.isPlacementAvailable()) {
+            return;
+        }
+        if (event.getButton() == MouseButton.SECONDARY) {
+            tattooWorkspace.clearSelection();
+            syncTattooControls(null);
+            updateTattooControlsState();
+            return;
+        }
+        if (event.getButton() != MouseButton.PRIMARY) {
+            return;
+        }
+        Point2D uv = extractTextureCoord(event.getPickResult());
+        if (uv == null) {
+            return;
+        }
+
+        double u = clamp(uv.getX(), 0.0, 1.0);
+        double v = clamp(uv.getY(), 0.0, 1.0);
+
+        if (tattooWorkspace.selectTattooAt(u, v)) {
+            tattooWorkspace.selected().ifPresent(this::syncTattooControls);
+            updateTattooControlsState();
+            tattooDragActive = true;
+            event.consume();
+            return;
+        }
+
+        if (!tattooWorkspace.hasPendingImage()) {
+            tattooWorkspace.clearSelection();
+            syncTattooControls(null);
+            updateTattooControlsState();
+            return;
+        }
+
+        Tattoo newTattoo = createTattooFromPending(u, v);
+        if (newTattoo == null) {
+            return;
+        }
+        tattooWorkspace.addTattoo(newTattoo);
+        syncTattooControls(newTattoo);
+        updateTattooControlsState();
+        tattooDragActive = true;
+        event.consume();
+    }
+
+    private void handleTattooDrag(MouseEvent event) {
+        if (!tattooDragActive || !event.isPrimaryButtonDown()) {
+            return;
+        }
+        if (!tattooWorkspace.isPlacementAvailable()) {
+            return;
+        }
+        Tattoo current = tattooWorkspace.selected().orElse(null);
+        if (current == null) {
+            return;
+        }
+        PickResult result = event.getPickResult();
+        if (result == null || !(result.getIntersectedNode() instanceof MeshView)) {
+            return;
+        }
+        Point2D uv = result.getIntersectedTexCoord();
+        if (uv == null) {
+            return;
+        }
+        double u = clamp(uv.getX(), 0.0, 1.0);
+        double v = clamp(uv.getY(), 0.0, 1.0);
+        tattooWorkspace.updateSelectedTattoo(current.withUV(u, v));
+        event.consume();
+    }
+
+    private void handleTattooRelease(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY || !event.isPrimaryButtonDown()) {
+            tattooDragActive = false;
+        }
+    }
+
+    private void syncTattooControls(Tattoo tattoo) {
+        if (tattoo == null || tattooSizeSlider == null || tattooOpacitySlider == null || tattooRotationSlider == null) {
+            return;
+        }
+        adjustingSliders = true;
+        try {
+            tattooSizeSlider.setValue(tattoo.scale());
+            tattooOpacitySlider.setValue(tattoo.alpha());
+            tattooRotationSlider.setValue(tattoo.rotation());
+        } finally {
+            adjustingSliders = false;
+        }
+    }
+
+    private Point2D extractTextureCoord(PickResult result) {
+        if (result == null || !(result.getIntersectedNode() instanceof MeshView)) {
+            return null;
+        }
+        return result.getIntersectedTexCoord();
+    }
+
+    private Tattoo createTattooFromPending(double u, double v) {
+        double size = sliderValueOrFallback(tattooSizeSlider, 0.2);
+        double opacity = sliderValueOrFallback(tattooOpacitySlider, 1.0);
+        double rotation = sliderValueOrFallback(tattooRotationSlider, 0.0);
+        Image pending = tattooWorkspace.consumePendingImage().orElse(null);
+        if (pending == null) {
+            return null;
+        }
+        return new Tattoo(u, v, pending, size, rotation, opacity);
+    }
+
+    private double sliderValueOrFallback(Slider slider, double fallback) {
+        return slider != null ? slider.getValue() : fallback;
+    }
+
+    private void loadInitialModel() {
         Path workingDirModel = Paths.get(System.getProperty("user.dir")).resolve(DEFAULT_MODEL_FILENAME);
         if (Files.exists(workingDirModel)) {
             loadFromPath(workingDirModel);
@@ -720,7 +847,9 @@ public class WorkspaceController {
         URL resource = getClass().getResource(DEFAULT_MODEL_RESOURCE);
         if (resource != null) {
             try (InputStream stream = resource.openStream()) {
-                Path temp = Files.createTempFile("human-model", ".obj");
+                Path tempDir = Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), "tattui-model-");
+                tempDir.toFile().deleteOnExit();
+                Path temp = Files.createTempFile(tempDir, "human-model", ".obj");
                 temp.toFile().deleteOnExit();
                 Files.copy(stream, temp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 loadFromPath(temp);
@@ -783,7 +912,7 @@ public class WorkspaceController {
             }
             initializeTattooPipeline();
             updateCurrentBounds();
-            resetView();
+            cameraRig.reset();
             applyLighting(lightingPreset);
             softenSpecular(modelRoot);
             applyCurrentProportions();
@@ -836,28 +965,27 @@ public class WorkspaceController {
     }
 
     private void initializeTattooPipeline() {
-        tattooMaterials.clear();
-        collectMaterials(modelRoot, tattooMaterials);
-        tattoos.clear();
-        selectedTattoo = null;
+        List<PhongMaterial> materials = new ArrayList<>();
+        collectMaterials(modelRoot, materials);
+        tattooWorkspace.configureMaterials(materials);
+        tattooWorkspace.clearPendingTattoo();
+        tattooWorkspace.clearAllTattoos();
 
-        if (!modelHasUVs || tattooMaterials.isEmpty()) {
-            baseTexture = null;
-            skinCanvas = null;
-            gc = null;
-            paintedTexture = null;
+        if (!modelHasUVs || materials.isEmpty()) {
+            tattooWorkspace.clearSurface();
             updateTattooControlsState();
             return;
         }
 
         Image diffuse = null;
-        for (PhongMaterial pm : tattooMaterials) {
+        for (PhongMaterial pm : materials) {
             if (pm.getDiffuseMap() != null) {
                 diffuse = pm.getDiffuseMap();
                 break;
             }
         }
 
+        Image baseTexture;
         if (diffuse == null) {
             int width = 2048;
             int height = 2048;
@@ -876,70 +1004,18 @@ public class WorkspaceController {
 
         double texWidth = Math.max(1.0, baseTexture.getWidth());
         double texHeight = Math.max(1.0, baseTexture.getHeight());
-        skinCanvas = new Canvas(texWidth, texHeight);
-        gc = skinCanvas.getGraphicsContext2D();
-        paintedTexture = new WritableImage((int) Math.max(1, Math.round(texWidth)), (int) Math.max(1, Math.round(texHeight)));
-
-        repaintTattooTexture();
-
-        for (PhongMaterial pm : tattooMaterials) {
-            pm.setDiffuseMap(paintedTexture);
-            pm.setDiffuseColor(Color.WHITE);
-        }
-
+        tattooWorkspace.configureSurface(baseTexture, texWidth, texHeight);
         updateTattooControlsState();
     }
 
     private void collectMaterials(Node node, List<PhongMaterial> out) {
-        if (node instanceof Shape3D shape && shape.getMaterial() instanceof PhongMaterial pm) {
-            if (!out.contains(pm)) {
-                out.add(pm);
-            }
+        if ((node instanceof Shape3D shape && shape.getMaterial() instanceof PhongMaterial pm) && !out.contains(pm)) {
+            out.add(pm);
         }
         if (node instanceof Parent parent) {
             for (Node child : parent.getChildrenUnmodifiable()) {
                 collectMaterials(child, out);
             }
-        }
-    }
-
-    private void repaintTattooTexture() {
-        if (gc == null || skinCanvas == null || baseTexture == null) {
-            return;
-        }
-
-        double width = skinCanvas.getWidth();
-        double height = skinCanvas.getHeight();
-
-        gc.setGlobalBlendMode(BlendMode.SRC_OVER);
-        gc.setGlobalAlpha(1.0);
-        gc.clearRect(0, 0, width, height);
-        gc.drawImage(baseTexture, 0, 0, width, height);
-
-        for (Tattoo tattoo : tattoos) {
-            if (tattoo.image == null) {
-                continue;
-            }
-            double imgWidth = tattoo.image.getWidth();
-            double imgHeight = tattoo.image.getHeight();
-            double px = tattoo.u * width;
-            double py = tattoo.v * height;
-            double drawW = imgWidth * tattoo.scale;
-            double drawH = imgHeight * tattoo.scale;
-
-            gc.save();
-            gc.translate(px, py);
-            gc.rotate(tattoo.rotation);
-            gc.setGlobalAlpha(tattoo.alpha);
-            gc.setGlobalBlendMode(BlendMode.SRC_OVER);
-            gc.drawImage(tattoo.image, -drawW / 2.0, -drawH / 2.0, drawW, drawH);
-            gc.restore();
-        }
-
-        skinCanvas.snapshot(null, paintedTexture);
-
-        for (PhongMaterial pm : tattooMaterials) {
-            pm.setDiffuseMap(paintedTexture);
         }
     }
 
@@ -961,95 +1037,37 @@ public class WorkspaceController {
     }
 
     private void updateTattooControlsState() {
-        boolean enabled = modelHasUVs && skinCanvas != null;
+        boolean placementEnabled = tattooWorkspace.isPlacementAvailable();
+        boolean hasSelection = tattooWorkspace.selected().isPresent();
+        boolean hasHistory = !tattooHistory.isEmpty();
+        boolean slidersEnabled = placementEnabled && hasSelection;
         if (loadTattooButton != null) {
-            loadTattooButton.setDisable(!enabled);
+            loadTattooButton.setDisable(!modelHasUVs);
         }
         if (tattooSizeSlider != null) {
-            tattooSizeSlider.setDisable(!enabled);
+            tattooSizeSlider.setDisable(!slidersEnabled);
         }
         if (tattooOpacitySlider != null) {
-            tattooOpacitySlider.setDisable(!enabled);
+            tattooOpacitySlider.setDisable(!slidersEnabled);
         }
         if (tattooRotationSlider != null) {
-            tattooRotationSlider.setDisable(!enabled);
+            tattooRotationSlider.setDisable(!slidersEnabled);
         }
-    }
-
-    private void handleTattooPress(MouseEvent event) {
-        if (!modelHasUVs || skinCanvas == null) {
-            return;
+        if (tattooHistoryScroll != null) {
+            tattooHistoryScroll.setDisable(!hasHistory);
         }
-        if (event.getButton() == MouseButton.SECONDARY) {
-            tattoos.clear();
-            selectedTattoo = null;
-            repaintTattooTexture();
-            return;
+        if (applyHistoryButton != null) {
+            boolean canApply = placementEnabled && selectedHistoryPreset() != null;
+            applyHistoryButton.setDisable(!canApply);
         }
-        if (event.getButton() != MouseButton.PRIMARY) {
-            return;
+        if (deleteTattooButton != null) {
+            deleteTattooButton.setDisable(!hasSelection);
         }
-        if (selectedTattoo == null && pendingTattooImage == null) {
-            return;
-        }
-        PickResult result = event.getPickResult();
-        if (result == null || !(result.getIntersectedNode() instanceof MeshView)) {
-            return;
-        }
-        Point2D uv = result.getIntersectedTexCoord();
-        if (uv == null) {
-            return;
-        }
-
-        double u = clamp(uv.getX(), 0.0, 1.0);
-        double v = clamp(uv.getY(), 0.0, 1.0);
-        double size = tattooSizeSlider != null ? tattooSizeSlider.getValue() : 0.2;
-        double opacity = tattooOpacitySlider != null ? tattooOpacitySlider.getValue() : 1.0;
-        double rotation = tattooRotationSlider != null ? tattooRotationSlider.getValue() : 0.0;
-
-        if (selectedTattoo == null) {
-            selectedTattoo = new Tattoo(u, v, pendingTattooImage, size, rotation, opacity);
-            tattoos.clear();
-            tattoos.add(selectedTattoo);
-            pendingTattooImage = null;
-        } else {
-            selectedTattoo.u = u;
-            selectedTattoo.v = v;
-            if (pendingTattooImage != null) {
-                selectedTattoo.image = pendingTattooImage;
-                selectedTattoo.scale = size;
-                selectedTattoo.rotation = rotation;
-                selectedTattoo.alpha = opacity;
-                pendingTattooImage = null;
-            }
-        }
-
-        tattoos.clear();
-        tattoos.add(selectedTattoo);
-        repaintTattooTexture();
-        event.consume();
-    }
-
-    private void handleTattooDrag(MouseEvent event) {
-        if (selectedTattoo == null || !modelHasUVs || skinCanvas == null || !event.isPrimaryButtonDown()) {
-            return;
-        }
-        PickResult result = event.getPickResult();
-        if (result == null || !(result.getIntersectedNode() instanceof MeshView)) {
-            return;
-        }
-        Point2D uv = result.getIntersectedTexCoord();
-        if (uv == null) {
-            return;
-        }
-        selectedTattoo.u = clamp(uv.getX(), 0.0, 1.0);
-        selectedTattoo.v = clamp(uv.getY(), 0.0, 1.0);
-        repaintTattooTexture();
-        event.consume();
     }
 
     private void updateCurrentBounds() {
         currentBounds = overallScaleGroup.getBoundsInParent();
+        cameraRig.setBounds(currentBounds);
     }
 
     private ObjLoader.LoadedModel createPlaceholderModel() {
@@ -1070,7 +1088,7 @@ public class WorkspaceController {
         Cylinder torso = new Cylinder(160, 500);
         torso.setMaterial(neutral);
         torso.setTranslateY(-220);
-        parts.add(new ObjLoader.ModelPart("Torso", torso));
+        parts.add(new ObjLoader.ModelPart(TORSO, torso));
 
         Cylinder pelvis = new Cylinder(150, 160);
         pelvis.setMaterial(neutral);
@@ -1141,31 +1159,31 @@ public class WorkspaceController {
                 }
             }
         }
-        return Objects.requireNonNull(partGroups.get("Torso"));
+        return Objects.requireNonNull(partGroups.get(TORSO));
     }
 
-    private Point3D clampTarget(Point3D candidate, Bounds bounds) {
-        double centerX = (bounds.getMinX() + bounds.getMaxX()) * 0.5;
-        double centerZ = (bounds.getMinZ() + bounds.getMaxZ()) * 0.5;
-        double widthHalf = bounds.getWidth() * 0.5;
-        double depthHalf = bounds.getDepth() * 0.5;
-        double minY = bounds.getMinY() + bounds.getHeight() * 0.2;
-        double maxY = bounds.getMinY() + bounds.getHeight() * 0.9;
-
-        double clampedX = clamp(candidate.getX(), centerX - widthHalf, centerX + widthHalf);
-        double clampedZ = clamp(candidate.getZ(), centerZ - depthHalf, centerZ + depthHalf);
-        double clampedY = clamp(candidate.getY(), minY, maxY);
-
-        return new Point3D(clampedX, clampedY, clampedZ);
+    private BufferedImage convertToBufferedImage(WritableImage image) {
+        int width = (int) Math.max(1, Math.round(image.getWidth()));
+        int height = (int) Math.max(1, Math.round(image.getHeight()));
+        BufferedImage buffered = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        PixelReader reader = image.getPixelReader();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                buffered.setRGB(x, y, reader.getArgb(x, y));
+            }
+        }
+        return buffered;
     }
 
     private double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
+        return Math.clamp(value, min, max);
     }
 
-    private double normalizeAngle(double angle) {
-        double mod = angle % 360.0;
-        return mod < 0 ? mod + 360.0 : mod;
+    private record TattooPreset(String label, Image image) {
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     private void showError(String message, Exception ex) {
@@ -1181,5 +1199,4 @@ public class WorkspaceController {
         alert.setContentText("This model has no UVs; tattoo placement requires UVs.");
         alert.show();
     }
-
 }
