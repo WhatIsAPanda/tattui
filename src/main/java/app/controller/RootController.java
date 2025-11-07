@@ -21,8 +21,6 @@ public class RootController {
 
     private WorkspaceController workspaceController;
     private final Map<String, Parent> pageCache = new HashMap<>();
-
-    private static RootController instance;
     private static final String WORKSPACE_PAGE = "workspace";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
@@ -38,7 +36,6 @@ public class RootController {
 
     @FXML
     public void initialize() {
-        instance = this;
         loadTaskbar();
         showPage(WORKSPACE_PAGE);
 
@@ -55,10 +52,7 @@ public class RootController {
 
     // --- Singleton Accessor ---
 
-    /** Provides global access to the active RootController instance. */
-    public static RootController getInstance() {
-        return instance;
-    }
+    // no global singleton accessor anymore
 
     // --- Navigation ---
 

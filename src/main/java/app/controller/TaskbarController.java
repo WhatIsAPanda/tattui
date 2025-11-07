@@ -19,15 +19,19 @@ public class TaskbarController {
 
     @FXML
     private void handleClick(ActionEvent e) {
-        if (onPageRequest == null) return;
         Object src = e.getSource();
         if (!(src instanceof Button b)) return;
 
+        if (onPageRequest == null) {
+            LOG.warning("Page request handler not set; button ignored");
+            return;
+        }
+
         switch (b.getId()) {
-            case "workspaceButton" -> RootController.getInstance().showPage("workspace");
-            case "galleryButton" -> RootController.getInstance().showPage("gallery");
-            case "mapButton" -> RootController.getInstance().showPage("map");
-            case "loginButton" -> RootController.getInstance().showPage("login");
+            case "workspaceButton" -> onPageRequest.accept("workspace");
+            case "galleryButton" -> onPageRequest.accept("gallery");
+            case "mapButton" -> onPageRequest.accept("map");
+            case "loginButton" -> onPageRequest.accept("login");
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
     }
