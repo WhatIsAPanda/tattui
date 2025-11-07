@@ -30,7 +30,9 @@ public class RootController {
         "login", "/app/Login.fxml"
     );
 
-    public RootController() {}
+    public RootController() {
+        // Default constructor required for JavaFX FXML loader.
+    }
 
     // --- Initialization ---
 
