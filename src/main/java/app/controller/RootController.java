@@ -32,14 +32,13 @@ public class RootController {
         "login", "/app/Login.fxml"
     );
 
-    public RootController() {
-        instance = this;
-    }
+    public RootController() {}
 
     // --- Initialization ---
 
     @FXML
     public void initialize() {
+        instance = this;
         loadTaskbar();
         showPage(WORKSPACE_PAGE);
 
