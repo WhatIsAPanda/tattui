@@ -3,37 +3,28 @@ package app.controller;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import java.util.function.Consumer;
 
 public class TaskbarController {
 
-    public interface PageNavigator {
-        void showWorkspace();
-        void showMap();
-        void showGallery();
-        // void showProfile();
+    private Consumer<String> onPageRequest;
+
+    public void setOnPageRequest(Consumer<String> handler) {
+        this.onPageRequest = handler;
     }
 
-    private PageNavigator navigator;
+    @FXML
+    private void handleClick(ActionEvent e) {
+        if (onPageRequest == null) return;
+        Object src = e.getSource();
+        if (!(src instanceof Button b)) return;
 
-    public void setNavigator(PageNavigator navigator) {
-        this.navigator = navigator;
-    }
-
-   @FXML
-    private void handleClick(ActionEvent event) {
-        if (navigator == null) return;
-        Object src = event.getSource();
-        if (!(src instanceof Button button)) return;
-
-        switch (button.getId()) {
-            case "workspaceButton" -> navigator.showWorkspace();
-            case "galleryButton" -> navigator.showGallery();
-            case "exploreButton" -> System.out.println("Explore clicked");
-            case "mapButton" -> navigator.showMap();
-            case "loginButton" -> System.out.println("Login clicked");
-            case "settingsButton" -> System.out.println("Settings clicked");
-            case "logoButton" -> System.out.println("Logo clicked");
-            default -> System.out.println("Unhandled button: " + button.getId());
+        switch (b.getId()) {
+            case "workspaceButton" -> RootController.getInstance().showPage("workspace");
+            case "galleryButton" -> RootController.getInstance().showPage("gallery");
+            case "mapButton" -> RootController.getInstance().showPage("map");
+            case "loginButton" -> RootController.getInstance().showPage("login");
+            default -> System.out.println("Unhandled button: " + b.getId());
         }
     }
 }

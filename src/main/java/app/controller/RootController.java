@@ -9,12 +9,10 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * Root controller that manages navigation between multiple FXML pages
- * (workspace, map, gallery, etc.) and centralizes loading logic.
- */
 public class RootController {
 
     @FXML private BorderPane rootPane;
@@ -22,114 +20,116 @@ public class RootController {
     @FXML private AnchorPane workspaceContainer;
 
     private WorkspaceController workspaceController;
-    private TaskbarController taskbarController;
-
-    // Cache of loaded views
     private final Map<String, Parent> pageCache = new HashMap<>();
 
-    // FXML path registry
+    private static RootController instance;
+
     private static final Map<String, String> PAGE_PATHS = Map.of(
         "workspace", "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
-        "gallery", "/app/Gallery.fxml"
+        "gallery", "/app/Gallery.fxml",
+        "login", "/app/Login.fxml"
     );
+
+    // --- Initialization ---
 
     @FXML
     public void initialize() {
+        instance = this;
         loadTaskbar();
-        showPage("workspace"); // Default page
+        showPage("workspace");
 
-        // Handle stage assignment once available
-        rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null && newScene.getWindow() instanceof Stage stage) {
+        rootPane.sceneProperty().addListener((obs, o, n) -> {
+            if (n != null && n.getWindow() instanceof Stage stage)
                 notifyWorkspaceStage(stage);
-            }
         });
 
         Platform.runLater(() -> {
-            if (rootPane.getScene() != null && rootPane.getScene().getWindow() instanceof Stage stage) {
-                notifyWorkspaceStage(stage);
-            }
+            Stage stage = (Stage) rootPane.getScene().getWindow();
+            if (stage != null) notifyWorkspaceStage(stage);
         });
     }
 
-    private void loadTaskbar() {
-        taskbarController = loadController("/app/taskbar.fxml", taskbarContainer, TaskbarController.class);
-        if (taskbarController != null) {
-            taskbarController.setNavigator(new TaskbarController.PageNavigator() {
-                @Override public void showWorkspace() { showPage("workspace"); }
-                @Override public void showMap() { showPage("map"); }
-                @Override public void showGallery() { showPage("gallery"); }
-            });
-        }
+    // --- Singleton Accessor ---
+
+    /** Provides global access to the active RootController instance. */
+    public static RootController getInstance() {
+        return instance;
     }
 
-    /**
-     * Unified page loader — handles caching, loading, and switching.
-     */
-    private void showPage(String key) {
+    // --- Navigation ---
+
+    /** Displays a page by key. Can be called from any controller. */
+    public void showPage(String key) {
         String path = PAGE_PATHS.get(key);
         if (path == null)
             throw new IllegalArgumentException("Unknown page key: " + key);
 
         Parent view = pageCache.computeIfAbsent(key, k -> loadView(path));
 
+        //Hide taskbar for pages on login
+        boolean showTaskbar = !"login".equals(key);
+        taskbarContainer.setVisible(showTaskbar);
+        taskbarContainer.setManaged(showTaskbar);
+
         attachContent(workspaceContainer, view);
-
-        if ("workspace".equals(key) && workspaceController != null) {
-            Stage stage = currentStage();
-            if (stage != null) workspaceController.attachStage(stage);
-        }
+        //weird workspace specific issue to be fixed
+        if ("workspace".equals(key) && workspaceController != null)
+            Optional.ofNullable(currentStage())
+                    .ifPresent(workspaceController::attachStage);
     }
 
-    /**
-     * Generic loader that attaches a view and returns its controller.
-     */
-    private <T> T loadController(String fxmlPath, Pane target, Class<T> controllerType) {
+    private Parent loadView(String path) {
         try {
-            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass().getResource(fxmlPath)));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
-            T controller = loader.getController();
-            attachContent(target, view);
-            return controllerType.isInstance(controller) ? controller : null;
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to load " + fxmlPath, e);
-        }
-    }
 
-    private Parent loadView(String fxmlPath) {
-        try {
-            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass().getResource(fxmlPath)));
-            Parent view = loader.load();
-            if ("/app/Workspace.fxml".equals(fxmlPath)) {
+            if ("/app/Workspace.fxml".equals(path))
                 workspaceController = loader.getController();
-            }
+
             return view;
         } catch (IOException e) {
-            throw new IllegalStateException("Unable to load " + fxmlPath, e);
+            throw new RuntimeException("Failed to load " + path, e);
         }
     }
 
-    private void notifyWorkspaceStage(Stage stage) {
-        if (workspaceController != null) {
-            workspaceController.attachStage(stage);
+    // --- Taskbar ---
+    private void loadTaskbar() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/taskbar.fxml"));
+            Parent view = loader.load();
+            TaskbarController controller = loader.getController();
+            attachContent(taskbarContainer, view);
+
+            // delegate navigation to showPage
+            controller.setOnPageRequest(this::showPage);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load taskbar", e);
         }
+    }
+
+    // --- Stage helpers ---
+
+    private void notifyWorkspaceStage(Stage s) {
+        if (workspaceController != null)
+            workspaceController.attachStage(s);
     }
 
     private Stage currentStage() {
-        if (rootPane.getScene() == null) return null;
+        if (rootPane.getScene() == null)
+            return null;
         return rootPane.getScene().getWindow() instanceof Stage s ? s : null;
     }
 
+    // --- Layout helpers ---
+
     private void attachContent(Pane parent, Node child) {
         parent.getChildren().setAll(child);
-        if (parent instanceof AnchorPane anchor) {
+        if (parent instanceof AnchorPane a) {
             AnchorPane.setTopAnchor(child, 0.0);
             AnchorPane.setRightAnchor(child, 0.0);
             AnchorPane.setBottomAnchor(child, 0.0);
             AnchorPane.setLeftAnchor(child, 0.0);
-        } else if (parent instanceof HBox) {
-            HBox.setHgrow(child, Priority.NEVER);
         }
     }
 }
