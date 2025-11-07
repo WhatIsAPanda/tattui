@@ -23,21 +23,25 @@ public class RootController {
     private final Map<String, Parent> pageCache = new HashMap<>();
 
     private static RootController instance;
+    private static final String WORKSPACE_PAGE = "workspace";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
-        "workspace", "/app/Workspace.fxml",
+        WORKSPACE_PAGE, "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
         "gallery", "/app/Gallery.fxml",
         "login", "/app/Login.fxml"
     );
 
+    public RootController() {
+        instance = this;
+    }
+
     // --- Initialization ---
 
     @FXML
     public void initialize() {
-        instance = this;
         loadTaskbar();
-        showPage("workspace");
+        showPage(WORKSPACE_PAGE);
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
             if (n != null && n.getWindow() instanceof Stage stage)
@@ -74,7 +78,7 @@ public class RootController {
 
         attachContent(workspaceContainer, view);
         //weird workspace specific issue to be fixed
-        if ("workspace".equals(key) && workspaceController != null)
+        if (WORKSPACE_PAGE.equals(key) && workspaceController != null)
             Optional.ofNullable(currentStage())
                     .ifPresent(workspaceController::attachStage);
     }
@@ -89,7 +93,7 @@ public class RootController {
 
             return view;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load " + path, e);
+            throw new ViewLoadException("Failed to load " + path, e);
         }
     }
 
@@ -104,7 +108,7 @@ public class RootController {
             // delegate navigation to showPage
             controller.setOnPageRequest(this::showPage);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load taskbar", e);
+            throw new ViewLoadException("Failed to load taskbar", e);
         }
     }
 
@@ -125,11 +129,17 @@ public class RootController {
 
     private void attachContent(Pane parent, Node child) {
         parent.getChildren().setAll(child);
-        if (parent instanceof AnchorPane a) {
+        if (parent instanceof AnchorPane _) {
             AnchorPane.setTopAnchor(child, 0.0);
             AnchorPane.setRightAnchor(child, 0.0);
             AnchorPane.setBottomAnchor(child, 0.0);
             AnchorPane.setLeftAnchor(child, 0.0);
+        }
+    }
+
+    public static class ViewLoadException extends RuntimeException {
+        public ViewLoadException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

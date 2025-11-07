@@ -84,6 +84,7 @@ import javax.imageio.ImageIO;
  * Application controller that encapsulates the workspace behaviour and state.
  */
 public final class WorkspaceController {
+    private static final String PNG_PATTERN = "*.png";
     private static final double TARGET_HEIGHT = 1700.0;
     private static final double MIN_DISTANCE = 300.0;
     private static final double MAX_DISTANCE = 6000.0;
@@ -416,8 +417,8 @@ public final class WorkspaceController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Tattoo Image");
         chooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.svg"),
-            new FileChooser.ExtensionFilter("PNG", "*.png"),
+            new FileChooser.ExtensionFilter("Image Files", PNG_PATTERN, "*.jpg", "*.jpeg", "*.svg"),
+            new FileChooser.ExtensionFilter("PNG", PNG_PATTERN),
             new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
             new FileChooser.ExtensionFilter("SVG", "*.svg")
         );
@@ -441,7 +442,7 @@ public final class WorkspaceController {
         Stage stage = resolveStage();
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Workspace Image");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image", "*.png"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image", PNG_PATTERN));
         chooser.setInitialFileName("workspace.png");
         File target = chooser.showSaveDialog(stage);
         if (target == null) {

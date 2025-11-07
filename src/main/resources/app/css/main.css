@@ -53,14 +53,9 @@
   -fx-background-color: rgba(15, 23, 42, 0.8);
 }
 
-/* .titled-pane, 
-.titled-pane > .content, 
-.vbox, 
-.hbox, 
-.accordion, 
-.scroll-pane {
-  -fx-background-color: transparent;
-} */
-.root, .vbox, .titled-pane, .titled-pane > .content {
+.root,
+.vbox,
+.titled-pane,
+.titled-pane > .content {
   -fx-background-color: #1a1a1a;
 }
