@@ -28,7 +28,7 @@ public class RootController {
         WORKSPACE_PAGE, "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
         "gallery", "/app/Gallery.fxml",
-        "login", "/app/Login.fxml"
+        "login", "/app/LoginpagePretty.fxml"
     );
 
     public RootController() {

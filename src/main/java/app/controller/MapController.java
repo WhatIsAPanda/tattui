@@ -12,7 +12,7 @@ import javafx.scene.web.WebView;
 /**
  * Placeholder controller for the Map view. Provides no-op handlers so the view can be displayed.
  */
-public class MapController implements PageAware{
+public class MapController implements PageAware {
 
     @FXML
     private TextField searchField;
@@ -46,7 +46,7 @@ public class MapController implements PageAware{
 
     @FXML
     private void filterBlackwork(ActionEvent event) {
-        onPageRequest.accept("workspace");
+        // TODO
     }
 
     
