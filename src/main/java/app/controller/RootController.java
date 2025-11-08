@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class RootController {
 
@@ -34,11 +35,15 @@ public class RootController {
         // Default constructor required for JavaFX FXML loader.
     }
 
+    public interface PageAware {
+        void setOnPageRequest(Consumer<String> pageRequestHandler);
+    }
+
     // --- Initialization ---
 
     @FXML
     public void initialize() {
-        loadTaskbar();
+        loadView("/app/taskbar.fxml");
         showPage(WORKSPACE_PAGE);
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
@@ -82,28 +87,18 @@ public class RootController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
+            
+            Object cntrl = loader.getController();
+            if (cntrl instanceof PageAware aware)
+                aware.setOnPageRequest(this::showPage);
 
             if ("/app/Workspace.fxml".equals(path))
                 workspaceController = loader.getController();
-
+            if ("/app/taskbar.fxml".equals(path))
+                attachContent(taskbarContainer, view);
             return view;
         } catch (IOException e) {
             throw new ViewLoadException("Failed to load " + path, e);
-        }
-    }
-
-    // --- Taskbar ---
-    private void loadTaskbar() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/taskbar.fxml"));
-            Parent view = loader.load();
-            TaskbarController controller = loader.getController();
-            attachContent(taskbarContainer, view);
-
-            // delegate navigation to showPage
-            controller.setOnPageRequest(this::showPage);
-        } catch (IOException e) {
-            throw new ViewLoadException("Failed to load taskbar", e);
         }
     }
 

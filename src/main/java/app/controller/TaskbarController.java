@@ -7,10 +7,13 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TaskbarController {
+import app.controller.RootController.PageAware;
+
+public class TaskbarController implements PageAware{
 
     private static final Logger LOG = Logger.getLogger(TaskbarController.class.getName());
 
+    //THis shit handles navigation
     private Consumer<String> onPageRequest;
 
     public void setOnPageRequest(Consumer<String> handler) {

@@ -1,5 +1,8 @@
 package app.controller;
 
+import java.util.function.Consumer;
+
+import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
@@ -9,7 +12,7 @@ import javafx.scene.web.WebView;
 /**
  * Placeholder controller for the Map view. Provides no-op handlers so the view can be displayed.
  */
-public class MapController {
+public class MapController implements PageAware{
 
     @FXML
     private TextField searchField;
@@ -25,6 +28,12 @@ public class MapController {
         // TODO: implement search logic
     }
 
+    private Consumer<String> onPageRequest;
+
+    public void setOnPageRequest(Consumer<String> handler) {
+        this.onPageRequest = handler;
+    }
+    
     @FXML
     private void handleClear(ActionEvent event) {
         if (searchField != null) {
@@ -37,8 +46,11 @@ public class MapController {
 
     @FXML
     private void filterBlackwork(ActionEvent event) {
-        // TODO: implement filters
+        onPageRequest.accept("workspace");
+        System.err.println("mah balls itch");
     }
+
+    
 
     @FXML
     private void filterScript(ActionEvent event) {
