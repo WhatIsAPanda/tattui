@@ -47,7 +47,6 @@ public class MapController implements PageAware{
     @FXML
     private void filterBlackwork(ActionEvent event) {
         onPageRequest.accept("workspace");
-        System.err.println("mah balls itch");
     }
 
     
