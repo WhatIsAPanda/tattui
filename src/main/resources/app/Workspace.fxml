@@ -15,7 +15,7 @@
             prefWidth="960.0"
             xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="app.controller.WorkspaceController">
+            fx:controller="app.boundary.WorkspaceBoundary">
 
     <top>
         <HBox fx:id="toolbarBox"

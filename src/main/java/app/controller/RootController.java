@@ -43,6 +43,7 @@ public class RootController {
     public interface WorkspaceAware {
         void setWorkspaceProvider(Supplier<WorkspaceController> provider);
     }
+    
 
     // --- Initialization ---
 
@@ -93,6 +94,7 @@ public class RootController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
             
+
             Object cntrl = loader.getController();
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);

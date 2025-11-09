@@ -23,7 +23,7 @@ public final class ModelWorkspaceApp extends Application {
 
         Scene scene = new Scene(root, 1280, 800, true);
         scene.getStylesheets().add(
-            Objects.requireNonNull(ModelWorkspaceApp.class.getResource("/app/WS_MAIN.css")).toExternalForm()
+            Objects.requireNonNull(ModelWorkspaceApp.class.getResource("/app/css/WS_MAIN.css")).toExternalForm()
         );
 
         stage.setTitle("3D Model Workspace");
