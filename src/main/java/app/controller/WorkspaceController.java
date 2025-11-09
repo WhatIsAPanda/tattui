@@ -18,6 +18,8 @@ import javafx.scene.AmbientLight;
 import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SceneAntialiasing;
@@ -42,7 +44,10 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -295,6 +300,8 @@ public final class WorkspaceController {
         tattooHistoryScroll.setPrefViewportHeight(120);
         tattooHistoryScroll.setMaxHeight(150);
         tattooHistoryScroll.setFocusTraversable(false);
+        tattooHistoryScroll.getStyleClass().add("tattoo-scroll");
+
 
         applyHistoryButton = new Button("Use Selected");
         applyHistoryButton.setOnAction(e -> applySelectedHistoryTattoo());
@@ -319,6 +326,9 @@ public final class WorkspaceController {
         Label historyLabel = new Label("Recent Tattoos");
         VBox historyBox = new VBox(4, historyLabel, tattooHistoryScroll, applyHistoryButton);
         historyBox.setFillWidth(true);
+        
+
+
 
         VBox tattooControls = new VBox(6,
             loadTattooButton,

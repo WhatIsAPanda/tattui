@@ -26,6 +26,7 @@
   -fx-text-fill: #000000;
 }
 
+
 .combo-box,
 .text-field {
   -fx-background-color: #4b4b4b;
@@ -51,6 +52,14 @@
 
 .split-pane-divider {
   -fx-background-color: rgba(15, 23, 42, 0.8);
+}
+
+.tattoo-history-thumb{
+  -fx-background-color: #f2f2f2;
+}
+
+.tattoo-history-thumb:hover {
+    -fx-background-color: #e0e0e0;
 }
 
 .root,
