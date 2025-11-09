@@ -1,6 +1,7 @@
 package app.boundary;
 
 import app.controller.LoginController;
+import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -10,7 +11,7 @@ import javafx.scene.control.TextField;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 
-public class LoginBoundary {
+public class LoginBoundary implements PageAware{
     @FXML
     private TextField usernameField;
     @FXML

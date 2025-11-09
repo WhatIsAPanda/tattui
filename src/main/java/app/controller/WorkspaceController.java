@@ -326,10 +326,9 @@ public final class WorkspaceController {
         Label historyLabel = new Label("Recent Tattoos");
         VBox historyBox = new VBox(4, historyLabel, tattooHistoryScroll, applyHistoryButton);
         historyBox.setFillWidth(true);
+        historyBox.setFocusTraversable(false);
+        historyBox.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         
-
-
-
         VBox tattooControls = new VBox(6,
             loadTattooButton,
             historyBox,
@@ -445,6 +444,23 @@ public final class WorkspaceController {
         updateTattooControlsState();
     }
 
+    public boolean openTattooFromGallery(Image image, String label) {
+        if (image == null) {
+            return false;
+        }
+        if (!modelHasUVs) {
+            showNoUVMessage();
+            return false;
+        }
+        if (!tattooWorkspace.isPlacementAvailable()) {
+            return false;
+        }
+        rememberTattoo(label, image);
+        tattooWorkspace.preparePendingTattoo(image);
+        updateTattooControlsState();
+        return true;
+    }
+
     private void handleExportModel() {
         if (viewerPane == null) {
             return;
@@ -487,11 +503,16 @@ public final class WorkspaceController {
     }
 
     private void rememberTattoo(File source, Image image) {
+        String label = source != null ? source.getName() : null;
+        rememberTattoo(label, image);
+    }
+
+    private void rememberTattoo(String label, Image image) {
         if (image == null) {
             return;
         }
-        String label = source != null ? source.getName() : "Tattoo " + (tattooHistory.size() + 1);
-        TattooPreset preset = new TattooPreset(label, image);
+        String presetLabel = (label != null && !label.isBlank()) ? label : "Tattoo " + (tattooHistory.size() + 1);
+        TattooPreset preset = new TattooPreset(presetLabel, image);
         tattooHistory.removeIf(existing -> existing.image() == image);
         tattooHistory.add(0, preset);
         while (tattooHistory.size() > MAX_TATTOO_HISTORY) {

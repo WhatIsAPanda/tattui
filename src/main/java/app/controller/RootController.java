@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class RootController {
 
@@ -37,6 +38,10 @@ public class RootController {
 
     public interface PageAware {
         void setOnPageRequest(Consumer<String> pageRequestHandler);
+    }
+
+    public interface WorkspaceAware {
+        void setWorkspaceProvider(Supplier<WorkspaceController> provider);
     }
 
     // --- Initialization ---
@@ -96,6 +101,8 @@ public class RootController {
                 workspaceController = loader.getController();
             if ("/app/taskbar.fxml".equals(path))
                 attachContent(taskbarContainer, view);
+            if (cntrl instanceof WorkspaceAware aware)
+                aware.setWorkspaceProvider(() -> workspaceController);
             return view;
         } catch (IOException e) {
             throw new ViewLoadException("Failed to load " + path, e);
