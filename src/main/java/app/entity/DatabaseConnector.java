@@ -35,6 +35,29 @@ public class DatabaseConnector {
             return profileList.getFirst();
         }
     }
+    public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+                "SELECT * FROM Users as U \n" +
+                    "LEFT JOIN PostOwnerships as PO ON PO.user_id = U.id\n" +
+                    "LEFT JOIN Posts as P ON PO.post_id = P.id\n" +
+                        "WHERE U.latitude >= ? AND U.latitude <= ? AND U.longitude >= ? AND U.longitude <= ?");
+        profileQueryStatement.setDouble(1, latitudeFrom);
+        profileQueryStatement.setDouble(2, latitudeTo);
+        profileQueryStatement.setDouble(3, longitudeFrom);
+        profileQueryStatement.setDouble(4, longitudeTo);
+        ResultSet rs = profileQueryStatement.executeQuery();
+        List<Profile> profileList = convertToProfileList(rs);
+        if(profileList.isEmpty()){
+            return Collections.emptyList();
+        }
+        else {
+            return profileList;
+        }
+    }
+
+    public static List<Profile> getProfilesLike() {
+        return Collections.emptyList();
+    }
     private static List<Profile> convertToProfileList(ResultSet rs) throws SQLException {
         if(rs.isAfterLast()) {
             return Collections.emptyList();
@@ -70,13 +93,7 @@ public class DatabaseConnector {
         return profiles;
     }
 
-    public static List<Profile> getProfilesWithinBounds() {
-        return Collections.emptyList();
-    }
 
-    public static List<Profile> getProfilesLike() {
-        return Collections.emptyList();
-    }
 
 
 
