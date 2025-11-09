@@ -1,7 +1,6 @@
 package app.boundary;
 
 import app.controller.LoginController;
-import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -9,9 +8,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
 import java.sql.SQLException;
-import java.util.function.Consumer;
 
-public class LoginBoundary implements PageAware{
+public class LoginBoundary {
     @FXML
     private TextField usernameField;
     @FXML
@@ -21,12 +19,6 @@ public class LoginBoundary implements PageAware{
     @FXML
     private Button registerButton;
 
-    private Consumer<String> onPageRequest;
-
-    public void setOnPageRequest(Consumer<String> handler) {
-        this.onPageRequest = handler;
-    }
-
     @FXML
     public void loginButtonClicked() throws SQLException {
         String username = usernameField.getText();
@@ -34,7 +26,6 @@ public class LoginBoundary implements PageAware{
         boolean success = LoginController.verifyUser(username, password);
         if (success) {
             System.out.println("success!");
-            onPageRequest.accept("workspace");
         } else {
             System.out.println("fail!");
         }

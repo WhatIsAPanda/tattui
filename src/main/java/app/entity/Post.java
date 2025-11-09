@@ -3,10 +3,10 @@ package app.entity;
 import javafx.scene.image.Image;
 
 public class Post {
-    private int id;
-    private String caption;
-    private String url;
-    private Image image;
+    public int id;
+    public String caption;
+    public String url;
+    public Image image;
 
     public Post(int id, String caption, String url) {
         image = new Image(url);
@@ -14,4 +14,6 @@ public class Post {
         this.url = url;
         this.id = id;
     }
+
+
 }

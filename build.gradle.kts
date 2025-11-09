@@ -28,8 +28,7 @@ javafx {
 
 dependencies {
     implementation("de.javagl:obj:0.4.0")
-    // implementation("mysql:mysql-connector-j:8.1.0")
-}
+    implementation("mysql:mysql-connector-java:8.0.33")}
 
 application {
     applicationDefaultJvmArgs = listOf("--enable-native-access=javafx.graphics")
