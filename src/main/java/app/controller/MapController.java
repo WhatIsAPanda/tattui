@@ -7,13 +7,17 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import javafx.fxml.FXML;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
 /**
  * Placeholder controller for the Map view. Provides no-op handlers so the view can be displayed.
  */
 public class MapController implements PageAware {
-
+    
     @FXML
     private TextField searchField;
 
@@ -22,6 +26,13 @@ public class MapController implements PageAware {
 
     @FXML
     private WebView mapView;
+
+    @FXML
+    public void initialize() {
+        WebEngine webEngine = mapView.getEngine();
+        String url = getClass().getResource("/app/html/map.html").toExternalForm();
+        webEngine.load(url);
+    }
 
     @FXML
     private void handleSearch(ActionEvent event) {
