@@ -14,6 +14,7 @@ public class LoginController {
         }
         if(profile.password.equals(password)) {
             LoggedInUser.setInstance(profile);
+            System.out.println(LoggedInUser.getInstance().username);
             return true;
         }
         return false;

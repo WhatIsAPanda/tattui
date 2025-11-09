@@ -1,10 +1,14 @@
 package app.controller;
 
+import app.boundary.ViewMyProfileBoundary;
+import app.entity.LoggedInUser;
+import app.entity.Profile;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -12,7 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class RootController {
@@ -29,7 +33,8 @@ public class RootController {
         WORKSPACE_PAGE, "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
         "gallery", "/app/Gallery.fxml",
-        "login", "/app/Login.fxml"
+        "login", "/app/Login.fxml",
+            "myProfile","/app/viewMyProfile.fxml"
     );
 
     public RootController() {
@@ -37,7 +42,7 @@ public class RootController {
     }
 
     public interface PageAware {
-        void setOnPageRequest(Consumer<String> pageRequestHandler);
+        void setOnPageRequest(BiConsumer<String, Optional<Profile>> pageRequestHandler);
     }
 
     public interface WorkspaceAware {
@@ -49,7 +54,7 @@ public class RootController {
 
     @FXML
     public void initialize() {
-        loadView("/app/taskbar.fxml");
+        loadView("/app/taskbar.fxml", Optional.empty());
         showPage(WORKSPACE_PAGE);
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
@@ -69,13 +74,22 @@ public class RootController {
 
     // --- Navigation ---
 
-    /** Displays a page by key. Can be called from any controller. */
     public void showPage(String key) {
+        showPage(key, Optional.empty());
+    }
+    /** Displays a page by key. Can be called from any controller. */
+    public void showPage(String key, Optional<Profile> profile) {
         String path = PAGE_PATHS.get(key);
         if (path == null)
             throw new IllegalArgumentException("Unknown page key: " + key);
-
-        Parent view = pageCache.computeIfAbsent(key, k -> loadView(path));
+        System.out.println("showpage ran: " + key);
+        Parent view;
+        if(key.equals(WORKSPACE_PAGE)) {
+            view = pageCache.computeIfAbsent(key, k -> loadView(path, profile));
+        }
+        else {
+            view = loadView(path, profile);
+        }
 
         //Hide taskbar for pages on login
         boolean showTaskbar = !"login".equals(key);
@@ -89,15 +103,20 @@ public class RootController {
                     .ifPresent(workspaceController::attachStage);
     }
 
-    private Parent loadView(String path) {
+    private Parent loadView(String path, Optional<Profile> profile) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
-            
+
 
             Object cntrl = loader.getController();
+            System.out.println(cntrl.getClass());
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
+            if(cntrl instanceof ViewMyProfileBoundary boundary && profile.isPresent()) {
+                System.out.println("reached set profile");
+                boundary.setProfile(profile.get());
+            }
 
             if ("/app/Workspace.fxml".equals(path))
                 workspaceController = loader.getController();

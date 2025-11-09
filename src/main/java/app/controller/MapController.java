@@ -1,8 +1,11 @@
 package app.controller;
 
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import app.controller.RootController.PageAware;
+import app.entity.Profile;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
@@ -39,9 +42,9 @@ public class MapController implements PageAware {
         // TODO: implement search logic
     }
 
-    private Consumer<String> onPageRequest;
+    private BiConsumer<String, Optional<Profile>> onPageRequest;
 
-    public void setOnPageRequest(Consumer<String> handler) {
+    public void setOnPageRequest(BiConsumer<String,Optional<Profile>> handler) {
         this.onPageRequest = handler;
     }
     
@@ -57,7 +60,7 @@ public class MapController implements PageAware {
 
     @FXML
     private void filterBlackwork(ActionEvent event) {
-        // TODO
+
     }
 
     

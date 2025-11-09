@@ -44,11 +44,8 @@ public class ViewMyProfileBoundary {
     }
     @FXML
     public void loadProfile() {
-        System.out.println("artistNameField1 = " + artistNameField1);
-        System.out.println("profilePicture = " + profilePicture);
-        System.out.println("postsPanel = " + postsPanel);
         System.out.println(profile.username);
-        System.out.println(profile.password);
+        System.out.println(profile.profile_picture_url);
         artistNameField1.setText("@" + profile.username);
         artistNameField2.setText("@" + profile.username);
         Image profile_picture = profile.profile_picture_image;

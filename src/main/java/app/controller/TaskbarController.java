@@ -1,9 +1,13 @@
 package app.controller;
 
+import app.entity.LoggedInUser;
+import app.entity.Profile;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import java.util.function.Consumer;
+
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,9 +18,9 @@ public class TaskbarController implements PageAware{
     private static final Logger LOG = Logger.getLogger(TaskbarController.class.getName());
 
     //THis shit handles navigation
-    private Consumer<String> onPageRequest;
+    private BiConsumer<String, Optional<Profile>> onPageRequest;
 
-    public void setOnPageRequest(Consumer<String> handler) {
+    public void setOnPageRequest(BiConsumer<String, Optional<Profile>> handler) {
         this.onPageRequest = handler;
     }
 
@@ -31,10 +35,14 @@ public class TaskbarController implements PageAware{
         }
 
         switch (b.getId()) {
-            case "workspaceButton" -> onPageRequest.accept("workspace");
-            case "galleryButton" -> onPageRequest.accept("gallery");
-            case "mapButton" -> onPageRequest.accept("map");
-            case "loginButton" -> onPageRequest.accept("login");
+            case "workspaceButton" -> onPageRequest.accept("workspace", Optional.empty());
+            case "galleryButton" -> onPageRequest.accept("gallery", Optional.empty());
+            case "mapButton" -> onPageRequest.accept("map", Optional.empty());
+            case "loginButton" -> onPageRequest.accept("login", Optional.empty());
+            case "logoButton" -> {
+                onPageRequest.accept("myProfile", Optional.of(LoggedInUser.getInstance()));
+                System.out.println("button got clicked, accept ran");
+            }
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
     }

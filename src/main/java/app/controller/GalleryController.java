@@ -1,5 +1,6 @@
 package app.controller;
 
+import app.entity.Profile;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -22,6 +23,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -44,7 +47,7 @@ public final class GalleryController implements RootController.PageAware, RootCo
     @FXML private Button uploadButton;
 
     private final List<GalleryItem> galleryItems = new ArrayList<>();
-    private Consumer<String> onPageRequest;
+    private BiConsumer<String, Optional<Profile>> onPageRequest;
     private Supplier<WorkspaceController> workspaceProvider;
 
     @FXML
@@ -77,7 +80,7 @@ public final class GalleryController implements RootController.PageAware, RootCo
     }
 
     @Override
-    public void setOnPageRequest(Consumer<String> handler) {
+    public void setOnPageRequest(BiConsumer<String, Optional<Profile>> handler) {
         this.onPageRequest = handler;
     }
 
@@ -186,7 +189,7 @@ public final class GalleryController implements RootController.PageAware, RootCo
             return;
         }
         if (onPageRequest != null) {
-            onPageRequest.accept("workspace");
+            onPageRequest.accept("workspace", Optional.empty());
         }
     }
 
