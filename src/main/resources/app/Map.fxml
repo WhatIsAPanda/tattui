@@ -17,7 +17,7 @@
 
     <center>
         <StackPane>
-            <WebView fx:id="mapView" StackPane.alignment="CENTER"/>
+            <StackPane fx:id="mapContainer" StackPane.alignment="CENTER"/>
         </StackPane>
     </center>
 
