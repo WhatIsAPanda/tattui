@@ -28,7 +28,8 @@
             <children>
                 <Button fx:id="loadModelButton" text="Load Model"/>
                 <Button fx:id="resetViewButton" text="Reset View"/>
-                <Button fx:id="exportModelButton" text="Export Preview"/>
+                <Button fx:id="exportPreviewButton" text="Export Preview"/>
+                <Button fx:id="exportTattooedModelButton" text="Export Model"/>
                 <Label text="Lighting:"/>
                 <ComboBox fx:id="lightingCombo" prefWidth="150.0"/>
             </children>

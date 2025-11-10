@@ -188,6 +188,27 @@ public final class TattooWorkspace {
         paintMaterials(renderedTexture);
     }
 
+    public WritableImage renderedTexture() {
+        return renderedTexture;
+    }
+
+    public Image baseTexture() {
+        return baseTexture;
+    }
+
+    public List<Tattoo> exportableTattoos() {
+        return List.copyOf(tattoos);
+    }
+
+    public void replaceTattoos(List<Tattoo> replacements) {
+        tattoos.clear();
+        if (replacements != null && !replacements.isEmpty()) {
+            tattoos.addAll(replacements);
+        }
+        selectedIndex = -1;
+        repaint();
+    }
+
     private void paintMaterials(WritableImage texture) {
         for (PhongMaterial pm : materials) {
             pm.setDiffuseMap(texture);
