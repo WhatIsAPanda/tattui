@@ -29,7 +29,8 @@ public class RootController {
         WORKSPACE_PAGE, "/app/Workspace.fxml",
         "map", "/app/Map.fxml",
         "gallery", "/app/Gallery.fxml",
-        "login", "/app/Login.fxml"
+        "login", "/app/Login.fxml",
+            "explore", "/app/Explore.fxml"
     );
 
     public RootController() {
@@ -50,7 +51,13 @@ public class RootController {
     @FXML
     public void initialize() {
         loadView("/app/taskbar.fxml");
-        showPage(WORKSPACE_PAGE);
+
+// ✅ Preload AND cache the workspace view under the "workspace" key
+        Parent wsView = loadView("/app/Workspace.fxml");
+        pageCache.put(WORKSPACE_PAGE, wsView);
+
+// Start on Explore
+        showPage("explore");
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
             if (n != null && n.getWindow() instanceof Stage stage)

@@ -202,6 +202,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     @FXML
     private void initialize() {
+        System.out.println("[WS] initialize, instance=" + System.identityHashCode(this));
         setupToolbar();
         setupControlPanel();
         setupViewer();
@@ -448,6 +449,11 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     @Override
     public boolean openTattooFromGallery(Image image, String label) {
+        System.out.println("[WS] openTattooFromGallery on instance=" + System.identityHashCode(this));
+        System.out.println("[Workspace] openTattooFromGallery called. image=" + (image!=null) + ", label=" + label);
+        System.out.println("[Workspace] modelHasUVs=" + modelHasUVs + ", placementAvailable=" + tattooWorkspace.isPlacementAvailable());
+
+
         if (image == null) {
             return false;
         }
@@ -460,6 +466,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         rememberTattoo(label, image);
         tattooWorkspace.preparePendingTattoo(image);
+
+        System.out.println("[Workspace] staged image. historySize=" + tattooHistory.size());
+
         updateTattooControlsState();
         return true;
     }
