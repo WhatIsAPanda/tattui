@@ -35,6 +35,7 @@ public class TaskbarController implements PageAware{
             case "galleryButton" -> onPageRequest.accept("gallery");
             case "mapButton" -> onPageRequest.accept("map");
             case "loginButton" -> onPageRequest.accept("login");
+            case "logoButton" -> onPageRequest.accept("viewProfile");
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
     }
