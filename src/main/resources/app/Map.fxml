@@ -1,44 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.web.WebView?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.control.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="app.controller.MapController">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.MapController">
 
     <top>
-        <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding:8;">
-            <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS"/>
-            <Button text="Search" onAction="#handleSearch"/>
-            <Button text="Clear"  onAction="#handleClear"/>
+        <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="8" style="-fx-padding:8;">
+            <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS" />
+            <Button onAction="#handleSearch" text="Search" />
+            <Button onAction="#handleClear" text="Clear" />
         </HBox>
     </top>
 
     <center>
         <StackPane>
-            <StackPane fx:id="mapContainer" StackPane.alignment="CENTER"/>
+            <StackPane fx:id="mapContainer" StackPane.alignment="CENTER" />
         </StackPane>
     </center>
 
     <right>
         <VBox spacing="6" style="-fx-padding:8; -fx-min-width:260;">
-            <Label text="Results"/>
-            <ListView fx:id="resultsList" VBox.vgrow="ALWAYS"/>
+            <Label text="Results" />
+            <ListView fx:id="resultsList" VBox.vgrow="ALWAYS" />
         </VBox>
     </right>
 
     <bottom>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-padding:6;">
             <FlowPane hgap="8" vgap="8">
-                <Button text="#Blackwork"       onAction="#filterBlackwork"/>
-                <Button text="#Script"          onAction="#filterScript"/>
-                <Button text="#NeoTraditional"  onAction="#filterNeoTraditional"/>
-                <Button text="#Japanese"        onAction="#filterJapanese"/>
-                <Button text="#Minimalist"      onAction="#filterMinimalist"/>
-                <Button text="#Geometric"       onAction="#filterGeometric"/>
-                <Button text="#Watercolor"      onAction="#filterWatercolor"/>
-                <Button text="#Tribal"          onAction="#filterTribal"/>
+                <Button onAction="#filterBlackwork" text="#Blackwork" />
+                <Button onAction="#filterScript" text="#Script" />
+                <Button onAction="#filterNeoTraditional" text="#NeoTraditional" />
+                <Button onAction="#filterJapanese" text="#Japanese" />
+                <Button onAction="#filterMinimalist" text="#Minimalist" />
+                <Button onAction="#filterGeometric" text="#Geometric" />
+                <Button onAction="#filterWatercolor" text="#Watercolor" />
+                <Button onAction="#filterTribal" text="#Tribal" />
             </FlowPane>
         </ScrollPane>
     </bottom>
