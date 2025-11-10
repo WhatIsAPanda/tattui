@@ -21,44 +21,79 @@ public class DatabaseConnector {
 
     public static Profile getProfileByUsername(String queryUsername) throws SQLException {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
-                "SELECT * FROM PostOwnerships as PO " +
-                        "LEFT JOIN Users as U ON PO.user_id = U.id " +
-                        "LEFT JOIN Posts as P ON PO.post_id = P.id WHERE U.username = ?");
+                "SELECT * FROM Users as U \n" +
+                        "LEFT JOIN PostOwnerships as PO ON PO.user_id = U.id\n" +
+                        "LEFT JOIN Posts as P ON PO.post_id = P.id\n" +
+                        "WHERE U.username = ?;");
         profileQueryStatement.setString(1, queryUsername);
         ResultSet rs = profileQueryStatement.executeQuery();
-        if(!rs.next()) {
+        List<Profile> profileList = convertToProfileList(rs);
+        if(profileList.isEmpty()){
             return null;
         }
-        int user_id = rs.getInt("user_id");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        String profile_picture = rs.getString("profile_picture");
-        String biography = rs.getString("biography");
-        List<Post> posts = new ArrayList<>();
-        int post_id = rs.getInt("post_id");
-        String postURL = rs.getString("postURL");
-        String caption = rs.getString("caption");
-
-        Post newPost = new Post(post_id,caption,postURL);
-        posts.add(newPost);
-
-        while(rs.next()) {
-            post_id = rs.getInt("post_id");
-            postURL = rs.getString("postURL");
-            caption = rs.getString("caption");
-            newPost =  new Post(post_id,caption,postURL);
-            posts.add(newPost);
+        else {
+            return profileList.getFirst();
         }
-        return new Profile(user_id, username,password,profile_picture,posts,biography);
     }
-
-    public static List<Profile> getProfileWithinBounds() {
-        return Collections.emptyList();
+    public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+                "SELECT * FROM Users as U \n" +
+                        "LEFT JOIN PostOwnerships as PO ON PO.user_id = U.id\n" +
+                        "LEFT JOIN Posts as P ON PO.post_id = P.id\n" +
+                        "WHERE U.latitude >= ? AND U.latitude <= ? AND U.longitude >= ? AND U.longitude <= ?");
+        profileQueryStatement.setDouble(1, latitudeFrom);
+        profileQueryStatement.setDouble(2, latitudeTo);
+        profileQueryStatement.setDouble(3, longitudeFrom);
+        profileQueryStatement.setDouble(4, longitudeTo);
+        ResultSet rs = profileQueryStatement.executeQuery();
+        List<Profile> profileList = convertToProfileList(rs);
+        if(profileList.isEmpty()){
+            return Collections.emptyList();
+        }
+        else {
+            return profileList;
+        }
     }
 
     public static List<Profile> getProfilesLike() {
         return Collections.emptyList();
     }
+    private static List<Profile> convertToProfileList(ResultSet rs) throws SQLException {
+        if(rs.isAfterLast()) {
+            return Collections.emptyList();
+        }
+        List<Profile> profiles = new ArrayList<>();
+        rs.next();
+        while(!rs.isAfterLast()) {
+            int user_id = rs.getInt("user_id");
+            String username = rs.getString("username");
+            String password = rs.getString("password");
+            String profile_picture = rs.getString("profile_picture");
+            String biography = rs.getString("biography");
+            List<Post> posts = new ArrayList<>();
+            int post_id = rs.getInt("post_id");
+            if(post_id != 0) {
+                String postURL = rs.getString("postURL");
+                String caption = rs.getString("caption");
+                Post newPost = new Post(post_id,caption,postURL);
+                posts.add(newPost);
+            }
+            while(rs.next()) {
+                if(!(rs.getInt("user_id") == user_id)) {
+                    break;
+                }
+                post_id = rs.getInt("post_id");
+                String postURL = rs.getString("postURL");
+                String caption = rs.getString("caption");
+                Post newPost =  new Post(post_id,caption,postURL);
+                posts.add(newPost);
+            }
+            profiles.add(new Profile(user_id,username,password,profile_picture,posts,biography));
+        }
+        return profiles;
+    }
+
+
 
 
 
