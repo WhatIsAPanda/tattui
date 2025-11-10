@@ -1480,7 +1480,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         try {
             return Integer.parseInt(value.trim());
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException _) {
             return fallback;
         }
     }
@@ -1491,7 +1491,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         try {
             return Double.parseDouble(value.trim());
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException _) {
             return fallback;
         }
     }
