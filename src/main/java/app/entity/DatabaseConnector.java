@@ -20,7 +20,6 @@ public class DatabaseConnector {
             String dbUser = USER;
             String dbPassword = PASSWORD;
 
-
             if (dbUrl == null || dbUser == null || dbPassword == null) {
                 Properties props = new Properties();
                 try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
@@ -30,10 +29,10 @@ public class DatabaseConnector {
                     dbPassword = props.getProperty("password");
                 } catch (IOException e) {
                     e.printStackTrace();
+                    System.out.println(dbUser);
                 }
-            } else {
-                conn = DriverManager.getConnection(dbUrl,dbUser,dbPassword);
-            }
+            } 
+            conn = DriverManager.getConnection(dbUrl,dbUser,dbPassword);
         }
         catch (SQLException e) {
             e.printStackTrace();

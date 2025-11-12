@@ -80,21 +80,6 @@
                     <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
                 </Button>
 
-                <Button fx:id="exploreButton"
-                        accessibleText="Explore"
-                        mnemonicParsing="false"
-                        onAction="#handleClick"
-                        prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
-                    <graphic>
-                        <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@../icons/explore.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Explore" /></tooltip>
-                    <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
-                </Button>
-
                 <Button fx:id="mapButton"
                         accessibleText="Map"
                         mnemonicParsing="false"
