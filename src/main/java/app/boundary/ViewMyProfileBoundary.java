@@ -47,16 +47,16 @@ public class ViewMyProfileBoundary {
         System.out.println("artistNameField1 = " + artistNameField1);
         System.out.println("profilePicture = " + profilePicture);
         System.out.println("postsPanel = " + postsPanel);
-        System.out.println(profile.username);
-        System.out.println(profile.password);
-        artistNameField1.setText("@" + profile.username);
-        artistNameField2.setText("@" + profile.username);
-        Image profile_picture = profile.profile_picture_image;
+        System.out.println(profile.getUsername());
+        System.out.println(profile.getPassword());
+        artistNameField1.setText("@" + profile.getUsername());
+        artistNameField2.setText("@" + profile.getUsername());
+        Image profile_picture = profile.getProfile_picture_image();
         ImagePattern pfpImagePattern = new ImagePattern(profile_picture);
         profilePicture.setFill(pfpImagePattern);
-        biographyField.setText(profile.biography);
+        biographyField.setText(profile.getBiography());
 
-        List<Post> posts =  profile.posts;
+        List<Post> posts =  profile.getPosts();
         int imagesProcessed = 0;
         int row = -1;
         while(imagesProcessed < posts.size()) {

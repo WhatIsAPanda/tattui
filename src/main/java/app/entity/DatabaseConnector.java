@@ -1,18 +1,39 @@
 package app.entity;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 public class DatabaseConnector {
     private static Connection conn;
-    private static final String url = System.getenv("DATABASE_URL");
-    private static final String user = System.getenv("DATABASE_USER");
-    private static final String password = System.getenv("DATABASE_PASSWORD");
+    private static final String URL = System.getenv("DATABASE_URL");
+    private static final String USER = System.getenv("DATABASE_USER");
+    private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
     static{
         try{
-            conn = DriverManager.getConnection(url,user,password);
+            String dbUrl = URL;
+            String dbUser = USER;
+            String dbPassword = PASSWORD;
+
+
+            if (dbUrl == null || dbUser == null || dbPassword == null) {
+                Properties props = new Properties();
+                try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
+                    props.load(fis);
+                    dbUrl = props.getProperty("url");
+                    dbUser = props.getProperty("user");
+                    dbPassword = props.getProperty("password");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                conn = DriverManager.getConnection(dbUrl,dbUser,dbPassword);
+            }
         }
         catch (SQLException e) {
             e.printStackTrace();
@@ -88,7 +109,7 @@ public class DatabaseConnector {
                 Post newPost =  new Post(post_id,caption,postURL);
                 posts.add(newPost);
             }
-            profiles.add(new Profile(user_id,username,password,profile_picture,posts,biography));
+            profiles.add(new Profile(user_id,username,password,profile_picture,posts,biography, "FIller", 0.0, 0.0, "Balls"));
         }
         return profiles;
     }

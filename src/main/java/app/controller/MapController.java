@@ -1,6 +1,7 @@
 package app.controller;
 
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
@@ -8,7 +9,7 @@ import com.gluonhq.maps.MapView;
 import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
@@ -19,20 +20,22 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Pair;
+import java.util.LinkedList;
+import app.entity.Profile;
+import app.entity.ProfileCell;
 
-/**
- * Placeholder controller for the Map view. Provides no-op handlers so the view can be displayed.
- */
 public class MapController implements PageAware {
     
     @FXML
     private TextField searchField;
 
     @FXML
-    private ListView<String> resultsList;
+    private ListView<Profile> resultsList;
+
+    private LinkedList<Profile> allResults;
 
     @FXML
-    private StackPane mapContainer; // replace WebView in FXML with StackPane id="mapContainer"
+    private StackPane mapContainer; 
 
     @FXML
     public void initialize() {
@@ -42,6 +45,8 @@ public class MapController implements PageAware {
         map.setZoom(10);
         map.addLayer(new DotLayer(center));
         mapContainer.getChildren().add(map);
+
+        resultsList.setCellFactory(listView -> new ProfileCell());
     }
 
     // Inner layer class
@@ -59,12 +64,12 @@ public class MapController implements PageAware {
         }
     }
 
-
     @FXML
     private void handleSearch(ActionEvent event) {
         // TODO: implement search logic
+        
     }
-
+    
     private Consumer<String> onPageRequest;
 
     public void setOnPageRequest(Consumer<String> handler) {
@@ -82,44 +87,17 @@ public class MapController implements PageAware {
     }
 
     @FXML
-    private void filterBlackwork(ActionEvent event) {
-        // TODO
+    private void filter(ActionEvent event) {
+        Button clickedButton = (Button) event.getSource();
+        String filterTag = clickedButton.getText(); // e.g. "#Blackwork"
+        applyFilter(filterTag);
     }
 
-    
-
-    @FXML
-    private void filterScript(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterNeoTraditional(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterJapanese(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterMinimalist(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterGeometric(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterWatercolor(ActionEvent event) {
-        // TODO
-    }
-
-    @FXML
-    private void filterTribal(ActionEvent event) {
-        // TODO
+    private void applyFilter(String tag) {
+        resultsList.getItems().setAll(
+            allResults.stream()
+                .filter(item -> item.getTags().contains(tag))
+                .collect(Collectors.toList())
+        );
     }
 }

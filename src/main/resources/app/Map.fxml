@@ -51,14 +51,14 @@
     <bottom>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-padding:6;">
             <FlowPane hgap="8" vgap="8">
-                <Button onAction="#filterBlackwork" text="#Blackwork" />
-                <Button onAction="#filterScript" text="#Script" />
-                <Button onAction="#filterNeoTraditional" text="#NeoTraditional" />
-                <Button onAction="#filterJapanese" text="#Japanese" />
-                <Button onAction="#filterMinimalist" text="#Minimalist" />
-                <Button onAction="#filterGeometric" text="#Geometric" />
-                <Button onAction="#filterWatercolor" text="#Watercolor" />
-                <Button onAction="#filterTribal" text="#Tribal" />
+                <Button onAction="#filter" text="#Blackwork" />
+                <Button onAction="#filter" text="#Script" />
+                <Button onAction="#filter" text="#NeoTraditional" />
+                <Button onAction="#filter" text="#Japanese" />
+                <Button onAction="#filter" text="#Minimalist" />
+                <Button onAction="#filter" text="#Geometric" />
+                <Button onAction="#filter" text="#Watercolor" />
+                <Button onAction="#filter" text="#Tribal" />
             </FlowPane>
         </ScrollPane>
     </bottom>

@@ -12,7 +12,7 @@ public class LoginController {
         if(profile == null) {
             return false;
         }
-        if(profile.password.equals(password)) {
+        if(profile.getPassword().equals(password)) {
             LoggedInUser.setInstance(profile);
             return true;
         }

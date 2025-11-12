@@ -8,18 +8,19 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Profile {
-    public int id;
-    public String username;
-    public String password;
-    public List<Post> posts;
-    public String biography;
-    public String profile_picture_url;
-    public Image profile_picture_image;
-//    public String address;
-//    public double longtitude;
-//    public double latitude;
+    private int id;
+    private String username;
+    private String password;
+    private List<Post> posts;
+    private String biography;
+    private String profile_picture_url;
+    private Image profile_picture_image;
+    private String address;
+    private double longtitude;
+    private double latitude;
+    private String tags;
 
-    public Profile(int id, String username, String password, String profile_picture_url, List<Post> posts, String biography) {
+    public Profile(int id, String username, String password, String profile_picture_url, List<Post> posts, String biography, String address, double longtitude, double latitude, String tags) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -27,8 +28,53 @@ public class Profile {
         this.posts = posts;
         this.biography = biography;
         this.profile_picture_image = new Image(profile_picture_url);
-//        this.address = address;
-//        this.longtitude = longtitude;
-//        this.latitude = latitude;
+        this.address = address;
+        this.longtitude = longtitude;
+        this.latitude = latitude;
+        this.tags = tags;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public List<Post> getPosts() {
+        return posts;
+    }
+
+    public String getBiography() {
+        return biography;
+    }
+
+    public String getProfile_picture_url() {
+        return profile_picture_url;
+    }
+
+    public Image getProfile_picture_image() {
+        return profile_picture_image;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public double getLongtitude() {
+        return longtitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public String getTags() {
+        return tags;
     }
 }
