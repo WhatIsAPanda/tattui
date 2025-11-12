@@ -861,17 +861,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
         tattooDragOffsetV = 0.0;
     }
 
-    private void handleDeleteTattoo() {
+    private boolean handleDeleteTattoo() {
         if (!tattooWorkspace.deleteSelectedTattoo()) {
-            return;
+            return false;
         }
-        var current = tattooWorkspace.selected();
-        if (current.isPresent()) {
-            syncTattooControls(current.get());
-        } else {
-            syncTattooControls(null);
-        }
+        tattooWorkspace.selected().ifPresentOrElse(this::syncTattooControls, () -> syncTattooControls(null));
         updateTattooControlsState();
+        return true;
     }
 
     private void setupViewer() {
@@ -939,8 +935,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     private void handleWorkspaceKey(KeyEvent event) {
         if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
-            handleDeleteTattoo();
-            event.consume();
+            if (tattooWorkspace.selected().isPresent()) {
+                handleDeleteTattoo();
+            }
             return;
         }
         cameraRig.handleKey(event);
@@ -976,17 +973,17 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private void initializeSkinToneFromMaterials(List<PhongMaterial> materials) {
-        Color detected = materials.stream()
-            .map(PhongMaterial::getDiffuseColor)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
-        if (detected != null) {
-            skinTone.set(detected);
-        }
+        Color selectedTone = SKIN_TONE_PALETTE.isEmpty() ? DEFAULT_SKIN_TONE : SKIN_TONE_PALETTE.get(SKIN_TONE_PALETTE.size() - 1);
+        skinTone.set(selectedTone);
         applySkinToneToMaterials();
-        tattooWorkspace.updateSkinTone(skinTone.get());
-        syncSkinToneSelection();
+        tattooWorkspace.updateSkinTone(selectedTone);
+        if (skinToneToggleGroup != null && !skinToneToggleGroup.getToggles().isEmpty()) {
+            skinToneToggleGroup.selectToggle(skinToneToggleGroup.getToggles().get(skinToneToggleGroup.getToggles().size() - 1));
+        }
+        if (lightingModeCombo != null) {
+            lightingModeCombo.setValue(lightingMode);
+        }
+        lightingSystem.apply(lightingMode);
     }
 
     private void applySkinToneToMaterials() {
