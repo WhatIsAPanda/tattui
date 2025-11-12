@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
@@ -14,10 +15,20 @@
 <BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.MapController">
 
     <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="8" style="-fx-padding:8;">
-            <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS" />
-            <Button onAction="#handleSearch" text="Search" />
-            <Button onAction="#handleClear" text="Clear" />
+        <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="8" style="-fx-padding:8;" BorderPane.alignment="CENTER">
+            <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS">
+            <HBox.margin>
+               <Insets />
+            </HBox.margin>
+            <opaqueInsets>
+               <Insets />
+            </opaqueInsets></TextField>
+         <HBox alignment="CENTER_LEFT" maxWidth="244.0" minWidth="244.0" prefHeight="50.0" prefWidth="244.0" spacing="8.0">
+            <children>
+               <Button onAction="#handleSearch" text="Search" />
+               <Button onAction="#handleClear" text="Clear" />
+            </children>
+         </HBox>
         </HBox>
     </top>
 
@@ -28,7 +39,7 @@
     </center>
 
     <right>
-        <VBox spacing="6" style="-fx-padding:8; -fx-min-width:260;">
+        <VBox maxWidth="260.0" minWidth="260.0" prefWidth="260.0" spacing="6" style="-fx-padding:8; -fx-min-width:260;">
             <Label text="Results" />
             <ListView fx:id="resultsList" VBox.vgrow="ALWAYS" />
         </VBox>

@@ -37,7 +37,7 @@ public class MapController implements PageAware {
     @FXML
     public void initialize() {
         MapView map = new MapView();
-        MapPoint center = new MapPoint(37.7749, -122.4194);
+        MapPoint center = new MapPoint(41.892718, 12.476259);
         map.setCenter(center);
         map.setZoom(10);
         map.addLayer(new DotLayer(center));
