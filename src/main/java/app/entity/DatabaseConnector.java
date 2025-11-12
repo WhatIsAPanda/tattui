@@ -55,6 +55,19 @@ public class DatabaseConnector {
             return profileList.getFirst();
         }
     }
+
+    public static List<Profile> getProfilesLike(String pattern) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(
+            "SELECT * FROM Users AS U \n" +
+            "LEFT JOIN PostOwnerships AS PO ON PO.user_id = U.id\n" +
+            "LEFT JOIN Posts AS P ON PO.post_id = P.id\n" +
+            "WHERE U.username ILIKE ?;"
+        );
+        stmt.setString(1, "%" + pattern + "%");
+        ResultSet rs = stmt.executeQuery();
+        return convertToProfileList(rs);
+    }
+
     public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
                 "SELECT * FROM Users as U \n" +
@@ -90,6 +103,10 @@ public class DatabaseConnector {
             String password = rs.getString("password");
             String profile_picture = rs.getString("profile_picture");
             String biography = rs.getString("biography");
+            // String address = rs.getString("address");
+            double longitude = rs.getDouble("longitude");
+            double latitude = rs.getDouble("latitude");
+
             List<Post> posts = new ArrayList<>();
             int post_id = rs.getInt("post_id");
             if(post_id != 0) {
@@ -108,7 +125,7 @@ public class DatabaseConnector {
                 Post newPost =  new Post(post_id,caption,postURL);
                 posts.add(newPost);
             }
-            profiles.add(new Profile(user_id,username,password,profile_picture,posts,biography, "FIller", 0.0, 0.0, "Balls"));
+            profiles.add(new Profile(user_id,username,password,profile_picture,posts,biography, "FIller", longitude, latitude, "Balls"));
         }
         return profiles;
     }

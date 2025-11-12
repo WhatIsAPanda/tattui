@@ -26,11 +26,11 @@ public class RootController {
     private static final String WORKSPACE_PAGE = "workspace";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
-        WORKSPACE_PAGE, "/app/Workspace.fxml",
-        "map", "/app/Map.fxml",
-        "gallery", "/app/Gallery.fxml",
-        "login", "/app/Login.fxml",
-        "viewProfile", "/app/viewProfile.fxml"
+        WORKSPACE_PAGE, "/app/view/Workspace.fxml",
+        "map", "/app/view/Map.fxml",
+        "gallery", "/app/view/Gallery.fxml",
+        "login", "/app/view/Login.fxml",
+        "viewProfile", "/app/view/viewProfile.fxml"
     );
 
     public RootController() {
@@ -50,7 +50,7 @@ public class RootController {
 
     @FXML
     public void initialize() {
-        loadView("/app/taskbar.fxml");
+        loadView("/app/view/Taskbar.fxml");
         showPage(WORKSPACE_PAGE);
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
@@ -100,9 +100,9 @@ public class RootController {
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
 
-            if ("/app/Workspace.fxml".equals(path))
+            if ("/app/view/Workspace.fxml".equals(path))
                 workspaceController = loader.getController();
-            if ("/app/taskbar.fxml".equals(path))
+            if ("/app/view/Taskbar.fxml".equals(path))
                 attachContent(taskbarContainer, view);
             if (cntrl instanceof WorkspaceAware aware)
                 aware.setWorkspaceProvider(() -> workspaceController);

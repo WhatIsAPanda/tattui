@@ -13,7 +13,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(Main.class.getResource("/app/Root.fxml"));
+        FXMLLoader loader = new FXMLLoader(Main.class.getResource("/app/view/Root.fxml"));
         Parent root = loader.load();
 
         Scene scene = new Scene(root, 1280, 800);
@@ -21,7 +21,7 @@ public class Main extends Application {
             Objects.requireNonNull(Main.class.getResource("/app/css/main.css")).toExternalForm()
         );
 
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/icons/code.png")));
+        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/app/view/icons/code.png")));
         stage.setTitle("Tattui");
         stage.setScene(scene);
         stage.show();

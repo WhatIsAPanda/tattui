@@ -3,17 +3,41 @@ package app.entity;
 import javafx.scene.image.Image;
 
 public class Post {
-    public int id;
-    public String caption;
-    public String url;
-    public Image image;
+    private int id;
+    private String caption;
+    private String postURL;
+    private Image image;
 
-    public Post(int id, String caption, String url) {
-        image = new Image(url);
-        this.caption = caption;
-        this.url = url;
+    public Post(int id, String caption, String postURL) {
         this.id = id;
+        this.caption = caption;
+        this.postURL = postURL;
+
+        if (postURL != null && !postURL.isBlank()) {
+            try {
+                this.image = new Image(postURL, true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.image = null;
+            }
+        } else {
+            this.image = null;
+        }
     }
 
+    public Image getImage() {
+        return image;
+    }
 
+    public String getCaption() {
+        return caption;
+    }
+
+    public String getPostURL() {
+        return postURL;
+    }
+
+    public int getId() {
+        return id;
+    }
 }

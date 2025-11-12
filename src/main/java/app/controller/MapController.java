@@ -20,9 +20,24 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Pair;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.List;
+
 import app.entity.Profile;
 import app.entity.ProfileCell;
+import app.entity.DatabaseConnector;
+
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 
 public class MapController implements PageAware {
     
@@ -66,10 +81,97 @@ public class MapController implements PageAware {
 
     @FXML
     private void handleSearch(ActionEvent event) {
-        // TODO: implement search logic
-        
+        String query = searchField.getText();
+        if (query == null || query.trim().isEmpty()) {
+            return;
+        }
+        citySearch(query);
     }
     
+
+    private void citySearch(String query){
+        try {// Step 1: Geocode city name → approximate lat/lon bounds
+            Pair<Double, Double> center = geocodeCity(query.trim());
+            if (center == null) {
+                System.out.println("City not found: " + query);
+                resultsList.getItems().clear();
+                return;
+            }
+
+            double lat = center.getKey();
+            double lon = center.getValue();
+
+            // Step 2: Define a reasonable search radius (e.g., 0.5° ≈ ~55 km)
+            double radius = 0.5;
+            double latFrom = lat - radius;
+            double latTo = lat + radius;
+            double lonFrom = lon - radius;
+            double lonTo = lon + radius;
+
+            // Step 3: Query database for users within bounds
+            List<Profile> profiles = DatabaseConnector.getProfilesWithinBounds(latFrom, latTo, lonFrom, lonTo);
+
+            // Step 4: Update UI
+            if (profiles != null && !profiles.isEmpty()) {
+                allResults = new LinkedList<>(profiles);
+                resultsList.getItems().setAll(allResults);
+            } else {
+                resultsList.getItems().clear();
+                System.out.println("No profiles found near " + query);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error searching by city: " + e.getMessage());
+        }
+    }
+    
+        
+    private Pair<Double, Double> geocodeCity(String city) {
+        try {
+            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" 
+                            + java.net.URLEncoder.encode(city, "UTF-8");
+            HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+            conn.setRequestProperty("User-Agent", "JavaFXApp");
+            conn.setRequestMethod("GET");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                JSONArray arr = new JSONArray(sb.toString());
+                if (arr.length() > 0) {
+                    JSONObject obj = arr.getJSONObject(0);
+                    double lat = obj.getDouble("lat");
+                    double lon = obj.getDouble("lon");
+                    return new Pair<>(lat, lon);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void usernameSearch(String query) {
+        try {
+            // Fetch all profiles whose usernames partially match the query
+            List<Profile> profiles = DatabaseConnector.getProfilesLike(query.trim());
+
+            if (profiles != null && !profiles.isEmpty()) {
+                allResults = new LinkedList<>(profiles);
+                resultsList.getItems().setAll(allResults);
+            } else {
+                resultsList.getItems().clear();
+                System.out.println("No matching profiles found.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error retrieving profiles: " + e.getMessage());
+        }
+    }
+    
+
     private Consumer<String> onPageRequest;
 
     public void setOnPageRequest(Consumer<String> handler) {

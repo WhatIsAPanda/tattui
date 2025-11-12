@@ -69,7 +69,7 @@ public class ViewMyProfileBoundary {
                 if(imagesProcessed == posts.size()) {
                     break;
                 }
-                ImageView imgView = new ImageView(posts.get(imagesProcessed).image);
+                ImageView imgView = new ImageView(posts.get(imagesProcessed).getImage());
                 imgView.setFitHeight(250);
                 imgView.setFitWidth(179);
                 imgView.setPreserveRatio(false);
