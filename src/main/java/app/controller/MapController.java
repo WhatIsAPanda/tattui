@@ -62,6 +62,7 @@ public class MapController implements PageAware {
         mapContainer.getChildren().add(map);
 
         resultsList.setCellFactory(listView -> new ProfileCell());
+
     }
 
     // Inner layer class
@@ -71,7 +72,7 @@ public class MapController implements PageAware {
         @Override
         protected void layoutLayer() {
             getChildren().clear();
-            Node dot = new Circle(5, Color.RED);
+            Node dot = new Circle(5, Color.BLACK);
             Point2D mp = getMapPoint(p.getLatitude(), p.getLongitude());
             dot.setTranslateX(mp.getX());
             dot.setTranslateY(mp.getY());

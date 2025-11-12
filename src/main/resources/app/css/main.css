@@ -31,8 +31,8 @@
   -fx-background-color: #4b4b4b;
   -fx-text-fill: #e2e8f0;
   -fx-border-color: rgba(148, 163, 184, 0.3);
-  -fx-border-radius: 6;
-  -fx-background-radius: 6;
+  -fx-border-radius: 3;
+  -fx-background-radius: 3;
   -fx-prompt-text-fill: #94a3b8;
 }
 
@@ -205,3 +205,25 @@
   -fx-focus-color: transparent;
   -fx-faint-focus-color: transparent;
 }
+
+.neutral-card,
+.neutral-card * {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-background-color: white;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-text-fill: black;
+    -fx-border-color: transparent;
+    -fx-effect: null;
+
+}
+
+#Title {
+  -fx-font-family: "Times New Roman";
+  -fx-font-size: 14px;
+  -fx-font-weight: bold;
+  
+}
+

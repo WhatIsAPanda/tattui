@@ -7,19 +7,18 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-
-<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="300.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="profileCard" fillHeight="false" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="88.0" styleClass="neutral-card" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <ImageView fitHeight="75.0" fitWidth="75.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+      <ImageView fitHeight="88.0" fitWidth="88.0" preserveRatio="false">
          <HBox.margin>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets right="10.0" />
          </HBox.margin>
       </ImageView>
-      <VBox prefWidth="209.0" HBox.hgrow="ALWAYS">
+      <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="68.0" prefWidth="209.0" HBox.hgrow="ALWAYS">
          <children>
-            <Label text="Title" VBox.vgrow="ALWAYS">
+            <Label fx:id="Title" text="Title" VBox.vgrow="ALWAYS">
                <font>
-                  <Font name="System Bold" size="14.0" />
+                  <Font name="Times New Roman Bold" size="14.0" />
                </font>
                <VBox.margin>
                   <Insets />

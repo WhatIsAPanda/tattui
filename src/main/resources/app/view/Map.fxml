@@ -16,7 +16,7 @@
 
     <top>
         <HBox alignment="CENTER_LEFT" prefHeight="51.0" spacing="8" style="-fx-padding: 8; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
-            <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS">
+            <TextField fx:id="searchField" promptText="Search shops, artists, cities" style="-fx-background-radius: 3; -fx-border-radius: 3;" HBox.hgrow="ALWAYS">
             <HBox.margin>
                <Insets />
             </HBox.margin>
@@ -41,7 +41,7 @@
     <right>
         <VBox maxWidth="260.0" minWidth="260.0" prefWidth="260.0" spacing="6" style="-fx-padding:8; -fx-min-width:260;">
             <Label text="Results" />
-            <ListView fx:id="resultsList" VBox.vgrow="ALWAYS" />
+            <ListView fx:id="resultsList" cacheShape="false" centerShape="false" editable="true" fixedCellSize="88.0" scaleShape="false" VBox.vgrow="ALWAYS" style="-fx-padding: 0; -fx-background-insets: 0; -fx-border-width: 0;" />
          <BorderPane.margin>
             <Insets top="-1.0" />
          </BorderPane.margin>

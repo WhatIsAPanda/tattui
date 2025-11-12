@@ -1,12 +1,14 @@
 package app.entity;
 
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.Label;
 import java.io.IOException;
 import app.entity.Profile;
 
@@ -18,40 +20,56 @@ public class ProfileCell extends ListCell<Profile> {
 
         if (empty || profile == null) {
             setGraphic(null);
+            setText(null);
             return;
         }
 
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/profileMapCard.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/profileCellCard.fxml"));
             HBox root = loader.load();
 
-            //getting the boxes from the fmxl
-            //profile pic
             ImageView image = (ImageView) root.getChildren().get(0);
             VBox info = (VBox) root.getChildren().get(1);
 
-            //UserName?
             Label title = (Label) info.getChildren().get(0);
-            //Bio
             Label desc = (Label) info.getChildren().get(1);
-            //Adderess
             Label address = (Label) info.getChildren().get(2);
-            //Tag
             Label tag = (Label) info.getChildren().get(3);
 
-            //Setting them
             title.setText(profile.getUsername());
             desc.setText(profile.getBiography());
             address.setText(profile.getAddress());
             tag.setText(profile.getTags());
 
             if (profile.getProfile_picture_url() != null && !profile.getProfile_picture_url().isEmpty()) {
-                image.setImage(new Image(profile.getProfile_picture_url(), true));
+                Image img = new Image(profile.getProfile_picture_url(), true);
+                image.setImage(img);
+
+                // Wait until image loads to set the viewport (image must have real dimensions)
+                img.progressProperty().addListener((obs, oldVal, newVal) -> {
+                    if (img.getProgress() == 1.0 && img.getWidth() > 0 && img.getHeight() > 0) {
+                        double width = img.getWidth();
+                        double height = img.getHeight();
+                        double size = Math.min(width, height);
+                        double x = (width - size) / 2;
+                        double y = (height - size) / 2;
+
+                        image.setViewport(new Rectangle2D(x, y, size, size));
+                        image.setFitWidth(88);
+                        image.setFitHeight(88);
+                        image.setPreserveRatio(false);
+                    }
+                });
+            } else {
+                image.setImage(null);
             }
 
             setGraphic(root);
+            setPadding(Insets.EMPTY);
+
         } catch (IOException e) {
             e.printStackTrace();
+            setGraphic(null);
         }
     }
 }
