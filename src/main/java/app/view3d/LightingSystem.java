@@ -8,7 +8,21 @@ import javafx.scene.AmbientLight;
 
 public final class LightingSystem {
 
-    public enum Mode { UNIFORM, UNLIT }
+    public enum Mode {
+        STUDIO("Studio"),
+        UNLIT("Unlit");
+
+        private final String label;
+
+        Mode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
 
     private final Group rig = new Group();
     private Mode current;
@@ -23,7 +37,7 @@ public final class LightingSystem {
         }
         current = mode;
         rig.getChildren().clear();
-        if (mode == Mode.UNIFORM) {
+        if (mode == Mode.STUDIO) {
             rig.getChildren().addAll(uniformRig());
         }
     }

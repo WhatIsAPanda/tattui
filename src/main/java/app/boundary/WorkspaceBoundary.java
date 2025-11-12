@@ -178,7 +178,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     private final Group root3D = new Group(modelRoot);
     private final LightingSystem lightingSystem = new LightingSystem();
-    private LightingSystem.Mode lightingMode = LightingSystem.Mode.UNIFORM;
+    private LightingSystem.Mode lightingMode = LightingSystem.Mode.UNLIT;
 
     @FXML private BorderPane rootPane;
     @FXML private HBox toolbarBox;
