@@ -54,12 +54,54 @@
   -fx-background-color: rgba(15, 23, 42, 0.8);
 }
 
-.tattoo-history-thumb{
+.toolbar {
+  -fx-background-color: #0d0d0d;
+  -fx-border-color: transparent transparent #ffffff transparent;
+  -fx-border-width: 0 0 1 0;
+  -fx-effect: none;
+}
+
+.tattoo-history-thumb {
   -fx-background-color: #f2f2f2;
+  -fx-padding: 4;
+  -fx-background-radius: 6;
 }
 
 .tattoo-history-thumb:hover {
-    -fx-background-color: #e0e0e0;
+  -fx-background-color: #e0e0e0;
+}
+
+.tattoo-history-toggle,
+.tattoo-history-toggle:focused {
+  -fx-background-color: transparent;
+  -fx-border-color: rgba(255, 255, 255, 0.15);
+  -fx-border-width: 2;
+  -fx-border-radius: 8;
+  -fx-background-radius: 8;
+  -fx-padding: 2;
+}
+
+.tattoo-history-toggle:selected,
+.tattoo-history-toggle:focused:selected {
+  -fx-border-color: #ffffff;
+  -fx-background-color: transparent;
+}
+
+.lock-aspect-toggle,
+.lock-aspect-toggle:focused {
+  -fx-background-color: linear-gradient(#1b1b1b, #050505);
+  -fx-text-fill: #f8fafc;
+  -fx-border-color: rgba(255, 255, 255, 0.15);
+  -fx-border-width: 2;
+  -fx-border-radius: 6;
+  -fx-background-radius: 6;
+  -fx-padding: 6;
+}
+
+.lock-aspect-toggle:selected,
+.lock-aspect-toggle:focused:selected {
+  -fx-border-color: #ffffff;
+  -fx-background-color: linear-gradient(#2a2a2a, #0b0b0b);
 }
 
 .root,
@@ -67,4 +109,77 @@
 .titled-pane,
 .titled-pane > .content {
   -fx-background-color: #1a1a1a;
+}
+
+.sidebar-scroll,
+.sidebar-scroll:focused {
+  -fx-background-color: #0d0d0d;
+  -fx-background: #0d0d0d;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+  -fx-effect: none;
+}
+
+.sidebar-scroll > .viewport {
+  -fx-background-color: transparent;
+}
+
+.control-pane,
+.control-pane:focused {
+  -fx-background-color: #0d0d0d;
+  -fx-background-insets: 0;
+  -fx-padding: 16;
+}
+
+.sidebar-titled-pane,
+.sidebar-titled-pane:focused {
+  -fx-background-color: #101010;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-border-color: rgba(255, 255, 255, 0.08);
+  -fx-border-radius: 4;
+  -fx-background-radius: 4;
+}
+
+.sidebar-titled-pane > .title {
+  -fx-background-color: linear-gradient(#1b1b1b, #050505);
+  -fx-border-color: rgba(0, 0, 0, 0.7);
+  -fx-border-radius: 4;
+  -fx-background-radius: 4;
+}
+
+.sidebar-titled-pane:focused > .title {
+  -fx-background-color: linear-gradient(#1b1b1b, #050505);
+}
+
+.sidebar-titled-pane > .content {
+  -fx-background-color: #0d0d0d;
+}
+
+.tattoo-scroll,
+.tattoo-scroll:focused {
+  -fx-background-color: #121212;
+  -fx-background: #121212;
+  -fx-border-color: rgba(255, 255, 255, 0.05);
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+
+.tattoo-scroll > .viewport {
+  -fx-background-color: transparent;
+}
+
+.sidebar-card,
+.sidebar-card:focused {
+  -fx-background-color: #121212;
+  -fx-border-color: rgba(255, 255, 255, 0.08);
+  -fx-border-radius: 6;
+  -fx-background-radius: 6;
+  -fx-padding: 8 10 10 10;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
 }

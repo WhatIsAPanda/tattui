@@ -172,8 +172,8 @@ public final class TattooWorkspace {
             double imgHeight = tattoo.image().getHeight();
             double px = tattoo.u() * width;
             double py = tattoo.v() * height;
-            double drawW = imgWidth * tattoo.scale();
-            double drawH = imgHeight * tattoo.scale();
+            double drawW = imgWidth * tattoo.widthScale();
+            double drawH = imgHeight * tattoo.heightScale();
 
             graphics.save();
             graphics.translate(px, py);
@@ -237,8 +237,8 @@ public final class TattooWorkspace {
         }
         double width = Math.max(1.0, paintCanvas.getWidth());
         double height = Math.max(1.0, paintCanvas.getHeight());
-        double halfWidth = (tattoo.image().getWidth() * tattoo.scale()) / (2.0 * width);
-        double halfHeight = (tattoo.image().getHeight() * tattoo.scale()) / (2.0 * height);
+        double halfWidth = (tattoo.image().getWidth() * tattoo.widthScale()) / (2.0 * width);
+        double halfHeight = (tattoo.image().getHeight() * tattoo.heightScale()) / (2.0 * height);
         if (halfWidth <= 0 || halfHeight <= 0) {
             return false;
         }
