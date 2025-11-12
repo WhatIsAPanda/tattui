@@ -36,6 +36,9 @@ public final class WorkspaceCamera {
 
     private Bounds bounds;
     private Point3D target = new Point3D(0, 0, 0);
+    private double panX;
+    private double panY;
+    private double panZ;
     private double lastMouseX;
     private double lastMouseY;
 
@@ -81,6 +84,7 @@ public final class WorkspaceCamera {
         double targetY = floor + height * 0.55;
 
         target = new Point3D(centerX, targetY, centerZ);
+        panX = panY = panZ = 0.0;
         yaw.set(DEFAULT_YAW);
         pitch.set(DEFAULT_PITCH);
 
@@ -135,10 +139,20 @@ public final class WorkspaceCamera {
             return;
         }
         double factor = distance.get() / 800.0;
-        double newX = target.getX() - dx * panSensitivity * factor;
-        double newY = target.getY() + dy * panSensitivity * factor;
-        double newZ = target.getZ() + dx * panSensitivity * factor * 0.6;
-        target = clampTarget(new Point3D(newX, newY, newZ), bounds);
+        double yawRadians = Math.toRadians(yaw.get());
+        double cosYaw = Math.cos(yawRadians);
+        double sinYaw = Math.sin(yawRadians);
+
+        double rightX = cosYaw;
+        double rightZ = -sinYaw;
+        double forwardX = sinYaw;
+        double forwardZ = cosYaw;
+
+        panX -= dx * panSensitivity * factor * rightX;
+        panZ -= dx * panSensitivity * factor * rightZ;
+        panX += dy * panSensitivity * factor * forwardX * 0.6;
+        panZ += dy * panSensitivity * factor * forwardZ * 0.6;
+        panY += dy * panSensitivity * factor;
         updateCameraTransform();
     }
 
@@ -152,7 +166,8 @@ public final class WorkspaceCamera {
             new Translate(target.getX(), target.getY(), target.getZ()),
             new Rotate(yaw.get(), Rotate.Y_AXIS),
             new Rotate(pitch.get(), Rotate.X_AXIS),
-            new Translate(0, 0, -clampedDistance)
+            new Translate(0, 0, -clampedDistance),
+            new Translate(panX, panY, panZ)
         );
     }
 
