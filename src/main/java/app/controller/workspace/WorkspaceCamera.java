@@ -25,8 +25,8 @@ public final class WorkspaceCamera {
     private final double pitchMin;
     private final double pitchMax;
 
-    private static final double DEFAULT_YAW = 210.0;
-    private static final double DEFAULT_PITCH = -20.0;
+    private static final double DEFAULT_YAW = 180.0;
+    private static final double DEFAULT_PITCH = -5.0;
 
     private final DoubleProperty yaw = new SimpleDoubleProperty(DEFAULT_YAW);
     private final DoubleProperty pitch = new SimpleDoubleProperty(DEFAULT_PITCH);
@@ -81,7 +81,7 @@ public final class WorkspaceCamera {
         double centerZ = (bounds.getMinZ() + bounds.getMaxZ()) * 0.5;
         double floor = bounds.getMinY();
         double height = bounds.getHeight();
-        double targetY = floor + height * 0.55;
+        double targetY = floor + height * 0.50;
 
         target = new Point3D(centerX, targetY, centerZ);
         panX = panY = panZ = 0.0;

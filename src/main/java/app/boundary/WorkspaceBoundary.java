@@ -5,6 +5,7 @@ import app.controller.workspace.TattooWorkspace;
 import app.controller.workspace.WorkspaceCamera;
 import app.entity.Tattoo;
 import app.loader.ObjLoader;
+import app.view3d.LightingSystem;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -24,14 +25,13 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.AmbientLight;
-import javafx.scene.DirectionalLight;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
@@ -177,7 +177,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private enum TattooDimension { WIDTH, HEIGHT }
 
     private final Group root3D = new Group(modelRoot);
-    private final Group lightingRig = new Group();
+    private final LightingSystem lightingSystem = new LightingSystem();
+    private LightingSystem.Mode lightingMode = LightingSystem.Mode.UNLIT;
 
     @FXML private BorderPane rootPane;
     @FXML private HBox toolbarBox;
@@ -185,6 +186,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     @FXML private Button resetViewButton;
     @FXML private Button exportPreviewButton;
     @FXML private Button exportTattooedModelButton;
+    private ComboBox<LightingSystem.Mode> lightingModeCombo;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
     @FXML private StackPane viewerPane;
@@ -333,6 +335,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
         HBox tattooLoadRow = new HBox(10, loadTattooButton, createSpacer(), removeBackgroundButton);
         tattooLoadRow.setFillHeight(true);
 
+        lightingModeCombo = new ComboBox<>();
+        lightingModeCombo.setItems(FXCollections.observableArrayList(LightingSystem.Mode.values()));
+        lightingModeCombo.setValue(lightingMode);
+        lightingModeCombo.valueProperty().addListener((obs, oldMode, newMode) -> {
+            if (newMode != null && newMode != lightingMode) {
+                lightingMode = newMode;
+                lightingSystem.apply(newMode);
+            }
+        });
+
         skinToneToggleGroup = new ToggleGroup();
 
         tattooHistoryToggleGroup = new ToggleGroup();
@@ -402,7 +414,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
         controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls));
 
         VBox modelProperties = new VBox(6,
-            buildSkinToneSelector()
+            buildSkinToneSelector(),
+            buildLightingSelector()
         );
         modelProperties.setFillWidth(true);
 
@@ -536,6 +549,15 @@ public final class WorkspaceBoundary implements WorkspaceController {
             skinToneToggleGroup.selectToggle(button);
         }
         return button;
+    }
+
+    private VBox buildLightingSelector() {
+        Label label = new Label("Lighting Mode");
+        HBox row = new HBox(8, lightingModeCombo);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setFillHeight(true);
+        HBox.setHgrow(lightingModeCombo, Priority.ALWAYS);
+        return new VBox(4, label, row);
     }
 
     private String toWebColor(Color color) {
@@ -864,7 +886,10 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         installInteractionHandlers();
         installTattooPlacementHandlers();
-        installNeutralLighting();
+        if (!root3D.getChildren().contains(lightingSystem.node())) {
+            root3D.getChildren().add(lightingSystem.node());
+        }
+        lightingSystem.apply(lightingMode);
         softenSpecular(modelRoot);
 
         viewerPane.getChildren().setAll(subScene);
@@ -912,17 +937,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
         subScene.addEventHandler(MouseEvent.MOUSE_RELEASED, this::handleTattooRelease);
     }
 
-    private void installNeutralLighting() {
-        if (!root3D.getChildren().contains(lightingRig)) {
-            root3D.getChildren().add(lightingRig);
-        }
-        lightingRig.getChildren().setAll(
-            createAmbientLight(0.85),
-            createDirectionalLight(0.18, 0.15, -0.35, -1.0),
-            createDirectionalLight(0.12, -0.2, -0.25, 0.9)
-        );
-    }
-
     private void handleWorkspaceKey(KeyEvent event) {
         if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
             handleDeleteTattoo();
@@ -930,18 +944,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
             return;
         }
         cameraRig.handleKey(event);
-    }
-
-    private AmbientLight createAmbientLight(double intensity) {
-        double level = clamp(intensity, 0.0, 1.0);
-        return new AmbientLight(Color.color(level, level, level));
-    }
-
-    private DirectionalLight createDirectionalLight(double intensity, double x, double y, double z) {
-        double level = clamp(intensity, 0.0, 1.0);
-        DirectionalLight light = new DirectionalLight(Color.color(level, level, level));
-        light.setDirection(new Point3D(x, y, z).normalize());
-        return light;
     }
 
     private void showLoadDialog(Stage stage) {
@@ -1031,40 +1033,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
             tattooWorkspace.updateSkinTone(desired);
             syncSkinToneSelection();
         }
-    }
-
-    private Color toneForPosition(double position) {
-        double clamped = clamp(position, 0.0, 1.0);
-        if (SKIN_TONE_PALETTE.size() == 1) {
-            return SKIN_TONE_PALETTE.get(0);
-        }
-        double scaled = clamped * (SKIN_TONE_PALETTE.size() - 1);
-        int index = (int) Math.floor(scaled);
-        int nextIndex = Math.min(index + 1, SKIN_TONE_PALETTE.size() - 1);
-        double fraction = scaled - index;
-        if (nextIndex == index) {
-            return SKIN_TONE_PALETTE.get(index);
-        }
-        Color start = SKIN_TONE_PALETTE.get(index);
-        Color end = SKIN_TONE_PALETTE.get(nextIndex);
-        return start.interpolate(end, fraction);
-    }
-
-    private double positionForColor(Color color) {
-        if (color == null || SKIN_TONE_PALETTE.isEmpty()) {
-            return 0.5;
-        }
-        double best = 0.0;
-        double bestDiff = Double.MAX_VALUE;
-        for (int i = 0; i < SKIN_TONE_PALETTE.size(); i++) {
-            Color candidate = SKIN_TONE_PALETTE.get(i);
-            double diff = colorDistanceSq(candidate, color);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                best = (double) i / Math.max(1, SKIN_TONE_PALETTE.size() - 1);
-            }
-        }
-        return best;
     }
 
     private static double colorDistanceSq(Color a, Color b) {
