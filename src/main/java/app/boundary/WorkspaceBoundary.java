@@ -5,29 +5,33 @@ import app.controller.workspace.TattooWorkspace;
 import app.controller.workspace.WorkspaceCamera;
 import app.entity.Tattoo;
 import app.loader.ObjLoader;
-import app.model.ModelManipulator;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.geometry.Point3D;
+import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.fxml.FXML;
-import javafx.scene.AmbientLight;
-import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.AmbientLight;
+import javafx.scene.DirectionalLight;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
@@ -41,6 +45,7 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
@@ -53,7 +58,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
@@ -100,8 +104,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private static final double TARGET_HEIGHT = 1700.0;
     private static final double MIN_DISTANCE = 300.0;
     private static final double MAX_DISTANCE = 6000.0;
-    private static final double SLIDER_MIN = 0.6;
-    private static final double SLIDER_MAX = 1.4;
     private static final double TATTOO_MIN_SCALE = 0.05;
     private static final double TATTOO_MAX_SCALE = 1.0;
     private static final double DEFAULT_TATTOO_SCALE = 0.20;
@@ -110,6 +112,36 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private static final double PITCH_MIN = -80.0;
     private static final double PITCH_MAX = 80.0;
     private static final int MAX_TATTOO_HISTORY = 12;
+    private static final Color DEFAULT_SKIN_TONE = Color.rgb(224, 172, 105);
+    private static final List<Color> SKIN_TONE_PALETTE = List.of(
+        Color.rgb(110, 66, 24),   // Deepest
+        Color.rgb(120, 72, 28),
+        Color.rgb(133, 80, 32),
+        Color.rgb(146, 90, 36),
+        Color.rgb(156, 97, 40),
+        Color.rgb(163, 103, 42),
+        Color.rgb(170, 108, 45),
+        Color.rgb(177, 114, 49),
+        Color.rgb(185, 121, 55),
+        Color.rgb(193, 128, 60),
+        Color.rgb(198, 134, 66),
+        Color.rgb(205, 143, 75),
+        Color.rgb(213, 153, 85),
+        Color.rgb(219, 163, 94),
+        Color.rgb(224, 172, 105),
+        Color.rgb(229, 178, 111),
+        Color.rgb(233, 183, 115),
+        Color.rgb(237, 189, 120),
+        Color.rgb(241, 194, 125),
+        Color.rgb(244, 201, 136),
+        Color.rgb(250, 212, 153),
+        Color.rgb(255, 219, 172),
+        Color.rgb(255, 227, 190),
+        Color.rgb(255, 234, 205),
+        Color.rgb(255, 237, 211),
+        Color.rgb(255, 242, 224),
+        Color.rgb(255, 247, 236)
+    );
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
 
@@ -136,32 +168,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
     private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
 
-    private static final List<String> PROPORTION_KEYS = List.of(
-        "Head Size",
-        "Shoulder Width",
-        "Torso Width",
-        "Torso Length",
-        "Hip Width",
-        "Arm Length",
-        "Arm Thickness",
-        "Leg Length",
-        "Leg Thickness"
-    );
-
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
-    private final Map<String, Slider> proportionControls = new LinkedHashMap<>();
 
     private final Group partRoot = new Group();
     private final Group overallScaleGroup = new Group(partRoot);
     private final Group modelRoot = new Group(overallScaleGroup);
 
-    private enum LightingPreset { TOP_DOWN, UNIFORM }
     private enum TattooDimension { WIDTH, HEIGHT }
 
-    private final Group lightsLayer = new Group();
-    private LightingPreset lightingPreset = LightingPreset.UNIFORM;
-
     private final Group root3D = new Group(modelRoot);
+    private final Group lightingRig = new Group();
 
     @FXML private BorderPane rootPane;
     @FXML private HBox toolbarBox;
@@ -169,7 +185,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
     @FXML private Button resetViewButton;
     @FXML private Button exportPreviewButton;
     @FXML private Button exportTattooedModelButton;
-    @FXML private ComboBox<LightingPreset> lightingCombo;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
     @FXML private StackPane viewerPane;
@@ -182,14 +197,15 @@ public final class WorkspaceBoundary implements WorkspaceController {
     );
     private final TattooWorkspace tattooWorkspace = new TattooWorkspace();
     private final DoubleProperty overallScale = new SimpleDoubleProperty(1.0);
+    private final ObjectProperty<Color> skinTone = new SimpleObjectProperty<>(DEFAULT_SKIN_TONE);
 
-    private ModelManipulator modelManipulator;
     private Stage primaryStage;
     private Path currentModelPath;
 
     private final ObservableList<TattooPreset> tattooHistory = FXCollections.observableArrayList();
 
     private Button loadTattooButton;
+    private Button removeBackgroundButton;
     private FlowPane tattooHistoryGallery;
     private ToggleGroup tattooHistoryToggleGroup;
     private ScrollPane tattooHistoryScroll;
@@ -198,10 +214,15 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private Slider tattooHeightSlider;
     private Slider tattooOpacitySlider;
     private Slider tattooRotationSlider;
+    private ToggleGroup skinToneToggleGroup;
     private ToggleButton lockAspectRatioToggle;
     private boolean tattooDragActive;
+    private double tattooDragOffsetU;
+    private double tattooDragOffsetV;
     private boolean historyPlacementArmed;
     private boolean modelHasUVs;
+
+    private final List<PhongMaterial> activeMaterials = new ArrayList<>();
 
     private Bounds currentBounds;
     private SubScene subScene;
@@ -216,6 +237,22 @@ public final class WorkspaceBoundary implements WorkspaceController {
         setupToolbar();
         setupControlPanel();
         setupViewer();
+        if (rootPane != null) {
+            rootPane.addEventFilter(KeyEvent.KEY_PRESSED, this::handleWorkspaceKey);
+            rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    newScene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleWorkspaceKey);
+                } else if (oldScene != null) {
+                    oldScene.removeEventFilter(KeyEvent.KEY_PRESSED, this::handleWorkspaceKey);
+                }
+            });
+        }
+        skinTone.addListener((obs, oldColor, newColor) -> {
+            applySkinToneToMaterials();
+            tattooWorkspace.updateSkinTone(newColor);
+            syncSkinToneSelection();
+        });
+        syncSkinToneSelection();
         Platform.runLater(() -> {
             if (subScene != null) {
                 subScene.requestFocus();
@@ -277,16 +314,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (exportTattooedModelButton != null) {
             exportTattooedModelButton.setOnAction(evt -> handleExportTattooedModel());
         }
-        if (lightingCombo != null) {
-            lightingCombo.setItems(FXCollections.observableArrayList(LightingPreset.values()));
-            lightingCombo.setValue(lightingPreset);
-            lightingCombo.valueProperty().addListener((obs, oldV, newV) -> {
-                if (newV != null && newV != lightingPreset) {
-                    lightingPreset = newV;
-                    applyLighting(lightingPreset);
-                }
-            });
-        }
     }
 
     private void setupControlPanel() {
@@ -301,6 +328,12 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         loadTattooButton = new Button("Load Tattoo");
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
+        removeBackgroundButton = new Button("Remove BG");
+        removeBackgroundButton.setOnAction(e -> handleRemoveBackground());
+        HBox tattooLoadRow = new HBox(10, loadTattooButton, createSpacer(), removeBackgroundButton);
+        tattooLoadRow.setFillHeight(true);
+
+        skinToneToggleGroup = new ToggleGroup();
 
         tattooHistoryToggleGroup = new ToggleGroup();
         tattooHistoryGallery = new FlowPane();
@@ -347,7 +380,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         lockAspectRatioToggle.getStyleClass().add("lock-aspect-toggle");
         lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> handleAspectLockChange(newVal));
 
-        Label historyLabel = new Label("Recent Tattoos");
+        Label historyLabel = new Label("Loaded Tattoos");
         VBox historyBox = new VBox(4, historyLabel, tattooHistoryScroll);
         historyBox.setFillWidth(true);
         historyBox.setFocusTraversable(false);
@@ -355,7 +388,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         historyBox.getStyleClass().add("sidebar-card");
         
         VBox tattooControls = new VBox(6,
-            loadTattooButton,
+            tattooLoadRow,
             historyBox,
             createLabeledControl("Tattoo Width", tattooWidthSlider),
             createLabeledControl("Tattoo Height", tattooHeightSlider),
@@ -368,20 +401,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls));
 
-        proportionControls.clear();
-        VBox proportionPanel = new VBox(8);
-        proportionPanel.setFillWidth(true);
-        for (String label : PROPORTION_KEYS) {
-            Slider slider = createSlider(SLIDER_MIN, SLIDER_MAX);
-            slider.valueProperty().addListener((obs, oldVal, newVal) -> {
-                if (!adjustingSliders) {
-                    applyCurrentProportions();
-                }
-            });
-            proportionControls.put(label, slider);
-            proportionPanel.getChildren().add(createLabeledControl(label, slider));
-        }
-        controlsContainer.getChildren().add(createDropdownPanel("Body Proportions", proportionPanel));
+        VBox modelProperties = new VBox(6,
+            buildSkinToneSelector()
+        );
+        modelProperties.setFillWidth(true);
+
+        controlsContainer.getChildren().add(createDropdownPanel("Model Properties", modelProperties));
+        syncSkinToneSelection();
 
         if (controlScroll != null) {
             controlScroll.setFitToWidth(true);
@@ -450,7 +476,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         return lockAspectRatioToggle != null && lockAspectRatioToggle.isSelected();
     }
 
-    private void resetTattooSizeControls() {
+    private void resetTattooAdjustmentControls() {
         adjustingSliders = true;
         try {
             if (tattooWidthSlider != null) {
@@ -459,22 +485,15 @@ public final class WorkspaceBoundary implements WorkspaceController {
             if (tattooHeightSlider != null) {
                 tattooHeightSlider.setValue(DEFAULT_TATTOO_SCALE);
             }
+            if (tattooOpacitySlider != null) {
+                tattooOpacitySlider.setValue(1.0);
+            }
+            if (tattooRotationSlider != null) {
+                tattooRotationSlider.setValue(0.0);
+            }
         } finally {
             adjustingSliders = false;
         }
-    }
-
-    private Slider createSlider(double min, double max) {
-        Slider slider = new Slider(min, max, 1.0);
-        slider.getStyleClass().add(WP_SLIDER);
-        slider.setShowTickMarks(false);
-        slider.setShowTickLabels(false);
-        slider.setBlockIncrement(0.05);
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(false);
-        slider.setMaxWidth(Double.MAX_VALUE);
-        return slider;
     }
 
     private VBox createLabeledControl(String labelText, Slider slider) {
@@ -482,6 +501,54 @@ public final class WorkspaceBoundary implements WorkspaceController {
         VBox box = new VBox(4, label, slider);
         box.setFillWidth(true);
         return box;
+    }
+
+    private VBox buildSkinToneSelector() {
+        Label label = new Label("Skin Tone");
+        FlowPane palette = new FlowPane(8, 8);
+        palette.setPrefWrapLength(200);
+        palette.setRowValignment(VPos.CENTER);
+        palette.setColumnHalignment(HPos.LEFT);
+        palette.setAlignment(Pos.CENTER_LEFT);
+        for (Color tone : SKIN_TONE_PALETTE) {
+            palette.getChildren().add(createSkinToneButton(tone));
+        }
+        VBox container = new VBox(4, label, palette);
+        container.setFillWidth(true);
+        return container;
+    }
+
+    private ToggleButton createSkinToneButton(Color tone) {
+        ToggleButton button = new ToggleButton();
+        button.setMinSize(32, 22);
+        button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        button.getStyleClass().add("skin-tone-chip");
+        button.setUserData(tone);
+        button.setToggleGroup(skinToneToggleGroup);
+        button.setStyle("-fx-background-color: " + toWebColor(tone) + ";");
+        button.setOnAction(e -> {
+            skinToneToggleGroup.selectToggle(button);
+            if (!Objects.equals(skinTone.get(), tone)) {
+                skinTone.set(tone);
+            }
+        });
+        if (Objects.equals(tone, skinTone.get()) && skinToneToggleGroup.getSelectedToggle() == null) {
+            skinToneToggleGroup.selectToggle(button);
+        }
+        return button;
+    }
+
+    private String toWebColor(Color color) {
+        int r = (int) Math.round(color.getRed() * 255);
+        int g = (int) Math.round(color.getGreen() * 255);
+        int b = (int) Math.round(color.getBlue() * 255);
+        return String.format("#%02x%02x%02x", r, g, b);
+    }
+
+    private Region createSpacer() {
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return spacer;
     }
 
     private TitledPane createDropdownPanel(String title, Node content) {
@@ -516,9 +583,32 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (loaded == null) {
             return;
         }
-        resetTattooSizeControls();
+        resetTattooAdjustmentControls();
         rememberTattoo(file, loaded);
-        tattooWorkspace.preparePendingTattoo(loaded);
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
+        updateTattooControlsState();
+    }
+
+    private void handleRemoveBackground() {
+        TattooPreset preset = selectedHistoryPreset();
+        if (preset == null || preset.image() == null) {
+            return;
+        }
+        Image processed = removeBackground(preset.image());
+        if (processed == null) {
+            return;
+        }
+        String label = preset.label() + " (No BG)";
+        rememberTattoo(label, processed);
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
         updateTattooControlsState();
     }
 
@@ -534,9 +624,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (!tattooWorkspace.isPlacementAvailable()) {
             return false;
         }
-        resetTattooSizeControls();
+        resetTattooAdjustmentControls();
         rememberTattoo(label, image);
-        tattooWorkspace.preparePendingTattoo(image);
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
         updateTattooControlsState();
         return true;
     }
@@ -724,7 +818,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (preset == null || preset.image() == null) {
             return;
         }
-        resetTattooSizeControls();
+        resetTattooAdjustmentControls();
         tattooWorkspace.preparePendingTattoo(preset.image());
         historyPlacementArmed = true;
         updateTattooControlsState();
@@ -733,6 +827,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private void disarmHistorySelection() {
         historyPlacementArmed = false;
         tattooWorkspace.clearPendingTattoo();
+    }
+
+    private void captureDragOffsets(Tattoo tattoo, double hitU, double hitV) {
+        tattooDragOffsetU = hitU - tattoo.u();
+        tattooDragOffsetV = hitV - tattoo.v();
+    }
+
+    private void resetDragOffsets() {
+        tattooDragOffsetU = 0.0;
+        tattooDragOffsetV = 0.0;
     }
 
     private void handleDeleteTattoo() {
@@ -760,8 +864,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         installInteractionHandlers();
         installTattooPlacementHandlers();
-        initLightingLayer(root3D);
-        applyLighting(lightingPreset);
+        installNeutralLighting();
         softenSpecular(modelRoot);
 
         viewerPane.getChildren().setAll(subScene);
@@ -784,16 +887,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
                 cameraRig.reset();
             }
         });
-        subScene.setOnKeyPressed(event -> {
-            cameraRig.handleKey(event);
-            if (event.getCode() == KeyCode.DIGIT1) {
-                lightingPreset = LightingPreset.TOP_DOWN;
-                applyLighting(lightingPreset);
-            } else if (event.getCode() == KeyCode.DIGIT2) {
-                lightingPreset = LightingPreset.UNIFORM;
-                applyLighting(lightingPreset);
-            }
-        });
+        subScene.setOnKeyPressed(this::handleWorkspaceKey);
     }
 
     private void handleCameraMousePressed(MouseEvent event) {
@@ -818,6 +912,38 @@ public final class WorkspaceBoundary implements WorkspaceController {
         subScene.addEventHandler(MouseEvent.MOUSE_RELEASED, this::handleTattooRelease);
     }
 
+    private void installNeutralLighting() {
+        if (!root3D.getChildren().contains(lightingRig)) {
+            root3D.getChildren().add(lightingRig);
+        }
+        lightingRig.getChildren().setAll(
+            createAmbientLight(0.85),
+            createDirectionalLight(0.18, 0.15, -0.35, -1.0),
+            createDirectionalLight(0.12, -0.2, -0.25, 0.9)
+        );
+    }
+
+    private void handleWorkspaceKey(KeyEvent event) {
+        if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
+            handleDeleteTattoo();
+            event.consume();
+            return;
+        }
+        cameraRig.handleKey(event);
+    }
+
+    private AmbientLight createAmbientLight(double intensity) {
+        double level = clamp(intensity, 0.0, 1.0);
+        return new AmbientLight(Color.color(level, level, level));
+    }
+
+    private DirectionalLight createDirectionalLight(double intensity, double x, double y, double z) {
+        double level = clamp(intensity, 0.0, 1.0);
+        DirectionalLight light = new DirectionalLight(Color.color(level, level, level));
+        light.setDirection(new Point3D(x, y, z).normalize());
+        return light;
+    }
+
     private void showLoadDialog(Stage stage) {
         Stage targetStage = stage != null ? stage : resolveStage();
         if (targetStage == null) {
@@ -837,54 +963,115 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
     }
 
-    private void initLightingLayer(Group sceneRoot) {
-        if (!sceneRoot.getChildren().contains(lightsLayer)) {
-            sceneRoot.getChildren().add(lightsLayer);
-        }
-    }
-
-    private AmbientLight amb(double g) {
-        return new AmbientLight(Color.gray(g));
-    }
-
-    private DirectionalLight dir(double g, double x, double y, double z) {
-        DirectionalLight light = new DirectionalLight(Color.gray(g));
-        light.setDirection(new javafx.geometry.Point3D(x, y, z).normalize());
-        return light;
-    }
-
-    private void applyLighting(LightingPreset preset) {
-
-    initLightingLayer(root3D);
-
-    lightsLayer.getChildren().clear();
-
-        if (preset == LightingPreset.TOP_DOWN) {
-            lightsLayer.getChildren().addAll(
-                amb(0.25),
-                dir(1.0, 0, -1, 0)
-            );
-        } else if (preset == LightingPreset.UNIFORM) {
-            lightsLayer.getChildren().addAll(
-                amb(0.70),
-                dir(0.35, -0.35, -1, -0.35),
-                dir(0.25, 0.35, -1, 0.35)
-            );
-        }
-    }
 
     private void softenSpecular(Parent root) {
         traverse(root, node -> {
             if (node instanceof Shape3D shape) {
-                var material = shape.getMaterial();
-                if (material instanceof PhongMaterial phong) {
-                    phong.setSpecularColor(Color.gray(0.15));
-                    phong.setSpecularPower(16);
-                }
                 shape.setCullFace(CullFace.BACK);
                 shape.setDrawMode(DrawMode.FILL);
             }
         });
+    }
+
+    private void initializeSkinToneFromMaterials(List<PhongMaterial> materials) {
+        Color detected = materials.stream()
+            .map(PhongMaterial::getDiffuseColor)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+        if (detected != null) {
+            skinTone.set(detected);
+        }
+        applySkinToneToMaterials();
+        tattooWorkspace.updateSkinTone(skinTone.get());
+        syncSkinToneSelection();
+    }
+
+    private void applySkinToneToMaterials() {
+        Color tone = skinTone.get() != null ? skinTone.get() : DEFAULT_SKIN_TONE;
+        for (PhongMaterial material : activeMaterials) {
+            material.setDiffuseColor(Color.WHITE);
+            material.setSpecularColor(Color.gray(0.05));
+            material.setSpecularPower(8);
+        }
+        tattooWorkspace.updateSkinTone(tone);
+    }
+
+    private void syncSkinToneSelection() {
+        if (skinToneToggleGroup == null) {
+            return;
+        }
+        Color target = skinTone.get() != null ? skinTone.get() : DEFAULT_SKIN_TONE;
+        ToggleButton bestMatch = null;
+        double bestDiff = Double.MAX_VALUE;
+        for (Toggle toggle : skinToneToggleGroup.getToggles()) {
+            Object data = toggle.getUserData();
+            if (!(data instanceof Color color)) {
+                continue;
+            }
+            double diff = colorDistanceSq(color, target);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestMatch = (ToggleButton) toggle;
+            }
+        }
+        if (bestMatch != null) {
+            skinToneToggleGroup.selectToggle(bestMatch);
+        }
+    }
+
+    private void applyInitialSkinTone() {
+        if (SKIN_TONE_PALETTE.isEmpty()) {
+            return;
+        }
+        Color desired = SKIN_TONE_PALETTE.get(SKIN_TONE_PALETTE.size() - 1);
+        if (!Objects.equals(skinTone.get(), desired)) {
+            skinTone.set(desired);
+        } else {
+            tattooWorkspace.updateSkinTone(desired);
+            syncSkinToneSelection();
+        }
+    }
+
+    private Color toneForPosition(double position) {
+        double clamped = clamp(position, 0.0, 1.0);
+        if (SKIN_TONE_PALETTE.size() == 1) {
+            return SKIN_TONE_PALETTE.get(0);
+        }
+        double scaled = clamped * (SKIN_TONE_PALETTE.size() - 1);
+        int index = (int) Math.floor(scaled);
+        int nextIndex = Math.min(index + 1, SKIN_TONE_PALETTE.size() - 1);
+        double fraction = scaled - index;
+        if (nextIndex == index) {
+            return SKIN_TONE_PALETTE.get(index);
+        }
+        Color start = SKIN_TONE_PALETTE.get(index);
+        Color end = SKIN_TONE_PALETTE.get(nextIndex);
+        return start.interpolate(end, fraction);
+    }
+
+    private double positionForColor(Color color) {
+        if (color == null || SKIN_TONE_PALETTE.isEmpty()) {
+            return 0.5;
+        }
+        double best = 0.0;
+        double bestDiff = Double.MAX_VALUE;
+        for (int i = 0; i < SKIN_TONE_PALETTE.size(); i++) {
+            Color candidate = SKIN_TONE_PALETTE.get(i);
+            double diff = colorDistanceSq(candidate, color);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                best = (double) i / Math.max(1, SKIN_TONE_PALETTE.size() - 1);
+            }
+        }
+        return best;
+    }
+
+    private static double colorDistanceSq(Color a, Color b) {
+        double dr = a.getRed() - b.getRed();
+        double dg = a.getGreen() - b.getGreen();
+        double db = a.getBlue() - b.getBlue();
+        return dr * dr + dg * dg + db * db;
     }
 
     private void traverse(Node n, Consumer<Node> visitor) {
@@ -904,6 +1091,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (event.getButton() == MouseButton.SECONDARY) {
             tattooWorkspace.clearSelection();
             syncTattooControls(null);
+            resetDragOffsets();
             updateTattooControlsState();
             return;
         }
@@ -919,7 +1107,10 @@ public final class WorkspaceBoundary implements WorkspaceController {
         double v = clamp(uv.getY(), 0.0, 1.0);
 
         if (tattooWorkspace.selectTattooAt(u, v)) {
-            tattooWorkspace.selected().ifPresent(this::syncTattooControls);
+            tattooWorkspace.selected().ifPresent(tattoo -> {
+                syncTattooControls(tattoo);
+                captureDragOffsets(tattoo, u, v);
+            });
             updateTattooControlsState();
             tattooDragActive = true;
             event.consume();
@@ -929,6 +1120,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (!tattooWorkspace.hasPendingImage()) {
             tattooWorkspace.clearSelection();
             syncTattooControls(null);
+            resetDragOffsets();
             updateTattooControlsState();
             return;
         }
@@ -939,6 +1131,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         tattooWorkspace.addTattoo(newTattoo);
         syncTattooControls(newTattoo);
+        resetDragOffsets();
         if (historyPlacementArmed) {
             historyPlacementArmed = false;
             if (tattooHistoryToggleGroup != null) {
@@ -971,8 +1164,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (uv == null) {
             return;
         }
-        double u = clamp(uv.getX(), 0.0, 1.0);
-        double v = clamp(uv.getY(), 0.0, 1.0);
+        double u = clamp(uv.getX() - tattooDragOffsetU, 0.0, 1.0);
+        double v = clamp(uv.getY() - tattooDragOffsetV, 0.0, 1.0);
         tattooWorkspace.updateSelectedTattoo(current.withUV(u, v));
         event.consume();
     }
@@ -980,6 +1173,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private void handleTattooRelease(MouseEvent event) {
         if (event.getButton() == MouseButton.PRIMARY || !event.isPrimaryButtonDown()) {
             tattooDragActive = false;
+            resetDragOffsets();
         }
     }
 
@@ -1070,7 +1264,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     private void applyModel(ObjLoader.LoadedModel loadedModel) {
         adjustingSliders = true;
-        modelManipulator = null;
         try {
             partRoot.getTransforms().clear();
             for (Group group : partGroups.values()) {
@@ -1080,15 +1273,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
                 group.setScaleZ(1.0);
             }
 
-            for (Slider slider : proportionControls.values()) {
-                slider.setValue(1.0);
-            }
             overallScale.set(1.0);
 
             for (ObjLoader.ModelPart part : loadedModel.parts()) {
                 Group targetGroup = resolvePartGroup(part.name());
                 targetGroup.getChildren().add(part.node());
             }
+
+            modelHasUVs = loadedModel.parts().stream()
+                .map(ObjLoader.ModelPart::node)
+                .anyMatch(this::nodeHasUVs);
 
             if (loadedModel.requiresYAxisFlip()) {
                 partRoot.getTransforms().add(new Scale(1, -1, 1));
@@ -1099,7 +1293,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
 
             normalizeModel();
-            initModelManipulatorFromScene();
             if (!modelHasUVs) {
                 showNoUVMessage();
             }
@@ -1107,9 +1300,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             loadTattooMetadataIfPresent();
             updateCurrentBounds();
             cameraRig.reset();
-            applyLighting(lightingPreset);
             softenSpecular(modelRoot);
-            applyCurrentProportions();
         } finally {
             adjustingSliders = false;
         }
@@ -1140,27 +1331,12 @@ public final class WorkspaceBoundary implements WorkspaceController {
         partRoot.getTransforms().add(new Translate(translateX, translateY, translateZ));
     }
 
-    private void initModelManipulatorFromScene() {
-        List<TriangleMesh> meshes = new ArrayList<>();
-        collectMeshes(modelRoot, meshes);
-        modelHasUVs = meshes.stream().anyMatch(mesh -> mesh.getTexCoords().size() > 0);
-        modelManipulator = meshes.isEmpty() ? null : new ModelManipulator(meshes);
-    }
-
-    private void collectMeshes(Node node, List<TriangleMesh> out) {
-        if (node instanceof MeshView mv && mv.getMesh() instanceof TriangleMesh tm) {
-            out.add(tm);
-        }
-        if (node instanceof Parent parent) {
-            for (Node child : parent.getChildrenUnmodifiable()) {
-                collectMeshes(child, out);
-            }
-        }
-    }
-
     private void initializeTattooPipeline() {
         List<PhongMaterial> materials = new ArrayList<>();
         collectMaterials(modelRoot, materials);
+        activeMaterials.clear();
+        activeMaterials.addAll(materials);
+        initializeSkinToneFromMaterials(materials);
         tattooWorkspace.configureMaterials(materials);
         tattooWorkspace.clearPendingTattoo();
         tattooWorkspace.clearAllTattoos();
@@ -1199,6 +1375,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         double texWidth = Math.max(1.0, baseTexture.getWidth());
         double texHeight = Math.max(1.0, baseTexture.getHeight());
         tattooWorkspace.configureSurface(baseTexture, texWidth, texHeight);
+        applyInitialSkinTone();
         updateTattooControlsState();
     }
 
@@ -1213,21 +1390,18 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
     }
 
-    private Map<String, Double> gatherCurrentProportions() {
-        LinkedHashMap<String, Double> values = new LinkedHashMap<>();
-        proportionControls.forEach((key, slider) -> {
-            double rounded = Math.round(slider.getValue() * 1000.0) / 1000.0;
-            values.put(key, rounded);
-        });
-        return values;
-    }
-
-    private void applyCurrentProportions() {
-        if (modelManipulator == null) {
-            return;
+    private boolean nodeHasUVs(Node node) {
+        if (node instanceof MeshView mv && mv.getMesh() instanceof TriangleMesh tm) {
+            return tm.getTexCoords().size() > 0;
         }
-        modelManipulator.apply(gatherCurrentProportions());
-        updateCurrentBounds();
+        if (node instanceof Parent parent) {
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                if (nodeHasUVs(child)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void updateTattooControlsState() {
@@ -1235,6 +1409,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         boolean hasSelection = tattooWorkspace.selected().isPresent();
         boolean hasHistory = !tattooHistory.isEmpty();
         boolean slidersEnabled = placementEnabled && hasSelection;
+        TattooPreset selectedPreset = selectedHistoryPreset();
         if (loadTattooButton != null) {
             loadTattooButton.setDisable(!modelHasUVs);
         }
@@ -1258,6 +1433,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         if (deleteTattooButton != null) {
             deleteTattooButton.setDisable(!hasSelection);
+        }
+        if (removeBackgroundButton != null) {
+            removeBackgroundButton.setDisable(selectedPreset == null);
         }
     }
 
@@ -1603,6 +1781,34 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
         }
         return buffered;
+    }
+
+    private Image removeBackground(Image source) {
+        if (source == null) {
+            return null;
+        }
+        PixelReader reader = source.getPixelReader();
+        if (reader == null) {
+            return null;
+        }
+        int width = (int) Math.max(1, Math.round(source.getWidth()));
+        int height = (int) Math.max(1, Math.round(source.getHeight()));
+        WritableImage result = new WritableImage(width, height);
+        PixelWriter writer = result.getPixelWriter();
+        Color background = reader.getColor(0, 0);
+        double threshold = 0.18;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Color sample = reader.getColor(x, y);
+                double diff = Math.sqrt(colorDistanceSq(sample, background));
+                if (diff < threshold) {
+                    writer.setColor(x, y, new Color(sample.getRed(), sample.getGreen(), sample.getBlue(), 0.0));
+                } else {
+                    writer.setColor(x, y, sample);
+                }
+            }
+        }
+        return result;
     }
 
     private double clamp(double value, double min, double max) {

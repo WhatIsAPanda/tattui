@@ -26,7 +26,6 @@
   -fx-text-fill: #000000;
 }
 
-
 .combo-box,
 .text-field {
   -fx-background-color: #4b4b4b;
@@ -56,7 +55,7 @@
 
 .toolbar {
   -fx-background-color: #0d0d0d;
-  -fx-border-color: transparent transparent #ffffff transparent;
+  -fx-border-color: transparent transparent transparent transparent;
   -fx-border-width: 0 0 1 0;
   -fx-effect: none;
 }
@@ -101,7 +100,30 @@
 .lock-aspect-toggle:selected,
 .lock-aspect-toggle:focused:selected {
   -fx-border-color: #ffffff;
+  -fx-border-width: 2;
   -fx-background-color: linear-gradient(#2a2a2a, #0b0b0b);
+}
+
+.slider .thumb {
+  -fx-border-color: rgba(255, 255, 255, 0.9);
+  -fx-border-width: 1;
+  -fx-border-radius: 10;
+  -fx-background-radius: 10;
+}
+
+.skin-tone-chip {
+  -fx-background-radius: 6;
+  -fx-border-radius: 6;
+  -fx-border-color: rgba(255, 255, 255, 0.3);
+  -fx-border-width: 1;
+  -fx-pref-width: 34;
+  -fx-pref-height: 22;
+  -fx-padding: 0;
+}
+
+.skin-tone-chip:selected {
+  -fx-border-color: #ffffff;
+  -fx-border-width: 2;
 }
 
 .root,

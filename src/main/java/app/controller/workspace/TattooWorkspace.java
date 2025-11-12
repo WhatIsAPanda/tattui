@@ -5,6 +5,8 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -20,13 +22,17 @@ import java.util.function.UnaryOperator;
 public final class TattooWorkspace {
     private final List<Tattoo> tattoos = new ArrayList<>();
     private final List<PhongMaterial> materials = new ArrayList<>();
+    private Color skinTone = Color.WHITE;
 
     private int selectedIndex = -1;
     private Image pendingImage;
-    private Image baseTexture;
+    private Image baseTemplate;
+    private WritableImage tintedBase;
     private Canvas paintCanvas;
     private GraphicsContext graphics;
     private WritableImage renderedTexture;
+    private int canvasWidth;
+    private int canvasHeight;
 
     public void configureMaterials(List<PhongMaterial> mats) {
         materials.clear();
@@ -39,24 +45,35 @@ public final class TattooWorkspace {
     }
 
     public void configureSurface(Image baseTexture, double width, double height) {
-        this.baseTexture = baseTexture;
+        this.canvasWidth = (int) Math.max(1, Math.round(width));
+        this.canvasHeight = (int) Math.max(1, Math.round(height));
+        this.baseTemplate = baseTexture != null ? baseTexture : createSolidTemplate(canvasWidth, canvasHeight, Color.rgb(225, 200, 180));
         this.paintCanvas = new Canvas(width, height);
         this.graphics = paintCanvas.getGraphicsContext2D();
-        this.renderedTexture = new WritableImage(
-            (int) Math.max(1, Math.round(width)),
-            (int) Math.max(1, Math.round(height))
-        );
+        this.renderedTexture = new WritableImage(canvasWidth, canvasHeight);
+        rebuildTintedBase();
         repaint();
     }
 
     public void clearSurface() {
-        baseTexture = null;
+        baseTemplate = null;
+        tintedBase = null;
         paintCanvas = null;
         graphics = null;
         renderedTexture = null;
         pendingImage = null;
         clearAllTattoos();
         paintMaterials(null);
+    }
+
+    public void updateSkinTone(Color tint) {
+        Color next = tint != null ? tint : Color.WHITE;
+        if (Objects.equals(next, this.skinTone)) {
+            return;
+        }
+        this.skinTone = next;
+        rebuildTintedBase();
+        repaint();
     }
 
     public boolean isPlacementAvailable() {
@@ -160,8 +177,11 @@ public final class TattooWorkspace {
         graphics.setGlobalBlendMode(BlendMode.SRC_OVER);
         graphics.setGlobalAlpha(1.0);
         graphics.clearRect(0, 0, width, height);
-        if (baseTexture != null) {
-            graphics.drawImage(baseTexture, 0, 0, width, height);
+        if (tintedBase != null) {
+            graphics.drawImage(tintedBase, 0, 0, width, height);
+        } else {
+            graphics.setFill(skinTone);
+            graphics.fillRect(0, 0, width, height);
         }
 
         for (Tattoo tattoo : tattoos) {
@@ -177,7 +197,8 @@ public final class TattooWorkspace {
 
             graphics.save();
             graphics.translate(px, py);
-            graphics.rotate(tattoo.rotation());
+            graphics.scale(1, -1);
+            graphics.rotate(-tattoo.rotation());
             graphics.setGlobalAlpha(tattoo.alpha());
             graphics.setGlobalBlendMode(BlendMode.SRC_OVER);
             graphics.drawImage(tattoo.image(), -drawW / 2.0, -drawH / 2.0, drawW, drawH);
@@ -193,7 +214,7 @@ public final class TattooWorkspace {
     }
 
     public Image baseTexture() {
-        return baseTexture;
+        return tintedBase;
     }
 
     public List<Tattoo> exportableTattoos() {
@@ -214,6 +235,46 @@ public final class TattooWorkspace {
             pm.setDiffuseMap(texture);
             if (texture != null) {
                 pm.setDiffuseColor(Color.WHITE);
+            }
+        }
+    }
+
+    private void rebuildTintedBase() {
+        if (canvasWidth <= 0 || canvasHeight <= 0) {
+            return;
+        }
+        PixelReader reader = baseTemplate != null ? baseTemplate.getPixelReader() : null;
+        WritableImage tinted = new WritableImage(canvasWidth, canvasHeight);
+        PixelWriter writer = tinted.getPixelWriter();
+        if (reader == null) {
+            fillSolid(writer, canvasWidth, canvasHeight, skinTone);
+        } else {
+            for (int y = 0; y < canvasHeight; y++) {
+                for (int x = 0; x < canvasWidth; x++) {
+                    Color sample = reader.getColor(x, y);
+                    Color tintedColor = Color.color(
+                        sample.getRed() * skinTone.getRed(),
+                        sample.getGreen() * skinTone.getGreen(),
+                        sample.getBlue() * skinTone.getBlue(),
+                        sample.getOpacity()
+                    );
+                    writer.setColor(x, y, tintedColor);
+                }
+            }
+        }
+        tintedBase = tinted;
+    }
+
+    private Image createSolidTemplate(int width, int height, Color fill) {
+        WritableImage image = new WritableImage(width, height);
+        fillSolid(image.getPixelWriter(), width, height, fill);
+        return image;
+    }
+
+    private void fillSolid(PixelWriter writer, int width, int height, Color fill) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                writer.setColor(x, y, fill);
             }
         }
     }
