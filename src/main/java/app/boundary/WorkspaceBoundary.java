@@ -223,6 +223,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private double tattooDragOffsetV;
     private boolean historyPlacementArmed;
     private boolean modelHasUVs;
+    private boolean modelProvidesBaseTexture;
 
     private final List<PhongMaterial> activeMaterials = new ArrayList<>();
 
@@ -885,7 +886,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (!root3D.getChildren().contains(lightingSystem.node())) {
             root3D.getChildren().add(lightingSystem.node());
         }
-        lightingSystem.apply(lightingMode);
+        refreshLightingRig();
         softenSpecular(modelRoot);
 
         viewerPane.getChildren().setAll(subScene);
@@ -895,8 +896,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
         subScene.heightProperty().bind(viewerPane.heightProperty());
 
         if (rootPane != null) {
-            viewerPane.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.65));
+        viewerPane.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.65));
         }
+    }
+
+    private void refreshLightingRig() {
+        lightingSystem.reset();
+        lightingSystem.apply(lightingMode);
     }
 
     private void installInteractionHandlers() {
@@ -983,7 +989,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (lightingModeCombo != null) {
             lightingModeCombo.setValue(lightingMode);
         }
-        lightingSystem.apply(lightingMode);
     }
 
     private void applySkinToneToMaterials() {
@@ -1230,6 +1235,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private void applyModel(ObjLoader.LoadedModel loadedModel) {
         adjustingSliders = true;
         try {
+            tattooWorkspace.clearSurface();
+            tattooWorkspace.resetMaterials();
+            historyPlacementArmed = false;
+            if (tattooHistoryToggleGroup != null) {
+                tattooHistoryToggleGroup.selectToggle(null);
+            }
+
             partRoot.getTransforms().clear();
             for (Group group : partGroups.values()) {
                 group.getChildren().clear();
@@ -1266,6 +1278,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             updateCurrentBounds();
             cameraRig.reset();
             softenSpecular(modelRoot);
+            refreshLightingRig();
         } finally {
             adjustingSliders = false;
         }
@@ -1297,6 +1310,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private void initializeTattooPipeline() {
+        modelProvidesBaseTexture = false;
         List<PhongMaterial> materials = new ArrayList<>();
         collectMaterials(modelRoot, materials);
         activeMaterials.clear();
@@ -1335,6 +1349,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             baseTexture = neutral;
         } else {
             baseTexture = diffuse;
+            modelProvidesBaseTexture = true;
         }
 
         double texWidth = Math.max(1.0, baseTexture.getWidth());
@@ -1654,7 +1669,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         Path baseDir = metadataPath.getParent();
         Image overrideBase = loadImage(baseDir, props.getProperty("baseTexture"));
-        if (overrideBase != null) {
+        if (overrideBase != null && !modelProvidesBaseTexture) {
             double width = Math.max(1.0, overrideBase.getWidth());
             double height = Math.max(1.0, overrideBase.getHeight());
             tattooWorkspace.configureSurface(overrideBase, width, height);
