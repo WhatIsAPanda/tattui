@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -240,6 +241,7 @@ public final class ObjLoader {
         }
         int[] faces = buildFaces(obj, faceIndices);
         mesh.getFaces().setAll(faces);
+        smoothAll(mesh);
 
         MeshView view = new MeshView(mesh);
         view.setCullFace(CullFace.BACK);
@@ -310,6 +312,13 @@ public final class ObjLoader {
             array[i] = faces.get(i);
         }
         return array;
+    }
+
+    private static void smoothAll(TriangleMesh mesh) {
+        int faceCount = mesh.getFaces().size() / 6;
+        int[] groups = new int[faceCount];
+        Arrays.fill(groups, 0x00000001);
+        mesh.getFaceSmoothingGroups().setAll(groups);
     }
 
     private static float[] flatten(List<float[]> data) {
