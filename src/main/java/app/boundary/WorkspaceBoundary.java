@@ -577,7 +577,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private TitledPane createDropdownPanel(String title, Node content) {
         TitledPane pane = new TitledPane(title, content);
         pane.setCollapsible(true);
-        pane.setExpanded(false);
+        pane.setExpanded(true);
         pane.setFocusTraversable(false);
         pane.getStyleClass().add("sidebar-titled-pane");
         pane.setMaxWidth(Double.MAX_VALUE);
