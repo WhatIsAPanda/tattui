@@ -26,9 +26,6 @@
          </BorderPane.margin>
         </ScrollPane>
     </right>
-   <left>
-      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
-   </left>
    <top>
         <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-border-color: transparent transparent white transparent; -border-width: 0 0 1 0;" styleClass="toolbar" BorderPane.alignment="CENTER">
             <padding>
