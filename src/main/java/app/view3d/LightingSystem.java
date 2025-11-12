@@ -31,8 +31,13 @@ public final class LightingSystem {
         return rig;
     }
 
+    public void reset() {
+        current = null;
+        rig.getChildren().clear();
+    }
+
     public void apply(Mode mode) {
-        if (mode == null || mode == current) {
+        if (mode == null) {
             return;
         }
         current = mode;

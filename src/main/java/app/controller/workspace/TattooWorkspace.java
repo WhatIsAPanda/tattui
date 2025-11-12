@@ -128,11 +128,7 @@ public final class TattooWorkspace {
             return false;
         }
         tattoos.remove(selectedIndex);
-        if (tattoos.isEmpty()) {
-            selectedIndex = -1;
-        } else {
-            selectedIndex = Math.min(selectedIndex, tattoos.size() - 1);
-        }
+        selectedIndex = -1;
         repaint();
         return true;
     }
@@ -214,6 +210,10 @@ public final class TattooWorkspace {
     }
 
     public Image baseTexture() {
+        return baseTemplate;
+    }
+
+    public Image tintedBase() {
         return tintedBase;
     }
 
