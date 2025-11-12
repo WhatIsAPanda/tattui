@@ -978,7 +978,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         });
     }
 
-    private void initializeSkinToneFromMaterials(List<PhongMaterial> materials) {
+    private void initializeSkinToneFromMaterials() {
         Color selectedTone = SKIN_TONE_PALETTE.isEmpty() ? DEFAULT_SKIN_TONE : SKIN_TONE_PALETTE.get(SKIN_TONE_PALETTE.size() - 1);
         skinTone.set(selectedTone);
         applySkinToneToMaterials();
@@ -1315,7 +1315,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         collectMaterials(modelRoot, materials);
         activeMaterials.clear();
         activeMaterials.addAll(materials);
-        initializeSkinToneFromMaterials(materials);
+        initializeSkinToneFromMaterials();
         tattooWorkspace.configureMaterials(materials);
         tattooWorkspace.clearPendingTattoo();
         tattooWorkspace.clearAllTattoos();
