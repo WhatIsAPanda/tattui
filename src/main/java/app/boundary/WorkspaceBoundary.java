@@ -1035,40 +1035,6 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
     }
 
-    private Color toneForPosition(double position) {
-        double clamped = clamp(position, 0.0, 1.0);
-        if (SKIN_TONE_PALETTE.size() == 1) {
-            return SKIN_TONE_PALETTE.get(0);
-        }
-        double scaled = clamped * (SKIN_TONE_PALETTE.size() - 1);
-        int index = (int) Math.floor(scaled);
-        int nextIndex = Math.min(index + 1, SKIN_TONE_PALETTE.size() - 1);
-        double fraction = scaled - index;
-        if (nextIndex == index) {
-            return SKIN_TONE_PALETTE.get(index);
-        }
-        Color start = SKIN_TONE_PALETTE.get(index);
-        Color end = SKIN_TONE_PALETTE.get(nextIndex);
-        return start.interpolate(end, fraction);
-    }
-
-    private double positionForColor(Color color) {
-        if (color == null || SKIN_TONE_PALETTE.isEmpty()) {
-            return 0.5;
-        }
-        double best = 0.0;
-        double bestDiff = Double.MAX_VALUE;
-        for (int i = 0; i < SKIN_TONE_PALETTE.size(); i++) {
-            Color candidate = SKIN_TONE_PALETTE.get(i);
-            double diff = colorDistanceSq(candidate, color);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                best = (double) i / Math.max(1, SKIN_TONE_PALETTE.size() - 1);
-            }
-        }
-        return best;
-    }
-
     private static double colorDistanceSq(Color a, Color b) {
         double dr = a.getRed() - b.getRed();
         double dg = a.getGreen() - b.getGreen();
