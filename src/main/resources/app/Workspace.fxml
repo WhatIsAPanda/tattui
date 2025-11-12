@@ -12,22 +12,6 @@
 
 <BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.WorkspaceBoundary">
 
-    <top>
-        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="50.0" spacing="10.0" styleClass="toolbar">
-            <padding>
-                <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
-            </padding>
-            <children>
-                <Button fx:id="loadModelButton" text="Load Model"/>
-                <Button fx:id="resetViewButton" text="Reset View"/>
-                <Button fx:id="exportPreviewButton" text="Export Preview"/>
-                <Button fx:id="exportTattooedModelButton" text="Export Model"/>
-                <Label text="Lighting:"/>
-                <ComboBox fx:id="lightingCombo" prefWidth="150.0"/>
-            </children>
-        </HBox>
-    </top>
-
     <center>
         <StackPane fx:id="viewerPane" styleClass="workspace-viewer" BorderPane.alignment="CENTER" />
     </center>
@@ -37,7 +21,31 @@
             <content>
                 <VBox fx:id="controlsContainer" alignment="TOP_LEFT" spacing="12.0" styleClass="control-pane" />
             </content>
+         <BorderPane.margin>
+            <Insets top="-1.0" />
+         </BorderPane.margin>
         </ScrollPane>
     </right>
+   <left>
+      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
+   </left>
+   <top>
+        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-border-color: transparent transparent white transparent; -border-width: 0 0 1 0;" styleClass="toolbar" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="11.0" left="16.0" right="16.0" top="11.0" />
+            </padding>
+            <children>
+                <Button fx:id="loadModelButton" text="Load Model" />
+                <Button fx:id="resetViewButton" text="Reset View" />
+                <Button fx:id="exportPreviewButton" text="Export Preview" />
+                <Button fx:id="exportTattooedModelButton" text="Export Model" />
+                <Label text="Lighting:" />
+                <ComboBox fx:id="lightingCombo" prefWidth="150.0" />
+            </children>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+        </HBox>
+   </top>
 
 </BorderPane>

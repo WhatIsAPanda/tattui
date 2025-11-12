@@ -15,7 +15,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.MapController">
 
     <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="8" style="-fx-padding:8;" BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_LEFT" prefHeight="51.0" spacing="8" style="-fx-padding: 8; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
             <TextField fx:id="searchField" promptText="Search shops, artists, cities" HBox.hgrow="ALWAYS">
             <HBox.margin>
                <Insets />
@@ -42,6 +42,9 @@
         <VBox maxWidth="260.0" minWidth="260.0" prefWidth="260.0" spacing="6" style="-fx-padding:8; -fx-min-width:260;">
             <Label text="Results" />
             <ListView fx:id="resultsList" VBox.vgrow="ALWAYS" />
+         <BorderPane.margin>
+            <Insets top="-1.0" />
+         </BorderPane.margin>
         </VBox>
     </right>
 
