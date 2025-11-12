@@ -21,7 +21,7 @@ public class Main extends Application {
             Objects.requireNonNull(Main.class.getResource("/app/css/main.css")).toExternalForm()
         );
 
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/app/view/icons/code.png")));
+        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/icons/code.png")));
         stage.setTitle("Tattui");
         stage.setScene(scene);
         stage.show();

@@ -938,7 +938,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private void handleWorkspaceKey(KeyEvent event) {
-        if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
+        if (event.getCode() == KeyCode.DELETE) {
             handleDeleteTattoo();
             event.consume();
             return;

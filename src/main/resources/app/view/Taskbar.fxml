@@ -23,7 +23,7 @@
                 <Button fx:id="logoButton" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#handleClick" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" StackPane.alignment="CENTER">
                     <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
-                            <image><Image url="@../icons/tattui.png" /></image>
+                            <image><Image url="@/icons/tattui.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Home" /></tooltip>
@@ -40,7 +40,7 @@
                 <Button fx:id="workspaceButton" accessibleText="Workspace" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@../icons/workspace.png" /></image>
+                            <image><Image url="@/icons/workspace.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Workspace" /></tooltip>
@@ -50,7 +50,7 @@
                 <Button fx:id="galleryButton" accessibleText="Gallery" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@../icons/gallery.png" /></image>
+                            <image><Image url="@/icons/gallery.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Gallery" /></tooltip>
@@ -60,7 +60,7 @@
                 <Button fx:id="mapButton" accessibleText="Map" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@../icons/map.png" /></image>
+                            <image><Image url="@/icons/map.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Map" /></tooltip>
@@ -73,7 +73,7 @@
 
         <!-- Center symbol -->
         <ImageView fitHeight="200.0" fitWidth="40.0" preserveRatio="true" scaleY="2.0" VBox.vgrow="NEVER">
-            <image><Image url="@../icons/sigal.png" /></image>
+            <image><Image url="@/icons/sigal.png" /></image>
         </ImageView>
 
         <!-- Bottom section -->
@@ -84,7 +84,7 @@
                 <Button fx:id="loginButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image><Image url="@../icons/login.png" /></image>
+                            <image><Image url="@/icons/login.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Login" /></tooltip>
@@ -96,7 +96,7 @@
                 <Button fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image><Image url="@../icons/settings.png" /></image>
+                            <image><Image url="@/icons/settings.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Settings" /></tooltip>
