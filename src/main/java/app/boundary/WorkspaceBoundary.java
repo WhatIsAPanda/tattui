@@ -36,6 +36,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
@@ -195,6 +196,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     @FXML private Button exportPreviewButton;
     @FXML private Button exportProjectButton;
     private ComboBox<LightingSystem.Mode> lightingModeCombo;
+    @FXML private SplitPane contentSplit;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
     @FXML private StackPane viewerPane;
@@ -251,6 +253,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         setupToolbar();
         setupControlPanel();
         setupViewer();
+        configureSplitPane();
         if (rootPane != null) {
             rootPane.addEventFilter(KeyEvent.KEY_PRESSED, this::handleWorkspaceKey);
             rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -342,6 +345,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         controlsContainer.setSpacing(12);
         controlsContainer.setPadding(new Insets(16));
         controlsContainer.setFillWidth(true);
+        controlsContainer.setMinWidth(0);
 
         loadTattooButton = new Button("Load Tattoo");
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
@@ -443,13 +447,12 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         if (controlScroll != null) {
             controlScroll.setFitToWidth(true);
+            controlScroll.setFitToHeight(true);
             controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             controlScroll.setPadding(Insets.EMPTY);
-            if (rootPane != null) {
-                controlScroll.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
-                controlScroll.maxWidthProperty().bind(rootPane.widthProperty().multiply(0.35));
-            }
+            controlScroll.setMinWidth(0);
+            controlScroll.setMaxWidth(Double.MAX_VALUE);
         }
 
         refreshTattooHistoryGallery();
@@ -1244,12 +1247,26 @@ public final class WorkspaceBoundary implements WorkspaceController {
         viewerPane.getChildren().setAll(subScene);
         StackPane.setMargin(subScene, Insets.EMPTY);
 
+        viewerPane.setMinSize(0, 0);
+        viewerPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         subScene.widthProperty().bind(viewerPane.widthProperty());
         subScene.heightProperty().bind(viewerPane.heightProperty());
+    }
 
-        if (rootPane != null) {
-        viewerPane.prefWidthProperty().bind(rootPane.widthProperty().multiply(0.65));
+    private void configureSplitPane() {
+        if (contentSplit == null) {
+            return;
         }
+        contentSplit.setMinSize(0, 0);
+        contentSplit.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        contentSplit.setPickOnBounds(false);
+        if (viewerPane != null) {
+            SplitPane.setResizableWithParent(viewerPane, true);
+        }
+        if (controlScroll != null) {
+            SplitPane.setResizableWithParent(controlScroll, true);
+        }
+        Platform.runLater(() -> contentSplit.setDividerPositions(0.68));
     }
 
     private void refreshLightingRig() {
