@@ -122,7 +122,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private static final int MAX_TATTOO_HISTORY = 12;
     private static final Color DEFAULT_SKIN_TONE = Color.rgb(224, 172, 105);
     private static final List<Color> SKIN_TONE_PALETTE = List.of(
-        Color.rgb(110, 66, 24),   // Deepest
+        Color.rgb(110, 66, 24),   // Darkest
         Color.rgb(120, 72, 28),
         Color.rgb(133, 80, 32),
         Color.rgb(146, 90, 36),
@@ -152,6 +152,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
     );
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
+    public static final String VERSION = "version";
+    public static final String DOT_IMAGE = ".image";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -855,24 +857,51 @@ public final class WorkspaceBoundary implements WorkspaceController {
         Set<String> referenced = new LinkedHashSet<>();
         List<CopiedMaterial> copiedMaterials = new ArrayList<>();
         for (String line : lines) {
-            String trimmed = line.trim();
-            if (!trimmed.toLowerCase(Locale.ROOT).startsWith("mtllib")) {
-                continue;
-            }
-            String[] tokens = trimmed.split("\\s+");
-            for (int i = 1; i < tokens.length; i++) {
-                String reference = tokens[i].trim();
-                if (reference.isEmpty() || !referenced.add(reference)) {
-                    continue;
-                }
-                CopiedMaterial copied = copyMaterialFile(sourceParent, targetDir, reference);
-                if (copied != null) {
-                    copiedMaterials.add(copied);
-                }
-            }
+            processMaterialDirective(line, referenced, copiedMaterials, sourceParent, targetDir);
         }
-        for (CopiedMaterial material : copiedMaterials) {
-            copyMaterialTextures(material, targetDir);
+        copyMaterialTextures(copiedMaterials, targetDir);
+    }
+
+    private void processMaterialDirective(
+        String line,
+        Set<String> referenced,
+        List<CopiedMaterial> copiedMaterials,
+        Path sourceParent,
+        Path targetDir
+    ) throws IOException {
+        if (!isMtllibDirective(line)) {
+            return;
+        }
+        String[] tokens = line.trim().split("\\s+");
+        for (int i = 1; i < tokens.length; i++) {
+            addMaterialReference(tokens[i], referenced, copiedMaterials, sourceParent, targetDir);
+        }
+    }
+
+    private boolean isMtllibDirective(String line) {
+        return line != null && line.trim().toLowerCase(Locale.ROOT).startsWith("mtllib");
+    }
+
+    private void addMaterialReference(
+        String token,
+        Set<String> referenced,
+        List<CopiedMaterial> copiedMaterials,
+        Path sourceParent,
+        Path targetDir
+    ) throws IOException {
+        String reference = token.trim();
+        if (reference.isEmpty() || !referenced.add(reference)) {
+            return;
+        }
+        CopiedMaterial copied = copyMaterialFile(sourceParent, targetDir, reference);
+        if (copied != null) {
+            copiedMaterials.add(copied);
+        }
+    }
+
+    private void copyMaterialTextures(List<CopiedMaterial> materials, Path exportRoot) throws IOException {
+        for (CopiedMaterial material : materials) {
+            copyMaterialTextures(material, exportRoot);
         }
     }
 
@@ -908,20 +937,34 @@ public final class WorkspaceBoundary implements WorkspaceController {
         List<String> lines = Files.readAllLines(source, StandardCharsets.UTF_8);
         Set<String> copied = new LinkedHashSet<>();
         for (String line : lines) {
-            String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                continue;
+            String reference = resolveTextureReference(line, copied);
+            if (reference != null) {
+                copyRelatedResource(sourceDir, targetDir, exportRoot, reference);
             }
-            String lower = trimmed.toLowerCase(Locale.ROOT);
-            if (!(lower.startsWith("map_") || lower.startsWith("bump") || lower.startsWith("disp") || lower.startsWith("refl"))) {
-                continue;
-            }
-            String reference = extractTextureReference(trimmed);
-            if (reference == null || !copied.add(reference)) {
-                continue;
-            }
-            copyRelatedResource(sourceDir, targetDir, exportRoot, reference);
         }
+    }
+
+    private String resolveTextureReference(String line, Set<String> copied) {
+        if (line == null) {
+            return null;
+        }
+        String trimmed = line.trim();
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+            return null;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        boolean textureDirective = lower.startsWith("map_")
+            || lower.startsWith("bump")
+            || lower.startsWith("disp")
+            || lower.startsWith("refl");
+        if (!textureDirective) {
+            return null;
+        }
+        String reference = extractTextureReference(trimmed);
+        if (reference == null || !copied.add(reference)) {
+            return null;
+        }
+        return reference;
     }
 
     private void copyRelatedResource(Path sourceBase, Path targetBase, Path exportRoot, String reference) throws IOException {
@@ -1907,7 +1950,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         Path baseTexturePath
     ) throws IOException {
         Properties props = new Properties();
-        props.setProperty("version", "2");
+        props.setProperty(VERSION, "2");
         Path baseDir = metadataPath.getParent();
         if (tattooDir != null) {
             Files.createDirectories(tattooDir);
@@ -1931,7 +1974,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
                 props.setProperty(prefix + ".alpha", Double.toString(tattoo.alpha()));
                 Path imagePath = appliedDir.resolve(String.format("tattoo-%02d.png", i + 1));
                 writeTattooImage(tattoo.image(), imagePath);
-                props.setProperty(prefix + ".image", relativize(baseDir, imagePath));
+                props.setProperty(prefix + DOT_IMAGE, relativize(baseDir, imagePath));
             }
         }
         List<TattooPreset> historyToPersist = history != null ? history : List.of();
@@ -1945,7 +1988,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             props.setProperty(prefix + ".label", label);
             Path imagePath = historyDir.resolve(String.format("history-%02d.png", i + 1));
             writeTattooImage(preset.image(), imagePath);
-            props.setProperty(prefix + ".image", relativize(baseDir, imagePath));
+            props.setProperty(prefix + DOT_IMAGE, relativize(baseDir, imagePath));
         }
         if (metadataPath.getParent() != null) {
             Files.createDirectories(metadataPath.getParent());
@@ -1995,51 +2038,76 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (!Files.exists(metadataPath)) {
             return;
         }
-        Properties props = new Properties();
-        try (InputStream input = Files.newInputStream(metadataPath)) {
-            props.load(input);
+        Properties props;
+        try {
+            props = readTattooProperties(metadataPath);
         } catch (IOException ex) {
             showError("Failed to load tattoo metadata", ex);
             return;
         }
-        int version = parseInt(props.getProperty("version"), 1);
         Path baseDir = metadataPath.getParent();
-        Image overrideBase = loadImage(baseDir, props.getProperty("baseTexture"));
-        if (overrideBase != null && !modelProvidesBaseTexture) {
-            double width = Math.max(1.0, overrideBase.getWidth());
-            double height = Math.max(1.0, overrideBase.getHeight());
-            tattooWorkspace.configureSurface(overrideBase, width, height);
+        applyBaseTextureOverride(props, baseDir);
+        tattooWorkspace.replaceTattoos(readAppliedTattoos(props, baseDir));
+        int version = parseInt(props.getProperty(VERSION), 1);
+        List<TattooPreset> history = version >= 2 ? loadTattooHistory(props, baseDir) : List.of();
+        restoreTattooHistory(history);
+        updateTattooControlsState();
+    }
+
+    private Properties readTattooProperties(Path metadataPath) throws IOException {
+        Properties props = new Properties();
+        try (InputStream input = Files.newInputStream(metadataPath)) {
+            props.load(input);
         }
+        return props;
+    }
+
+    private void applyBaseTextureOverride(Properties props, Path baseDir) {
+        if (modelProvidesBaseTexture) {
+            return;
+        }
+        Image overrideBase = loadImage(baseDir, props.getProperty("baseTexture"));
+        if (overrideBase == null) {
+            return;
+        }
+        double width = Math.max(1.0, overrideBase.getWidth());
+        double height = Math.max(1.0, overrideBase.getHeight());
+        tattooWorkspace.configureSurface(overrideBase, width, height);
+    }
+
+    private List<Tattoo> readAppliedTattoos(Properties props, Path baseDir) {
         int count = parseInt(props.getProperty("tattoo.count"), 0);
         List<Tattoo> restored = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String prefix = "tattoo." + i;
-            double u = parseDouble(props.getProperty(prefix + ".u"), 0.5);
-            double v = parseDouble(props.getProperty(prefix + ".v"), 0.5);
-            double legacyScale = parseDouble(props.getProperty(prefix + ".scale"), DEFAULT_TATTOO_SCALE);
-            double widthScale = parseDouble(props.getProperty(prefix + ".widthScale"), Double.NaN);
-            double heightScale = parseDouble(props.getProperty(prefix + ".heightScale"), Double.NaN);
-            if (!Double.isFinite(widthScale) || widthScale <= 0.0) {
-                widthScale = legacyScale;
+            Tattoo tattoo = readTattooEntry(props, baseDir, i);
+            if (tattoo != null) {
+                restored.add(tattoo);
             }
-            if (!Double.isFinite(heightScale) || heightScale <= 0.0) {
-                heightScale = legacyScale;
-            }
-            double rotation = parseDouble(props.getProperty(prefix + ".rotation"), 0.0);
-            double alpha = parseDouble(props.getProperty(prefix + ".alpha"), 1.0);
-            Image tattooImage = loadImage(baseDir, props.getProperty(prefix + ".image"));
-            if (tattooImage == null) {
-                continue;
-            }
-            restored.add(new Tattoo(u, v, tattooImage, widthScale, heightScale, rotation, alpha));
         }
-        tattooWorkspace.replaceTattoos(restored);
-        if (version >= 2) {
-            restoreTattooHistory(loadTattooHistory(props, baseDir));
-        } else {
-            restoreTattooHistory(List.of());
+        return restored;
+    }
+
+    private Tattoo readTattooEntry(Properties props, Path baseDir, int index) {
+        String prefix = "tattoo." + index;
+        Image tattooImage = loadImage(baseDir, props.getProperty(prefix + DOT_IMAGE));
+        if (tattooImage == null) {
+            return null;
         }
-        updateTattooControlsState();
+        double u = parseDouble(props.getProperty(prefix + ".u"), 0.5);
+        double v = parseDouble(props.getProperty(prefix + ".v"), 0.5);
+        double widthScale = resolvedScale(props, prefix + ".widthScale", prefix + ".scale");
+        double heightScale = resolvedScale(props, prefix + ".heightScale", prefix + ".scale");
+        double rotation = parseDouble(props.getProperty(prefix + ".rotation"), 0.0);
+        double alpha = parseDouble(props.getProperty(prefix + ".alpha"), 1.0);
+        return new Tattoo(u, v, tattooImage, widthScale, heightScale, rotation, alpha);
+    }
+
+    private double resolvedScale(Properties props, String scaleKey, String legacyKey) {
+        double candidate = parseDouble(props.getProperty(scaleKey), Double.NaN);
+        if (Double.isFinite(candidate) && candidate > 0.0) {
+            return candidate;
+        }
+        return parseDouble(props.getProperty(legacyKey), DEFAULT_TATTOO_SCALE);
     }
 
     private List<TattooPreset> loadTattooHistory(Properties props, Path baseDir) {
@@ -2047,7 +2115,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         List<TattooPreset> presets = new ArrayList<>();
         for (int i = 0; i < historyCount && presets.size() < MAX_TATTOO_HISTORY; i++) {
             String prefix = "history." + i;
-            Image image = loadImage(baseDir, props.getProperty(prefix + ".image"));
+            Image image = loadImage(baseDir, props.getProperty(prefix + DOT_IMAGE));
             if (image == null) {
                 continue;
             }
@@ -2091,9 +2159,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private WorkspacePreferences captureWorkspacePreferences() {
-        CameraState camera = cameraRig != null ? cameraRig.snapshot() : null;
+        CameraState camera2 = cameraRig != null ? cameraRig.snapshot() : null;
         Color tone = skinTone.get();
-        return new WorkspacePreferences(camera, tone, lightingMode);
+        return new WorkspacePreferences(camera2, tone, lightingMode);
     }
 
     private void writeWorkspacePreferences(Path preferencesPath, WorkspacePreferences preferences) throws IOException {
@@ -2101,18 +2169,18 @@ public final class WorkspaceBoundary implements WorkspaceController {
             return;
         }
         Properties props = new Properties();
-        props.setProperty("version", "1");
+        props.setProperty(VERSION, "1");
         if (preferences.camera() != null) {
-            CameraState camera = preferences.camera();
-            props.setProperty("camera.yaw", Double.toString(camera.yaw()));
-            props.setProperty("camera.pitch", Double.toString(camera.pitch()));
-            props.setProperty("camera.distance", Double.toString(camera.distance()));
-            props.setProperty("camera.targetX", Double.toString(camera.targetX()));
-            props.setProperty("camera.targetY", Double.toString(camera.targetY()));
-            props.setProperty("camera.targetZ", Double.toString(camera.targetZ()));
-            props.setProperty("camera.panX", Double.toString(camera.panX()));
-            props.setProperty("camera.panY", Double.toString(camera.panY()));
-            props.setProperty("camera.panZ", Double.toString(camera.panZ()));
+            CameraState camera2 = preferences.camera();
+            props.setProperty("camera.yaw", Double.toString(camera2.yaw()));
+            props.setProperty("camera.pitch", Double.toString(camera2.pitch()));
+            props.setProperty("camera.distance", Double.toString(camera2.distance()));
+            props.setProperty("camera.targetX", Double.toString(camera2.targetX()));
+            props.setProperty("camera.targetY", Double.toString(camera2.targetY()));
+            props.setProperty("camera.targetZ", Double.toString(camera2.targetZ()));
+            props.setProperty("camera.panX", Double.toString(camera2.panX()));
+            props.setProperty("camera.panY", Double.toString(camera2.panY()));
+            props.setProperty("camera.panZ", Double.toString(camera2.panZ()));
         }
         if (preferences.skinTone() != null) {
             props.setProperty("skinTone", colorToHex(preferences.skinTone()));
