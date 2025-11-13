@@ -208,6 +208,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     private Button loadTattooButton;
     private Button removeBackgroundButton;
+    private Button invertTattooButton;
     private FlowPane tattooHistoryGallery;
     private ToggleGroup tattooHistoryToggleGroup;
     private ScrollPane tattooHistoryScroll;
@@ -333,7 +334,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
         removeBackgroundButton = new Button("Remove BG");
         removeBackgroundButton.setOnAction(e -> handleRemoveBackground());
-        HBox tattooLoadRow = new HBox(10, loadTattooButton, createSpacer(), removeBackgroundButton);
+        invertTattooButton = new Button("Invert Colors");
+        invertTattooButton.setOnAction(e -> handleInvertTattoo());
+        HBox tattooLoadRow = new HBox(10, loadTattooButton, createSpacer(), removeBackgroundButton, invertTattooButton);
         tattooLoadRow.setFillHeight(true);
 
         lightingModeCombo = new ComboBox<>();
@@ -627,6 +630,25 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         String label = preset.label() + " (No BG)";
         rememberTattoo(label, processed);
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
+        updateTattooControlsState();
+    }
+
+    private void handleInvertTattoo() {
+        TattooPreset preset = selectedHistoryPreset();
+        if (preset == null || preset.image() == null) {
+            return;
+        }
+        Image inverted = invertImageColors(preset.image());
+        if (inverted == null) {
+            return;
+        }
+        String label = preset.label() + " (Inverted)";
+        rememberTattoo(label, inverted);
         if (tattooHistoryToggleGroup != null) {
             tattooHistoryToggleGroup.selectToggle(null);
         }
@@ -1417,6 +1439,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (removeBackgroundButton != null) {
             removeBackgroundButton.setDisable(selectedPreset == null);
         }
+        if (invertTattooButton != null) {
+            invertTattooButton.setDisable(selectedPreset == null);
+        }
     }
 
     private void updateCurrentBounds() {
@@ -1789,6 +1814,28 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
         }
         return result;
+    }
+
+    private Image invertImageColors(Image source) {
+        if (source == null) {
+            return null;
+        }
+        PixelReader reader = source.getPixelReader();
+        if (reader == null) {
+            return null;
+        }
+        int width = (int) Math.max(1, Math.round(source.getWidth()));
+        int height = (int) Math.max(1, Math.round(source.getHeight()));
+        WritableImage inverted = new WritableImage(width, height);
+        PixelWriter writer = inverted.getPixelWriter();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Color color = reader.getColor(x, y);
+                Color negated = new Color(1.0 - color.getRed(), 1.0 - color.getGreen(), 1.0 - color.getBlue(), color.getOpacity());
+                writer.setColor(x, y, negated);
+            }
+        }
+        return inverted;
     }
 
     private double clamp(double value, double min, double max) {
