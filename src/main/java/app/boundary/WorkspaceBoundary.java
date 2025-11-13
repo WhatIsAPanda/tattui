@@ -3,6 +3,7 @@ package app.boundary;
 import app.controller.WorkspaceController;
 import app.controller.workspace.TattooWorkspace;
 import app.controller.workspace.WorkspaceCamera;
+import app.entity.CameraState;
 import app.entity.Tattoo;
 import app.loader.ObjLoader;
 import app.view3d.LightingSystem;
@@ -72,7 +73,6 @@ import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,9 +80,12 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -93,6 +96,10 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
@@ -183,9 +190,10 @@ public final class WorkspaceBoundary implements WorkspaceController {
     @FXML private BorderPane rootPane;
     @FXML private HBox toolbarBox;
     @FXML private Button loadModelButton;
+    @FXML private Button loadProjectButton;
     @FXML private Button resetViewButton;
     @FXML private Button exportPreviewButton;
-    @FXML private Button exportTattooedModelButton;
+    @FXML private Button exportProjectButton;
     private ComboBox<LightingSystem.Mode> lightingModeCombo;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
@@ -203,6 +211,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     private Stage primaryStage;
     private Path currentModelPath;
+    private Path extractedProjectDir;
 
     private final ObservableList<TattooPreset> tattooHistory = FXCollections.observableArrayList();
 
@@ -310,14 +319,17 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (loadModelButton != null) {
             loadModelButton.setOnAction(evt -> showLoadDialog(resolveStage()));
         }
+        if (loadProjectButton != null) {
+            loadProjectButton.setOnAction(evt -> handleLoadProject());
+        }
         if (resetViewButton != null) {
             resetViewButton.setOnAction(evt -> cameraRig.reset());
         }
         if (exportPreviewButton != null) {
             exportPreviewButton.setOnAction(evt -> handleExportPreview());
         }
-        if (exportTattooedModelButton != null) {
-            exportTattooedModelButton.setOnAction(evt -> handleExportTattooedModel());
+        if (exportProjectButton != null) {
+            exportProjectButton.setOnAction(evt -> handleExportProject());
         }
     }
 
@@ -702,6 +714,36 @@ public final class WorkspaceBoundary implements WorkspaceController {
         return true;
     }
 
+    private void handleLoadProject() {
+        Stage stage = resolveStage();
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Load Project");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Tattui Project Archive", "*.zip"));
+        File archive = chooser.showOpenDialog(stage);
+        if (archive == null) {
+            return;
+        }
+        Path extraction = null;
+        try {
+            extraction = extractProjectArchive(archive.toPath());
+            Path objPath = findFirstObj(extraction);
+            if (objPath == null) {
+                throw new IOException("Project archive does not contain an OBJ file.");
+            }
+            loadFromPath(objPath);
+            if (Objects.equals(currentModelPath, objPath)) {
+                replaceExtractedProjectDir(extraction);
+                extraction = null;
+            }
+        } catch (IOException ex) {
+            showError("Failed to load project archive: " + archive.getName(), ex);
+        } finally {
+            if (extraction != null) {
+                deleteRecursively(extraction);
+            }
+        }
+    }
+
     private void handleExportPreview() {
         if (viewerPane == null) {
             return;
@@ -729,7 +771,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
     }
 
-    private void handleExportTattooedModel() {
+    private void handleExportProject() {
         if (currentModelPath == null || !Files.exists(currentModelPath)) {
             showError("Export unavailable", new IOException("No model file is currently loaded."));
             return;
@@ -740,22 +782,38 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         Stage stage = resolveStage();
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Export Tattooed Model");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wavefront OBJ", "*.obj"));
-        String suggested = stripExtension(currentModelPath.getFileName().toString()) + "_tattooed.obj";
+        chooser.setTitle("Export Project");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Tattui Project Archive", "*.zip"));
+        String suggested = stripExtension(currentModelPath.getFileName().toString()) + "_project.zip";
         chooser.setInitialFileName(suggested);
         File target = chooser.showSaveDialog(stage);
         if (target == null) {
             return;
         }
         try {
-            exportTattooedModel(currentModelPath, target.toPath());
+            exportProjectArchive(target.toPath());
         } catch (IOException ex) {
-            showError("Failed to export tattooed model", ex);
+            showError("Failed to export project", ex);
         }
     }
 
-    private void exportTattooedModel(Path sourceObj, Path targetObj) throws IOException {
+    private void exportProjectArchive(Path requestedTarget) throws IOException {
+        if (requestedTarget == null) {
+            throw new IOException("No export target specified");
+        }
+        Path zipTarget = ensureZipExtension(requestedTarget);
+        Path exportDir = Files.createTempDirectory("tattui-export-");
+        try {
+            String sourceFileName = currentModelPath != null ? currentModelPath.getFileName().toString() : "model.obj";
+            Path objTarget = exportDir.resolve(sourceFileName);
+            writeProjectAssets(currentModelPath, objTarget);
+            zipDirectory(exportDir, zipTarget);
+        } finally {
+            deleteRecursively(exportDir);
+        }
+    }
+
+    private void writeProjectAssets(Path sourceObj, Path targetObj) throws IOException {
         if (sourceObj == null || targetObj == null) {
             throw new IOException("Invalid export paths");
         }
@@ -763,33 +821,274 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        String baseName = stripExtension(targetObj.getFileName().toString());
-        String mtlName = baseName + ".mtl";
-        Path mtlPath = targetObj.resolveSibling(mtlName);
-        String renderedTextureName = baseName + "-texture.png";
-        Path renderedTexturePath = targetObj.resolveSibling(renderedTextureName);
-        String baseTextureName = baseName + "-base.png";
-        Path baseTexturePath = targetObj.resolveSibling(baseTextureName);
+        Files.copy(sourceObj, targetObj, StandardCopyOption.REPLACE_EXISTING);
+        copyModelDependencies(sourceObj, parent);
         Path metadataPath = metadataPathFor(targetObj);
-        Path tattooDir = targetObj.resolveSibling(baseName + "_tattoos");
-
-        ObjRewriteResult rewriteResult = rewriteObjForExport(Files.readAllLines(sourceObj), mtlName);
-        Files.write(targetObj, rewriteResult.lines(), StandardCharsets.UTF_8);
-        writeMtlFile(mtlPath, rewriteResult.materials(), renderedTextureName);
-        boolean baseWritten = writeTextureImages(renderedTexturePath, baseTexturePath);
+        Path preferencesPath = preferencesPathFor(targetObj);
+        Path tattooDir = targetObj.resolveSibling(stripExtension(targetObj.getFileName().toString()) + "_tattoos");
+        Path baseTexturePath = tattooDir.resolve("base.png");
+        Path writtenBaseTexture = writeBaseTextureImage(baseTexturePath);
         List<Tattoo> exportedTattoos = tattooWorkspace.exportableTattoos();
-        Path parentDir = targetObj.getParent();
-        if (!exportedTattoos.isEmpty()) {
-            Files.createDirectories(tattooDir);
-        }
+        List<TattooPreset> historySnapshot = snapshotTattooHistory();
         writeTattooMetadata(
             metadataPath,
             tattooDir,
             exportedTattoos,
-            baseWritten ? baseTextureName : null,
-            renderedTextureName,
-            parentDir
+            historySnapshot,
+            writtenBaseTexture
         );
+        writeWorkspacePreferences(preferencesPath, captureWorkspacePreferences());
+    }
+
+    private void copyModelDependencies(Path sourceObj, Path targetDir) throws IOException {
+        if (sourceObj == null || targetDir == null) {
+            return;
+        }
+        Path sourceParent = sourceObj.getParent();
+        if (sourceParent == null) {
+            return;
+        }
+        List<String> lines = Files.readAllLines(sourceObj, StandardCharsets.UTF_8);
+        Set<String> referenced = new LinkedHashSet<>();
+        List<CopiedMaterial> copiedMaterials = new ArrayList<>();
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (!trimmed.toLowerCase(Locale.ROOT).startsWith("mtllib")) {
+                continue;
+            }
+            String[] tokens = trimmed.split("\\s+");
+            for (int i = 1; i < tokens.length; i++) {
+                String reference = tokens[i].trim();
+                if (reference.isEmpty() || !referenced.add(reference)) {
+                    continue;
+                }
+                CopiedMaterial copied = copyMaterialFile(sourceParent, targetDir, reference);
+                if (copied != null) {
+                    copiedMaterials.add(copied);
+                }
+            }
+        }
+        for (CopiedMaterial material : copiedMaterials) {
+            copyMaterialTextures(material, targetDir);
+        }
+    }
+
+    private CopiedMaterial copyMaterialFile(Path sourceParent, Path targetParent, String reference) throws IOException {
+        Path relative = parseReference(reference);
+        if (relative == null || sourceParent == null) {
+            return null;
+        }
+        Path sourcePath = sourceParent.resolve(relative).normalize();
+        if (!Files.exists(sourcePath)) {
+            return null;
+        }
+        Path targetPath = targetParent.resolve(relative).normalize();
+        ensureWithinDirectory(targetParent, targetPath);
+        if (targetPath.getParent() != null) {
+            Files.createDirectories(targetPath.getParent());
+        }
+        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        return new CopiedMaterial(sourcePath, targetPath);
+    }
+
+    private void copyMaterialTextures(CopiedMaterial material, Path exportRoot) throws IOException {
+        Path source = material.source();
+        Path target = material.target();
+        if (source == null || target == null || !Files.exists(source)) {
+            return;
+        }
+        Path sourceDir = source.getParent();
+        Path targetDir = target.getParent();
+        if (sourceDir == null || targetDir == null) {
+            return;
+        }
+        List<String> lines = Files.readAllLines(source, StandardCharsets.UTF_8);
+        Set<String> copied = new LinkedHashSet<>();
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue;
+            }
+            String lower = trimmed.toLowerCase(Locale.ROOT);
+            if (!(lower.startsWith("map_") || lower.startsWith("bump") || lower.startsWith("disp") || lower.startsWith("refl"))) {
+                continue;
+            }
+            String reference = extractTextureReference(trimmed);
+            if (reference == null || !copied.add(reference)) {
+                continue;
+            }
+            copyRelatedResource(sourceDir, targetDir, exportRoot, reference);
+        }
+    }
+
+    private void copyRelatedResource(Path sourceBase, Path targetBase, Path exportRoot, String reference) throws IOException {
+        Path relative = parseReference(reference);
+        if (relative == null || sourceBase == null || targetBase == null) {
+            return;
+        }
+        Path sourcePath = sourceBase.resolve(relative).normalize();
+        if (!Files.exists(sourcePath)) {
+            return;
+        }
+        Path targetPath = targetBase.resolve(relative).normalize();
+        ensureWithinDirectory(exportRoot, targetPath);
+        if (targetPath.getParent() != null) {
+            Files.createDirectories(targetPath.getParent());
+        }
+        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private String extractTextureReference(String line) {
+        String[] tokens = line.split("\\s+");
+        for (int i = tokens.length - 1; i >= 1; i--) {
+            String token = tokens[i].trim();
+            if (!token.isEmpty() && !token.startsWith("-")) {
+                return token;
+            }
+        }
+        return null;
+    }
+
+    private Path parseReference(String reference) {
+        if (reference == null) {
+            return null;
+        }
+        String sanitized = reference.replace('\\', File.separatorChar).trim();
+        if (sanitized.isEmpty()) {
+            return null;
+        }
+        try {
+            Path path = Paths.get(sanitized);
+            return path.isAbsolute() ? null : path;
+        } catch (InvalidPathException ex) {
+            return null;
+        }
+    }
+
+    private void ensureWithinDirectory(Path root, Path candidate) throws IOException {
+        if (root == null || candidate == null) {
+            return;
+        }
+        Path normalizedRoot = root.toAbsolutePath().normalize();
+        Path normalizedCandidate = candidate.toAbsolutePath().normalize();
+        if (!normalizedCandidate.startsWith(normalizedRoot)) {
+            throw new IOException("Resource resolves outside export directory: " + candidate);
+        }
+    }
+
+    private void zipDirectory(Path sourceDir, Path zipTarget) throws IOException {
+        if (sourceDir == null || zipTarget == null) {
+            throw new IOException("Invalid archive paths");
+        }
+        List<Path> files;
+        try (Stream<Path> walk = Files.walk(sourceDir)) {
+            files = walk.filter(Files::isRegularFile).toList();
+        }
+        if (files.isEmpty()) {
+            throw new IOException("No files available for export");
+        }
+        if (zipTarget.getParent() != null) {
+            Files.createDirectories(zipTarget.getParent());
+        }
+        try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(zipTarget))) {
+            for (Path file : files) {
+                Path relative = sourceDir.relativize(file);
+                ZipEntry entry = new ZipEntry(relative.toString().replace('\\', '/'));
+                out.putNextEntry(entry);
+                Files.copy(file, out);
+                out.closeEntry();
+            }
+        }
+    }
+
+    private Path extractProjectArchive(Path archive) throws IOException {
+        if (archive == null || !Files.exists(archive)) {
+            throw new IOException("Archive not found");
+        }
+        Path tempDir = Files.createTempDirectory("tattui-project-");
+        try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
+            ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                Path resolved = tempDir.resolve(entry.getName()).normalize();
+                if (!resolved.startsWith(tempDir)) {
+                    throw new IOException("Archive entry resolves outside target directory: " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(resolved);
+                } else {
+                    if (resolved.getParent() != null) {
+                        Files.createDirectories(resolved.getParent());
+                    }
+                    Files.copy(in, resolved, StandardCopyOption.REPLACE_EXISTING);
+                }
+                in.closeEntry();
+            }
+            return tempDir;
+        } catch (IOException ex) {
+            deleteRecursively(tempDir);
+            throw ex;
+        }
+    }
+
+    private Path findFirstObj(Path directory) throws IOException {
+        if (directory == null || !Files.exists(directory)) {
+            return null;
+        }
+        try (Stream<Path> walk = Files.walk(directory)) {
+            return walk
+                .filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".obj"))
+                .findFirst()
+                .orElse(null);
+        }
+    }
+
+    private Path ensureZipExtension(Path target) {
+        if (target == null) {
+            return null;
+        }
+        String name = target.getFileName().toString();
+        if (name.toLowerCase(Locale.ROOT).endsWith(".zip")) {
+            return target;
+        }
+        return target.resolveSibling(name + ".zip");
+    }
+
+    private void replaceExtractedProjectDir(Path newDir) {
+        if (Objects.equals(extractedProjectDir, newDir)) {
+            return;
+        }
+        deleteRecursively(extractedProjectDir);
+        extractedProjectDir = newDir;
+    }
+
+    private void cleanupExtractionIfNotNeeded(Path modelPath) {
+        if (extractedProjectDir == null || modelPath == null) {
+            return;
+        }
+        Path normalizedModel = modelPath.toAbsolutePath().normalize();
+        Path extractionRoot = extractedProjectDir.toAbsolutePath().normalize();
+        if (!normalizedModel.startsWith(extractionRoot)) {
+            deleteRecursively(extractedProjectDir);
+            extractedProjectDir = null;
+        }
+    }
+
+    private void deleteRecursively(Path path) {
+        if (path == null || !Files.exists(path)) {
+            return;
+        }
+        try (Stream<Path> walk = Files.walk(path)) {
+            walk.sorted(Comparator.reverseOrder()).forEach(candidate -> {
+                try {
+                    Files.deleteIfExists(candidate);
+                } catch (IOException ignored) {
+                    // Swallow cleanup failures silently.
+                }
+            });
+        } catch (IOException ignored) {
+            // Ignore cleanup failures.
+        }
     }
 
     private Image loadTattooImage(File file) {
@@ -823,6 +1122,15 @@ public final class WorkspaceBoundary implements WorkspaceController {
             tattooHistory.remove(tattooHistory.size() - 1);
         }
         refreshTattooHistoryGallery();
+    }
+
+    private List<TattooPreset> snapshotTattooHistory() {
+        List<TattooPreset> snapshot = new ArrayList<>();
+        int limit = Math.min(MAX_TATTOO_HISTORY, tattooHistory.size());
+        for (int i = 0; i < limit; i++) {
+            snapshot.add(tattooHistory.get(i));
+        }
+        return snapshot;
     }
 
     private void refreshTattooHistoryGallery() {
@@ -1265,14 +1573,20 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private void loadFromPath(Path path) {
+        boolean loaded = false;
         try {
             currentModelPath = path;
             ObjLoader.LoadedModel model = ObjLoader.load(path);
             applyModel(model);
+            loaded = true;
         } catch (IOException ex) {
             showError("Failed to load OBJ model: " + path.getFileName(), ex);
             currentModelPath = null;
             applyModel(createPlaceholderModel());
+        } finally {
+            if (loaded) {
+                cleanupExtractionIfNotNeeded(path);
+            }
         }
     }
 
@@ -1321,6 +1635,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             loadTattooMetadataIfPresent();
             updateCurrentBounds();
             cameraRig.reset();
+            loadWorkspacePreferencesIfPresent();
             softenSpecular(modelRoot);
             refreshLightingRig();
         } finally {
@@ -1566,123 +1881,54 @@ public final class WorkspaceBoundary implements WorkspaceController {
         return Objects.requireNonNull(partGroups.get(TORSO));
     }
 
-    private ObjRewriteResult rewriteObjForExport(List<String> originalLines, String mtlName) {
-        List<String> rewritten = new ArrayList<>();
-        Set<String> materialNames = new LinkedHashSet<>();
-        boolean mtllibReplaced = false;
-        for (String line : originalLines) {
-            String lower = line.trim().toLowerCase(Locale.ROOT);
-            if (!mtllibReplaced && lower.startsWith("mtllib")) {
-                rewritten.add("mtllib " + mtlName);
-                mtllibReplaced = true;
-                continue;
-            }
-            if (lower.startsWith("usemtl")) {
-                String[] tokens = line.trim().split("\\s+");
-                if (tokens.length > 1) {
-                    materialNames.add(tokens[1]);
-                }
-            }
-            rewritten.add(line);
-        }
-        if (!mtllibReplaced) {
-            int index = findDirectiveInsertionIndex(rewritten);
-            rewritten.add(index, "mtllib " + mtlName);
-        }
-        if (materialNames.isEmpty()) {
-            materialNames.add("tattui_default");
-            int index = findUseMtlInsertionIndex(rewritten);
-            rewritten.add(index, "usemtl tattui_default");
-        }
-        return new ObjRewriteResult(rewritten, materialNames);
-    }
-
-    private int findDirectiveInsertionIndex(List<String> lines) {
-        for (int i = 0; i < lines.size(); i++) {
-            String trimmed = lines.get(i).trim();
-            if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
-                return i;
-            }
-        }
-        return lines.size();
-    }
-
-    private int findUseMtlInsertionIndex(List<String> lines) {
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).trim().toLowerCase(Locale.ROOT).startsWith("mtllib")) {
-                return i + 1;
-            }
-        }
-        return findDirectiveInsertionIndex(lines);
-    }
-
-    private void writeMtlFile(Path mtlPath, Set<String> materialNames, String textureName) throws IOException {
-        if (mtlPath.getParent() != null) {
-            Files.createDirectories(mtlPath.getParent());
-        }
-        List<String> lines = new ArrayList<>();
-        lines.add("# Generated by Tattui");
-        for (String material : materialNames) {
-            lines.add("newmtl " + material);
-            lines.add("Kd 1.000000 1.000000 1.000000");
-            lines.add("Ka 0.000000 0.000000 0.000000");
-            lines.add("Ks 0.000000 0.000000 0.000000");
-            lines.add("map_Kd " + textureName);
-            lines.add("");
-        }
-        Files.write(mtlPath, lines, StandardCharsets.UTF_8);
-    }
-
-    private boolean writeTextureImages(Path renderedPath, Path basePath) throws IOException {
-        WritableImage rendered = tattooWorkspace.renderedTexture();
-        if (rendered == null) {
-            throw new IOException("Tattoo texture unavailable.");
-        }
-        if (renderedPath.getParent() != null) {
-            Files.createDirectories(renderedPath.getParent());
-        }
-        ImageIO.write(convertToBufferedImage(rendered), "png", renderedPath.toFile());
-        Image base = tattooWorkspace.baseTexture();
-        if (base != null) {
-            if (basePath.getParent() != null) {
-                Files.createDirectories(basePath.getParent());
-            }
-            ImageIO.write(convertToBufferedImage(base), "png", basePath.toFile());
-            return true;
-        }
-        return false;
-    }
 
     private void writeTattooMetadata(
         Path metadataPath,
         Path tattooDir,
         List<Tattoo> tattoos,
-        String baseTextureName,
-        String renderedTextureName,
-        Path parentDir
+        List<TattooPreset> history,
+        Path baseTexturePath
     ) throws IOException {
         Properties props = new Properties();
-        props.setProperty("version", "1");
-        props.setProperty("renderedTexture", renderedTextureName);
-        if (baseTextureName != null && !baseTextureName.isBlank()) {
-            props.setProperty("baseTexture", baseTextureName);
+        props.setProperty("version", "2");
+        Path baseDir = metadataPath.getParent();
+        if (tattooDir != null) {
+            Files.createDirectories(tattooDir);
         }
-        props.setProperty("tattoo.count", Integer.toString(tattoos.size()));
-        Path baseDir = parentDir != null ? parentDir : metadataPath.getParent();
-        for (int i = 0; i < tattoos.size(); i++) {
-            Tattoo tattoo = tattoos.get(i);
-            String prefix = "tattoo." + i;
-            props.setProperty(prefix + ".u", Double.toString(tattoo.u()));
-            props.setProperty(prefix + ".v", Double.toString(tattoo.v()));
-            props.setProperty(prefix + ".widthScale", Double.toString(tattoo.widthScale()));
-            props.setProperty(prefix + ".heightScale", Double.toString(tattoo.heightScale()));
-            props.setProperty(prefix + ".scale", Double.toString(tattoo.scale()));
-            props.setProperty(prefix + ".rotation", Double.toString(tattoo.rotation()));
-            props.setProperty(prefix + ".alpha", Double.toString(tattoo.alpha()));
-            Path imagePath = tattooDir.resolve(String.format("tattoo-%02d.png", i + 1));
-            writeTattooImage(tattoo.image(), imagePath);
-            Path relative = baseDir != null ? baseDir.relativize(imagePath) : imagePath.getFileName();
-            props.setProperty(prefix + ".image", relative.toString().replace('\\', '/'));
+        if (baseTexturePath != null) {
+            props.setProperty("baseTexture", relativize(baseDir, baseTexturePath));
+        }
+        props.setProperty("tattoo.count", Integer.toString(tattoos != null ? tattoos.size() : 0));
+        Path appliedDir = tattooDir.resolve("applied");
+        Files.createDirectories(appliedDir);
+        if (tattoos != null) {
+            for (int i = 0; i < tattoos.size(); i++) {
+                Tattoo tattoo = tattoos.get(i);
+                String prefix = "tattoo." + i;
+                props.setProperty(prefix + ".u", Double.toString(tattoo.u()));
+                props.setProperty(prefix + ".v", Double.toString(tattoo.v()));
+                props.setProperty(prefix + ".widthScale", Double.toString(tattoo.widthScale()));
+                props.setProperty(prefix + ".heightScale", Double.toString(tattoo.heightScale()));
+                props.setProperty(prefix + ".scale", Double.toString(tattoo.scale()));
+                props.setProperty(prefix + ".rotation", Double.toString(tattoo.rotation()));
+                props.setProperty(prefix + ".alpha", Double.toString(tattoo.alpha()));
+                Path imagePath = appliedDir.resolve(String.format("tattoo-%02d.png", i + 1));
+                writeTattooImage(tattoo.image(), imagePath);
+                props.setProperty(prefix + ".image", relativize(baseDir, imagePath));
+            }
+        }
+        List<TattooPreset> historyToPersist = history != null ? history : List.of();
+        props.setProperty("history.count", Integer.toString(historyToPersist.size()));
+        Path historyDir = tattooDir.resolve("history");
+        Files.createDirectories(historyDir);
+        for (int i = 0; i < historyToPersist.size(); i++) {
+            TattooPreset preset = historyToPersist.get(i);
+            String prefix = "history." + i;
+            String label = preset.label() != null ? preset.label() : "";
+            props.setProperty(prefix + ".label", label);
+            Path imagePath = historyDir.resolve(String.format("history-%02d.png", i + 1));
+            writeTattooImage(preset.image(), imagePath);
+            props.setProperty(prefix + ".image", relativize(baseDir, imagePath));
         }
         if (metadataPath.getParent() != null) {
             Files.createDirectories(metadataPath.getParent());
@@ -1690,6 +1936,18 @@ public final class WorkspaceBoundary implements WorkspaceController {
         try (OutputStream out = Files.newOutputStream(metadataPath)) {
             props.store(out, "Tattui tattoo metadata");
         }
+    }
+
+    private Path writeBaseTextureImage(Path target) throws IOException {
+        Image base = tattooWorkspace.baseTexture();
+        if (base == null) {
+            return null;
+        }
+        if (target.getParent() != null) {
+            Files.createDirectories(target.getParent());
+        }
+        ImageIO.write(convertToBufferedImage(base), "png", target.toFile());
+        return target;
     }
 
     private void writeTattooImage(Image image, Path target) throws IOException {
@@ -1700,6 +1958,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
             Files.createDirectories(target.getParent());
         }
         ImageIO.write(convertToBufferedImage(image), "png", target.toFile());
+    }
+
+    private String relativize(Path baseDir, Path target) {
+        if (target == null) {
+            return "";
+        }
+        if (baseDir == null) {
+            return target.getFileName().toString();
+        }
+        return baseDir.relativize(target).toString().replace('\\', '/');
     }
 
     private void loadTattooMetadataIfPresent() {
@@ -1717,6 +1985,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             showError("Failed to load tattoo metadata", ex);
             return;
         }
+        int version = parseInt(props.getProperty("version"), 1);
         Path baseDir = metadataPath.getParent();
         Image overrideBase = loadImage(baseDir, props.getProperty("baseTexture"));
         if (overrideBase != null && !modelProvidesBaseTexture) {
@@ -1748,7 +2017,196 @@ public final class WorkspaceBoundary implements WorkspaceController {
             restored.add(new Tattoo(u, v, tattooImage, widthScale, heightScale, rotation, alpha));
         }
         tattooWorkspace.replaceTattoos(restored);
+        if (version >= 2) {
+            restoreTattooHistory(loadTattooHistory(props, baseDir));
+        } else {
+            restoreTattooHistory(List.of());
+        }
         updateTattooControlsState();
+    }
+
+    private List<TattooPreset> loadTattooHistory(Properties props, Path baseDir) {
+        int historyCount = parseInt(props.getProperty("history.count"), 0);
+        List<TattooPreset> presets = new ArrayList<>();
+        for (int i = 0; i < historyCount && presets.size() < MAX_TATTOO_HISTORY; i++) {
+            String prefix = "history." + i;
+            Image image = loadImage(baseDir, props.getProperty(prefix + ".image"));
+            if (image == null) {
+                continue;
+            }
+            String label = props.getProperty(prefix + ".label");
+            if (label == null || label.isBlank()) {
+                label = "Tattoo " + (i + 1);
+            }
+            presets.add(new TattooPreset(label, image));
+        }
+        return presets;
+    }
+
+    private void restoreTattooHistory(List<TattooPreset> presets) {
+        tattooHistory.clear();
+        if (presets != null && !presets.isEmpty()) {
+            int limit = Math.min(MAX_TATTOO_HISTORY, presets.size());
+            tattooHistory.addAll(presets.subList(0, limit));
+        }
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
+        refreshTattooHistoryGallery();
+    }
+
+    private void loadWorkspacePreferencesIfPresent() {
+        if (currentModelPath == null) {
+            return;
+        }
+        Path prefsPath = preferencesPathFor(currentModelPath);
+        if (!Files.exists(prefsPath)) {
+            return;
+        }
+        try {
+            WorkspacePreferences preferences = readWorkspacePreferences(prefsPath);
+            applyWorkspacePreferences(preferences);
+        } catch (IOException ex) {
+            showError("Failed to load workspace preferences", ex);
+        }
+    }
+
+    private WorkspacePreferences captureWorkspacePreferences() {
+        CameraState camera = cameraRig != null ? cameraRig.snapshot() : null;
+        Color tone = skinTone.get();
+        return new WorkspacePreferences(camera, tone, lightingMode);
+    }
+
+    private void writeWorkspacePreferences(Path preferencesPath, WorkspacePreferences preferences) throws IOException {
+        if (preferencesPath == null || preferences == null) {
+            return;
+        }
+        Properties props = new Properties();
+        props.setProperty("version", "1");
+        if (preferences.camera() != null) {
+            CameraState camera = preferences.camera();
+            props.setProperty("camera.yaw", Double.toString(camera.yaw()));
+            props.setProperty("camera.pitch", Double.toString(camera.pitch()));
+            props.setProperty("camera.distance", Double.toString(camera.distance()));
+            props.setProperty("camera.targetX", Double.toString(camera.targetX()));
+            props.setProperty("camera.targetY", Double.toString(camera.targetY()));
+            props.setProperty("camera.targetZ", Double.toString(camera.targetZ()));
+            props.setProperty("camera.panX", Double.toString(camera.panX()));
+            props.setProperty("camera.panY", Double.toString(camera.panY()));
+            props.setProperty("camera.panZ", Double.toString(camera.panZ()));
+        }
+        if (preferences.skinTone() != null) {
+            props.setProperty("skinTone", colorToHex(preferences.skinTone()));
+        }
+        if (preferences.lightingMode() != null) {
+            props.setProperty("lightingMode", preferences.lightingMode().name());
+        }
+        if (preferencesPath.getParent() != null) {
+            Files.createDirectories(preferencesPath.getParent());
+        }
+        try (OutputStream out = Files.newOutputStream(preferencesPath)) {
+            props.store(out, "Tattui workspace preferences");
+        }
+    }
+
+    private WorkspacePreferences readWorkspacePreferences(Path prefsPath) throws IOException {
+        if (prefsPath == null || !Files.exists(prefsPath)) {
+            return null;
+        }
+        Properties props = new Properties();
+        try (InputStream in = Files.newInputStream(prefsPath)) {
+            props.load(in);
+        }
+        CameraState cameraState = parseCameraState(props);
+        Color tone = parseColor(props.getProperty("skinTone"));
+        LightingSystem.Mode mode = parseLightingMode(props.getProperty("lightingMode"));
+        return new WorkspacePreferences(cameraState, tone, mode);
+    }
+
+    private void applyWorkspacePreferences(WorkspacePreferences preferences) {
+        if (preferences == null) {
+            return;
+        }
+        if (preferences.skinTone() != null) {
+            skinTone.set(preferences.skinTone());
+        }
+        if (preferences.lightingMode() != null) {
+            lightingMode = preferences.lightingMode();
+            lightingSystem.apply(lightingMode);
+            if (lightingModeCombo != null) {
+                lightingModeCombo.setValue(lightingMode);
+            }
+        }
+        if (preferences.camera() != null) {
+            cameraRig.apply(preferences.camera());
+        }
+    }
+
+    private CameraState parseCameraState(Properties props) {
+        if (props == null) {
+            return null;
+        }
+        Double yaw = parseNullableDouble(props.getProperty("camera.yaw"));
+        Double pitch = parseNullableDouble(props.getProperty("camera.pitch"));
+        Double distance = parseNullableDouble(props.getProperty("camera.distance"));
+        Double targetX = parseNullableDouble(props.getProperty("camera.targetX"));
+        Double targetY = parseNullableDouble(props.getProperty("camera.targetY"));
+        Double targetZ = parseNullableDouble(props.getProperty("camera.targetZ"));
+        Double panX = parseNullableDouble(props.getProperty("camera.panX"));
+        Double panY = parseNullableDouble(props.getProperty("camera.panY"));
+        Double panZ = parseNullableDouble(props.getProperty("camera.panZ"));
+        if (yaw == null || pitch == null || distance == null
+            || targetX == null || targetY == null || targetZ == null
+            || panX == null || panY == null || panZ == null) {
+            return null;
+        }
+        return new CameraState(yaw, pitch, distance, targetX, targetY, targetZ, panX, panY, panZ);
+    }
+
+    private Double parseNullableDouble(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private String colorToHex(Color color) {
+        if (color == null) {
+            return null;
+        }
+        int r = (int) Math.round(color.getRed() * 255.0);
+        int g = (int) Math.round(color.getGreen() * 255.0);
+        int b = (int) Math.round(color.getBlue() * 255.0);
+        int a = (int) Math.round(color.getOpacity() * 255.0);
+        return String.format("#%02X%02X%02X%02X", r, g, b, a);
+    }
+
+    private Color parseColor(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Color.web(value);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private LightingSystem.Mode parseLightingMode(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        try {
+            return LightingSystem.Mode.valueOf(name);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private Image loadImage(Path baseDir, String relative) {
@@ -1765,6 +2223,11 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private Path metadataPathFor(Path objPath) {
         String base = stripExtension(objPath.getFileName().toString());
         return objPath.resolveSibling(base + ".tattoos");
+    }
+
+    private Path preferencesPathFor(Path objPath) {
+        String base = stripExtension(objPath.getFileName().toString());
+        return objPath.resolveSibling(base + ".prefs");
     }
 
     private String stripExtension(String name) {
@@ -1887,6 +2350,10 @@ public final class WorkspaceBoundary implements WorkspaceController {
         return Math.clamp(value, min, max);
     }
 
+    private record WorkspacePreferences(CameraState camera, Color skinTone, LightingSystem.Mode lightingMode) {}
+
+    private record CopiedMaterial(Path source, Path target) {}
+
     private record TattooPreset(String label, Image image) {
         @Override
         public String toString() {
@@ -1908,5 +2375,4 @@ public final class WorkspaceBoundary implements WorkspaceController {
         alert.show();
     }
 
-    private record ObjRewriteResult(List<String> lines, Set<String> materials) {}
 }

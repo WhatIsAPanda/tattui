@@ -1,5 +1,6 @@
 package app.controller.workspace;
 
+import app.entity.CameraState;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Bounds;
@@ -127,6 +128,35 @@ public final class WorkspaceCamera {
         if (event.getCode() == KeyCode.SPACE) {
             reset();
         }
+    }
+
+    public CameraState snapshot() {
+        return new CameraState(
+            yaw.get(),
+            pitch.get(),
+            distance.get(),
+            target.getX(),
+            target.getY(),
+            target.getZ(),
+            panX,
+            panY,
+            panZ
+        );
+    }
+
+    public void apply(CameraState state) {
+        if (state == null) {
+            return;
+        }
+        Point3D desiredTarget = new Point3D(state.targetX(), state.targetY(), state.targetZ());
+        target = bounds != null ? clampTarget(desiredTarget, bounds) : desiredTarget;
+        panX = state.panX();
+        panY = state.panY();
+        panZ = state.panZ();
+        yaw.set(normalizeAngle(state.yaw()));
+        pitch.set(clamp(state.pitch(), pitchMin, pitchMax));
+        distance.set(clamp(state.distance(), minDistance, maxDistance));
+        updateCameraTransform();
     }
 
     private void orbit(double dx, double dy) {

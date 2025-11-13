@@ -19,9 +19,10 @@
             </padding>
             <children>
                 <Button fx:id="loadModelButton" text="Load Model"/>
+                <Button fx:id="loadProjectButton" text="Load Project"/>
                 <Button fx:id="resetViewButton" text="Reset View"/>
                 <Button fx:id="exportPreviewButton" text="Export Preview"/>
-                <Button fx:id="exportTattooedModelButton" text="Export Model"/>
+                <Button fx:id="exportProjectButton" text="Export Project"/>
             </children>
         </HBox>
     </top>
