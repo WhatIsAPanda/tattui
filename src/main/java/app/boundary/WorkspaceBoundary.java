@@ -1007,7 +1007,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         try {
             Path path = Paths.get(sanitized);
             return path.isAbsolute() ? null : path;
-        } catch (InvalidPathException ex) {
+        } catch (InvalidPathException _) {
             return null;
         }
     }
@@ -1129,11 +1129,11 @@ public final class WorkspaceBoundary implements WorkspaceController {
             walk.sorted(Comparator.reverseOrder()).forEach(candidate -> {
                 try {
                     Files.deleteIfExists(candidate);
-                } catch (IOException ignored) {
+                } catch (IOException _) {
                     // Swallow cleanup failures silently.
                 }
             });
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             // Ignore cleanup failures.
         }
     }
@@ -2257,7 +2257,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         try {
             return Double.parseDouble(value.trim());
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException _) {
             return null;
         }
     }
@@ -2279,7 +2279,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         try {
             return Color.web(value);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }
@@ -2290,7 +2290,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         try {
             return LightingSystem.Mode.valueOf(name);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }
