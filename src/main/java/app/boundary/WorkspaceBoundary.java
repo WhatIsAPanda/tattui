@@ -154,6 +154,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
     public static final String DOT_IMAGE = ".image";
+    public static final String DOT_SCALE = ".scale";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -1969,7 +1970,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
                 props.setProperty(prefix + ".v", Double.toString(tattoo.v()));
                 props.setProperty(prefix + ".widthScale", Double.toString(tattoo.widthScale()));
                 props.setProperty(prefix + ".heightScale", Double.toString(tattoo.heightScale()));
-                props.setProperty(prefix + ".scale", Double.toString(tattoo.scale()));
+                props.setProperty(prefix + DOT_SCALE, Double.toString(tattoo.scale()));
                 props.setProperty(prefix + ".rotation", Double.toString(tattoo.rotation()));
                 props.setProperty(prefix + ".alpha", Double.toString(tattoo.alpha()));
                 Path imagePath = appliedDir.resolve(String.format("tattoo-%02d.png", i + 1));
@@ -2095,8 +2096,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         double u = parseDouble(props.getProperty(prefix + ".u"), 0.5);
         double v = parseDouble(props.getProperty(prefix + ".v"), 0.5);
-        double widthScale = resolvedScale(props, prefix + ".widthScale", prefix + ".scale");
-        double heightScale = resolvedScale(props, prefix + ".heightScale", prefix + ".scale");
+        double widthScale = resolvedScale(props, prefix + ".widthScale", prefix + DOT_SCALE);
+        double heightScale = resolvedScale(props, prefix + ".heightScale", prefix + DOT_SCALE);
         double rotation = parseDouble(props.getProperty(prefix + ".rotation"), 0.0);
         double alpha = parseDouble(props.getProperty(prefix + ".alpha"), 1.0);
         return new Tattoo(u, v, tattooImage, widthScale, heightScale, rotation, alpha);
