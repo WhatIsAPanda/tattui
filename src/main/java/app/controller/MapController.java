@@ -52,9 +52,17 @@ public class MapController implements PageAware {
     @FXML
     private StackPane mapContainer; 
 
+    private MapView map;
+
+    private Consumer<String> onPageRequest;
+
+    public void setOnPageRequest(Consumer<String> handler) {
+        this.onPageRequest = handler;
+    }
+
     @FXML
     public void initialize() {
-        MapView map = new MapView();
+        map = new MapView();
         MapPoint center = new MapPoint(41.892718, 12.476259);
         map.setCenter(center);
         map.setZoom(10);
@@ -62,8 +70,8 @@ public class MapController implements PageAware {
         mapContainer.getChildren().add(map);
 
         resultsList.setCellFactory(listView -> new ProfileCell());
-
     }
+
 
     // Inner layer class
     static class DotLayer extends MapLayer {
@@ -86,12 +94,28 @@ public class MapController implements PageAware {
         if (query == null || query.trim().isEmpty()) {
             return;
         }
+        if(query.charAt(0) == '#') {
+            tagSearch(query);
+        
+        }
         citySearch(query);
+        populateMap();
     }
-    
+    private void populateMap() {
+        if (map == null || allResults == null) return;
+        for (Profile target : allResults) {
+            MapPoint p = new MapPoint(target.getLatitude(), target.getLongtitude());
+            map.addLayer(new DotLayer(p));
+        }   
+    }
+
+    private void tagSearch(String query){
+        System.out.println("unhandled");
+    }
 
     private void citySearch(String query){
-        try {// Step 1: Geocode city name → approximate lat/lon bounds
+        try {//Geocode city name
+
             Pair<Double, Double> center = geocodeCity(query.trim());
             if (center == null) {
                 System.out.println("City not found: " + query);
@@ -102,18 +126,19 @@ public class MapController implements PageAware {
             double lat = center.getKey();
             double lon = center.getValue();
 
-            // Step 2: Define a reasonable search radius (e.g., 0.5° ≈ ~55 km)
+            //Define a search radius maybe slider later
             double radius = 0.5;
             double latFrom = lat - radius;
             double latTo = lat + radius;
             double lonFrom = lon - radius;
             double lonTo = lon + radius;
 
-            // Step 3: Query database for users within bounds
+            //Query database for users within bounds
             List<Profile> profiles = DatabaseConnector.getProfilesWithinBounds(latFrom, latTo, lonFrom, lonTo);
 
-            // Step 4: Update UI
+            //ui update
             if (profiles != null && !profiles.isEmpty()) {
+                //add style fitler logic here
                 allResults = new LinkedList<>(profiles);
                 resultsList.getItems().setAll(allResults);
             } else {
@@ -130,8 +155,7 @@ public class MapController implements PageAware {
         
     private Pair<Double, Double> geocodeCity(String city) {
         try {
-            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" 
-                            + java.net.URLEncoder.encode(city, "UTF-8");
+            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + java.net.URLEncoder.encode(city, "UTF-8");
             HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
             conn.setRequestProperty("User-Agent", "JavaFXApp");
             conn.setRequestMethod("GET");
@@ -172,13 +196,6 @@ public class MapController implements PageAware {
         }
     }
     
-
-    private Consumer<String> onPageRequest;
-
-    public void setOnPageRequest(Consumer<String> handler) {
-        this.onPageRequest = handler;
-    }
-    
     @FXML
     private void handleClear(ActionEvent event) {
         if (searchField != null) {
@@ -194,6 +211,7 @@ public class MapController implements PageAware {
         Button clickedButton = (Button) event.getSource();
         String filterTag = clickedButton.getText(); // e.g. "#Blackwork"
         applyFilter(filterTag);
+        tagSearch(filterTag);
     }
 
     private void applyFilter(String tag) {

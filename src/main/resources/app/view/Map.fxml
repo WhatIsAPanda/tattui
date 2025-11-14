@@ -16,7 +16,7 @@
 
     <top>
         <HBox alignment="CENTER_LEFT" prefHeight="51.0" spacing="8" style="-fx-padding: 8; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
-            <TextField fx:id="searchField" promptText="Search shops, artists, cities" style="-fx-background-radius: 3; -fx-border-radius: 3;" HBox.hgrow="ALWAYS">
+            <TextField fx:id="searchField"   onAction="#handleSearch" promptText="Search shops, artists, cities" style="-fx-background-radius: 3; -fx-border-radius: 3;" HBox.hgrow="ALWAYS">
             <HBox.margin>
                <Insets />
             </HBox.margin>
