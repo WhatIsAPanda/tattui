@@ -228,8 +228,12 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private ToggleGroup tattooHistoryToggleGroup;
     private ScrollPane tattooHistoryScroll;
     private Button deleteTattooButton;
+    private Slider tattooSizeSlider;
     private Slider tattooWidthSlider;
     private Slider tattooHeightSlider;
+    private VBox tattooSizeControl;
+    private VBox tattooWidthControl;
+    private VBox tattooHeightControl;
     private Slider tattooOpacitySlider;
     private Slider tattooRotationSlider;
     private ToggleGroup skinToneToggleGroup;
@@ -389,6 +393,10 @@ public final class WorkspaceBoundary implements WorkspaceController {
         tattooHistoryScroll.setFocusTraversable(false);
         tattooHistoryScroll.getStyleClass().add("tattoo-scroll");
 
+        tattooSizeSlider = new Slider(TATTOO_MIN_SCALE, TATTOO_MAX_SCALE, DEFAULT_TATTOO_SCALE);
+        tattooSizeSlider.getStyleClass().add(WP_SLIDER);
+        tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooSizeChange(newVal.doubleValue()));
+
         tattooWidthSlider = new Slider(TATTOO_MIN_SCALE, TATTOO_MAX_SCALE, DEFAULT_TATTOO_SCALE);
         tattooWidthSlider.getStyleClass().add(WP_SLIDER);
         tattooWidthSlider.valueProperty().addListener((obs, oldVal, newVal) ->
@@ -425,12 +433,16 @@ public final class WorkspaceBoundary implements WorkspaceController {
         historyBox.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         historyBox.getStyleClass().add("sidebar-card");
         
+        tattooSizeControl = createLabeledControl("Tattoo Size", tattooSizeSlider);
+        tattooWidthControl = createLabeledControl("Tattoo Width", tattooWidthSlider);
+        tattooHeightControl = createLabeledControl("Tattoo Height", tattooHeightSlider);
         VBox tattooControls = new VBox(6,
-            tattooLoadRow,
             historyBox,
-            createLabeledControl("Tattoo Width", tattooWidthSlider),
-            createLabeledControl("Tattoo Height", tattooHeightSlider),
+            tattooLoadRow,
             lockAspectRatioToggle,
+            tattooSizeControl,
+            tattooWidthControl,
+            tattooHeightControl,
             createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
             createLabeledControl("Tattoo Rotation", tattooRotationSlider),
             deleteTattooButton
@@ -485,15 +497,29 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
     }
 
-    private void handleAspectLockChange(boolean locked) {
-        if (!locked || adjustingSliders) {
+    private void onTattooSizeChange(double value) {
+        if (adjustingSliders || tattooSizeSlider == null || !isAspectRatioLocked()) {
             return;
         }
-        double width = sliderValueOrFallback(tattooWidthSlider, DEFAULT_TATTOO_SCALE);
-        double height = sliderValueOrFallback(tattooHeightSlider, DEFAULT_TATTOO_SCALE);
-        double uniform = (width + height) * 0.5;
-        syncLockedTattooSliders(uniform, null);
-        onTattooAdjustment(t -> t.withUniformScale(uniform));
+        syncLockedTattooSliders(value, tattooSizeSlider);
+        onTattooAdjustment(t -> t.withUniformScale(value));
+    }
+
+    private void handleAspectLockChange(boolean locked) {
+        if (adjustingSliders) {
+            return;
+        }
+        if (locked) {
+            double width = sliderValueOrFallback(tattooWidthSlider, DEFAULT_TATTOO_SCALE);
+            double height = sliderValueOrFallback(tattooHeightSlider, DEFAULT_TATTOO_SCALE);
+            double uniform = (width + height) * 0.5;
+            syncLockedTattooSliders(uniform, null);
+            onTattooAdjustment(t -> t.withUniformScale(uniform));
+        } else {
+            double uniform = sliderValueOrFallback(tattooSizeSlider, DEFAULT_TATTOO_SCALE);
+            syncLockedTattooSliders(uniform, null);
+        }
+        updateTattooControlsState();
     }
 
     private void syncLockedTattooSliders(double value, Slider source) {
@@ -504,6 +530,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
             if (tattooHeightSlider != null && tattooHeightSlider != source) {
                 tattooHeightSlider.setValue(value);
+            }
+            if (tattooSizeSlider != null && tattooSizeSlider != source) {
+                tattooSizeSlider.setValue(value);
             }
         } finally {
             adjustingSliders = false;
@@ -523,6 +552,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
             if (tattooHeightSlider != null) {
                 tattooHeightSlider.setValue(DEFAULT_TATTOO_SCALE);
             }
+            if (tattooSizeSlider != null) {
+                tattooSizeSlider.setValue(DEFAULT_TATTOO_SCALE);
+            }
             if (tattooOpacitySlider != null) {
                 tattooOpacitySlider.setValue(1.0);
             }
@@ -539,6 +571,21 @@ public final class WorkspaceBoundary implements WorkspaceController {
         VBox box = new VBox(4, label, slider);
         box.setFillWidth(true);
         return box;
+    }
+
+    private void applyTattooDimensionVisibility(boolean aspectLocked) {
+        setControlVisibility(tattooSizeControl, aspectLocked);
+        boolean showDimensions = !aspectLocked;
+        setControlVisibility(tattooWidthControl, showDimensions);
+        setControlVisibility(tattooHeightControl, showDimensions);
+    }
+
+    private void setControlVisibility(Node node, boolean visible) {
+        if (node == null) {
+            return;
+        }
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 
     private VBox buildSkinToneSelector() {
@@ -1567,8 +1614,12 @@ public final class WorkspaceBoundary implements WorkspaceController {
         }
         adjustingSliders = true;
         try {
+            double uniform = (tattoo.widthScale() + tattoo.heightScale()) * 0.5;
             tattooWidthSlider.setValue(tattoo.widthScale());
             tattooHeightSlider.setValue(tattoo.heightScale());
+            if (tattooSizeSlider != null) {
+                tattooSizeSlider.setValue(uniform);
+            }
             tattooOpacitySlider.setValue(tattoo.alpha());
             tattooRotationSlider.setValue(tattoo.rotation());
         } finally {
@@ -1587,7 +1638,9 @@ public final class WorkspaceBoundary implements WorkspaceController {
         double widthScale = sliderValueOrFallback(tattooWidthSlider, DEFAULT_TATTOO_SCALE);
         double heightScale = sliderValueOrFallback(tattooHeightSlider, DEFAULT_TATTOO_SCALE);
         if (isAspectRatioLocked()) {
-            heightScale = widthScale;
+            double uniform = sliderValueOrFallback(tattooSizeSlider, widthScale);
+            widthScale = uniform;
+            heightScale = uniform;
         }
         double opacity = sliderValueOrFallback(tattooOpacitySlider, 1.0);
         double rotation = sliderValueOrFallback(tattooRotationSlider, 0.0);
@@ -1809,15 +1862,22 @@ public final class WorkspaceBoundary implements WorkspaceController {
         boolean hasSelection = tattooWorkspace.selected().isPresent();
         boolean hasHistory = !tattooHistory.isEmpty();
         boolean slidersEnabled = placementEnabled && hasSelection;
+        boolean aspectLocked = isAspectRatioLocked();
+        boolean widthHeightEnabled = slidersEnabled && !aspectLocked;
+        boolean sizeEnabled = slidersEnabled && aspectLocked;
+        applyTattooDimensionVisibility(aspectLocked);
         TattooPreset selectedPreset = selectedHistoryPreset();
         if (loadTattooButton != null) {
             loadTattooButton.setDisable(!modelHasUVs);
         }
         if (tattooWidthSlider != null) {
-            tattooWidthSlider.setDisable(!slidersEnabled);
+            tattooWidthSlider.setDisable(!widthHeightEnabled);
         }
         if (tattooHeightSlider != null) {
-            tattooHeightSlider.setDisable(!slidersEnabled);
+            tattooHeightSlider.setDisable(!widthHeightEnabled);
+        }
+        if (tattooSizeSlider != null) {
+            tattooSizeSlider.setDisable(!sizeEnabled);
         }
         if (tattooOpacitySlider != null) {
             tattooOpacitySlider.setDisable(!slidersEnabled);
