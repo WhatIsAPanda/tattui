@@ -793,19 +793,21 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private TableCell<EstimateRow, String> createWhiteTextCell(Pos alignment) {
-        return new TableCell<>() {
-            {
-                setAlignment(alignment);
-            }
+        return new WhiteTextTableCell(alignment);
+    }
 
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item);
-                setTextFill(Color.WHITE);
-                setStyle("-fx-text-fill: white;");
-            }
-        };
+    private static final class WhiteTextTableCell extends TableCell<EstimateRow, String> {
+        WhiteTextTableCell(Pos alignment) {
+            setAlignment(alignment);
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(empty ? null : item);
+            setTextFill(Color.WHITE);
+            setStyle("-fx-text-fill: white;");
+        }
     }
 
     private static String formatMoney(double amount) {
