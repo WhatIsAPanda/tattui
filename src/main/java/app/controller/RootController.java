@@ -32,7 +32,8 @@ public class RootController {
         "map", "/app/view/Map.fxml",
         "gallery", "/app/view/Gallery.fxml",
         "login", "/app/view/Login.fxml",
-        "viewProfile", "/app/view/viewMyProfile.fxml"
+        "viewProfile", "/app/view/viewMyProfile.fxml",
+            "explore", "/app/view/Explore.fxml"
     );
 
     public RootController() {
