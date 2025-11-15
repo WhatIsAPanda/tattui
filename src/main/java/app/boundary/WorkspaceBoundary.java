@@ -160,6 +160,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
     public static final String VERSION = "version";
     public static final String DOT_IMAGE = ".image";
     public static final String DOT_SCALE = ".scale";
+    public static final String SUCCESS = "success";
+    public static final String ERROR = "error";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -1429,7 +1431,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
             if (exportStatusCard != null) {
                 ObservableList<String> classes = exportStatusCard.getStyleClass();
-                classes.removeAll("success", "error");
+                classes.removeAll(SUCCESS, ERROR);
             }
         });
     }
@@ -1453,8 +1455,8 @@ public final class WorkspaceBoundary implements WorkspaceController {
             }
             if (exportStatusCard != null) {
                 ObservableList<String> classes = exportStatusCard.getStyleClass();
-                classes.removeAll("success", "error");
-                classes.add(success ? "success" : "error");
+                classes.removeAll(SUCCESS, ERROR);
+                classes.add(success ? SUCCESS : ERROR);
             }
             exportStatusPause = new PauseTransition(Duration.seconds(2.2));
             exportStatusPause.setOnFinished(evt -> hideExportStatusOverlay());
