@@ -61,6 +61,9 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private void refreshResults() {
+        if (filterBox == null || searchField == null || resultsPane == null) {
+            return;
+        }
         String q = (searchField.getText() == null ? "" : searchField.getText())
                 .trim().toLowerCase(Locale.ROOT);
         ExploreControl.Kind kind = switch (filterBox.getSelectionModel().getSelectedItem()) {
