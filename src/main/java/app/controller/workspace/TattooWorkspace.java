@@ -23,6 +23,7 @@ public final class TattooWorkspace {
     private final List<Tattoo> tattoos = new ArrayList<>();
     private final List<PhongMaterial> materials = new ArrayList<>();
     private Color skinTone = Color.WHITE;
+    private final String TATTOO = "tattoo";
 
     private int selectedIndex = -1;
     private Image pendingImage;
@@ -117,7 +118,7 @@ public final class TattooWorkspace {
     }
 
     public void addTattoo(Tattoo tattoo) {
-        Objects.requireNonNull(tattoo, "tattoo");
+        Objects.requireNonNull(tattoo, TATTOO);
         tattoos.add(tattoo);
         selectedIndex = tattoos.size() - 1;
         repaint();
@@ -135,8 +136,8 @@ public final class TattooWorkspace {
     }
 
     public void insertTattooAt(int index, Tattoo tattoo) {
-        Objects.requireNonNull(tattoo, "tattoo");
-        int insertIndex = Math.max(0, Math.min(index, tattoos.size()));
+        Objects.requireNonNull(tattoo, TATTOO);
+        int insertIndex = Math.clamp(index, 0, tattoos.size());
         tattoos.add(insertIndex, tattoo);
         selectedIndex = insertIndex;
         repaint();
@@ -146,7 +147,7 @@ public final class TattooWorkspace {
         if (!hasSelection()) {
             return;
         }
-        tattoos.set(selectedIndex, Objects.requireNonNull(tattoo, "tattoo"));
+        tattoos.set(selectedIndex, Objects.requireNonNull(tattoo, TATTOO));
         repaint();
     }
 
