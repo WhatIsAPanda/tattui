@@ -61,15 +61,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
@@ -174,6 +165,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     public static final String DOT_SCALE = ".scale";
     public static final String SUCCESS = "success";
     public static final String ERROR = "error";
+    public static final String TATTOO_SPACE = "Tattoo ";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -1410,7 +1402,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (image == null) {
             return;
         }
-        String presetLabel = (label != null && !label.isBlank()) ? label : "Tattoo " + (tattooHistory.size() + 1);
+        String presetLabel = (label != null && !label.isBlank()) ? label : TATTOO_SPACE + (tattooHistory.size() + 1);
         TattooPreset preset = new TattooPreset(presetLabel, image);
         tattooHistory.removeIf(existing -> existing.image() == image);
         tattooHistory.add(0, preset);
@@ -2242,7 +2234,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private double calculateEstimate(double userHeightInches, List<Tattoo> tattoos) {
-        double heightScale = Math.max(0.5, Math.min(1.8, userHeightInches / DEFAULT_ESTIMATE_HEIGHT));
+        double heightScale = Math.clamp(userHeightInches / DEFAULT_ESTIMATE_HEIGHT, 0.5, 1.8);
         double total = 0.0;
         for (Tattoo tattoo : tattoos) {
             double imageWidth = tattoo.image() != null ? tattoo.image().getWidth() : 256.0;
@@ -2305,7 +2297,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         try {
             double parsed = Double.parseDouble(text.trim());
             return parsed > 0 ? parsed : null;
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException _) {
             return null;
         }
     }
@@ -2321,7 +2313,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
             updateEstimateTableHeight(0);
             return;
         }
-        double heightScale = Math.max(0.5, Math.min(1.8, height / DEFAULT_ESTIMATE_HEIGHT));
+        double heightScale = Math.clamp(height / DEFAULT_ESTIMATE_HEIGHT, 0.5, 1.8);
         double scaleFactor = Math.sqrt(heightScale * PIXEL_TO_SQUARE_INCH);
         int index = 1;
         for (Tattoo tattoo : tattoos) {
@@ -2355,11 +2347,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private String resolveTattooLabel(Tattoo tattoo, int index) {
         if (tattoo == null || tattoo.image() == null) {
-            return "Tattoo " + index;
+            return TATTOO_SPACE + index;
         }
         String url = tattoo.image().getUrl();
         if (url == null || url.isBlank()) {
-            return "Tattoo " + index;
+            return TATTOO_SPACE + index;
         }
         url = url.replace('\\', '/');
         int slash = url.lastIndexOf('/');
@@ -2369,7 +2361,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
                 return name;
             }
         }
-        return "Tattoo " + index;
+        return TATTOO_SPACE + index;
     }
 
     private ObjLoader.LoadedModel createPlaceholderModel() {
@@ -2644,7 +2636,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
             }
             String label = props.getProperty(prefix + ".label");
             if (label == null || label.isBlank()) {
-                label = "Tattoo " + (i + 1);
+                label = TATTOO_SPACE + (i + 1);
             }
             presets.add(new TattooPreset(label, image));
         }
