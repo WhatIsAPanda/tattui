@@ -123,14 +123,23 @@ public final class TattooWorkspace {
         repaint();
     }
 
-    public boolean deleteSelectedTattoo() {
+    public Optional<RemovedTattoo> deleteSelectedTattoo() {
         if (!hasSelection()) {
-            return false;
+            return Optional.empty();
         }
-        tattoos.remove(selectedIndex);
+        Tattoo removed = tattoos.remove(selectedIndex);
+        int index = selectedIndex;
         selectedIndex = -1;
         repaint();
-        return true;
+        return Optional.of(new RemovedTattoo(removed, index));
+    }
+
+    public void insertTattooAt(int index, Tattoo tattoo) {
+        Objects.requireNonNull(tattoo, "tattoo");
+        int insertIndex = Math.max(0, Math.min(index, tattoos.size()));
+        tattoos.add(insertIndex, tattoo);
+        selectedIndex = insertIndex;
+        repaint();
     }
 
     public void updateSelectedTattoo(Tattoo tattoo) {
@@ -313,4 +322,6 @@ public final class TattooWorkspace {
     private boolean hasSelection() {
         return selectedIndex >= 0 && selectedIndex < tattoos.size();
     }
+
+    public record RemovedTattoo(Tattoo tattoo, int index) {}
 }

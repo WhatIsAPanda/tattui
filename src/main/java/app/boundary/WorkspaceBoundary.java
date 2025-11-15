@@ -90,6 +90,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -98,8 +99,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Deque;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -240,6 +243,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private ToggleGroup tattooHistoryToggleGroup;
     private ScrollPane tattooHistoryScroll;
     private Button deleteTattooButton;
+    private Button undoTattooButton;
     private Slider tattooSizeSlider;
     private Slider tattooWidthSlider;
     private Slider tattooHeightSlider;
@@ -262,6 +266,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
     private Bounds currentBounds;
     private SubScene subScene;
     private boolean adjustingSliders;
+    private final Deque<TattooWorkspace.RemovedTattoo> deletedTattooHistory = new ArrayDeque<>();
 
     public WorkspaceBoundary() {
         initializePartGroups();
@@ -433,6 +438,14 @@ public final class WorkspaceBoundary implements WorkspaceController {
         deleteTattooButton.setMaxWidth(Double.MAX_VALUE);
         deleteTattooButton.setOnAction(e -> handleDeleteTattoo());
 
+        undoTattooButton = new Button("Undo");
+        undoTattooButton.setDisable(true);
+        undoTattooButton.setOnAction(e -> handleUndoTattoo());
+
+        HBox tattooActionRow = new HBox(10, deleteTattooButton, undoTattooButton);
+        tattooActionRow.setFillHeight(true);
+        HBox.setHgrow(deleteTattooButton, Priority.ALWAYS);
+
         lockAspectRatioToggle = new ToggleButton("Lock Aspect Ratio");
         lockAspectRatioToggle.setMaxWidth(Double.MAX_VALUE);
         lockAspectRatioToggle.getStyleClass().add("lock-aspect-toggle");
@@ -457,7 +470,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
             tattooHeightControl,
             createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
             createLabeledControl("Tattoo Rotation", tattooRotationSlider),
-            deleteTattooButton
+            tattooActionRow
         );
         tattooControls.setFillWidth(true);
 
@@ -1348,12 +1361,27 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private boolean handleDeleteTattoo() {
-        if (!tattooWorkspace.deleteSelectedTattoo()) {
+        Optional<TattooWorkspace.RemovedTattoo> removed = tattooWorkspace.deleteSelectedTattoo();
+        if (removed.isEmpty()) {
             return false;
         }
-        tattooWorkspace.selected().ifPresentOrElse(this::syncTattooControls, () -> syncTattooControls(null));
+        deletedTattooHistory.push(removed.get());
+        syncTattooControls(null);
         updateTattooControlsState();
+        updateUndoButtonState();
         return true;
+    }
+
+    private void handleUndoTattoo() {
+        TattooWorkspace.RemovedTattoo removed = deletedTattooHistory.pollFirst();
+        if (removed == null) {
+            updateUndoButtonState();
+            return;
+        }
+        tattooWorkspace.insertTattooAt(removed.index(), removed.tattoo());
+        syncTattooControls(removed.tattoo());
+        updateTattooControlsState();
+        updateUndoButtonState();
     }
 
     private void setupViewer() {
@@ -1841,6 +1869,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         adjustingSliders = true;
         try {
             tattooWorkspace.clearSurface();
+            clearDeletedTattooHistory();
             tattooWorkspace.resetMaterials();
             historyPlacementArmed = false;
             if (tattooHistoryToggleGroup != null) {
@@ -1925,6 +1954,7 @@ public final class WorkspaceBoundary implements WorkspaceController {
         tattooWorkspace.configureMaterials(materials);
         tattooWorkspace.clearPendingTattoo();
         tattooWorkspace.clearAllTattoos();
+        clearDeletedTattooHistory();
 
         if (!modelHasUVs || materials.isEmpty()) {
             tattooWorkspace.clearSurface();
@@ -2036,11 +2066,23 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (reflectTattooButton != null) {
             reflectTattooButton.setDisable(selectedPreset == null);
         }
+        updateUndoButtonState();
     }
 
     private void updateCurrentBounds() {
         currentBounds = overallScaleGroup.getBoundsInParent();
         cameraRig.setBounds(currentBounds);
+    }
+
+    private void updateUndoButtonState() {
+        if (undoTattooButton != null) {
+            undoTattooButton.setDisable(deletedTattooHistory.isEmpty());
+        }
+    }
+
+    private void clearDeletedTattooHistory() {
+        deletedTattooHistory.clear();
+        updateUndoButtonState();
     }
 
     private ObjLoader.LoadedModel createPlaceholderModel() {
