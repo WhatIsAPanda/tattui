@@ -1,6 +1,4 @@
 package app.boundary;
-
-import app.entity.LoggedInUser;
 import app.entity.Post;
 import app.entity.Profile;
 import javafx.fxml.FXML;
@@ -14,7 +12,7 @@ import javafx.scene.text.Text;
 
 import java.util.List;
 
-public class ViewMyProfileBoundary {
+public class ViewMyProfileBoundary{
     @FXML
     private Circle profilePicture;
     @FXML
@@ -29,11 +27,6 @@ public class ViewMyProfileBoundary {
     private Profile profile;
 
     @FXML
-    public void initialize() {
-
-    }
-
-    @FXML
     public void setProfile(Profile userProfile) {
         this.profile = userProfile;
         if(artistNameField1 == null) {
@@ -44,11 +37,6 @@ public class ViewMyProfileBoundary {
     }
     @FXML
     public void loadProfile() {
-        System.out.println("artistNameField1 = " + artistNameField1);
-        System.out.println("profilePicture = " + profilePicture);
-        System.out.println("postsPanel = " + postsPanel);
-        System.out.println(profile.getUsername());
-        System.out.println(profile.getPassword());
         artistNameField1.setText("@" + profile.getUsername());
         artistNameField2.setText("@" + profile.getUsername());
         Image profile_picture = profile.getProfile_picture_image();

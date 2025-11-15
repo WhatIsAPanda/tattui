@@ -1,5 +1,7 @@
 package app.controller;
 
+import app.entity.LoggedInUser;
+import app.entity.Profile;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -9,15 +11,20 @@ import java.util.logging.Logger;
 
 import app.controller.RootController.PageAware;
 
-public class TaskbarController implements PageAware{
+public class TaskbarController implements PageAware, RootController.ProfileAware {
 
     private static final Logger LOG = Logger.getLogger(TaskbarController.class.getName());
 
     //THis shit handles navigation
     private Consumer<String> onPageRequest;
+    private Consumer<Profile> onProfileRequest;
 
     public void setOnPageRequest(Consumer<String> handler) {
         this.onPageRequest = handler;
+    }
+    @Override
+    public void setProfileProvider(Consumer<Profile> provider) {
+        this.onProfileRequest = provider;
     }
 
     @FXML
@@ -35,7 +42,7 @@ public class TaskbarController implements PageAware{
             case "galleryButton" -> onPageRequest.accept("gallery");
             case "mapButton" -> onPageRequest.accept("map");
             case "loginButton" -> onPageRequest.accept("login");
-            case "logoButton" -> onPageRequest.accept("viewProfile");
+            case "logoButton" -> onProfileRequest.accept(LoggedInUser.getInstance());
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
     }
