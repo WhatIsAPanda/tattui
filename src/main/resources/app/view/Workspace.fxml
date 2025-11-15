@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
@@ -18,11 +19,23 @@
                 <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
             </padding>
             <children>
-                <Button fx:id="loadModelButton" text="Load Model"/>
-                <Button fx:id="loadProjectButton" text="Load Project"/>
-                <Button fx:id="resetViewButton" text="Reset View"/>
-                <Button fx:id="exportPreviewButton" text="Export Preview"/>
-                <Button fx:id="exportProjectButton" text="Export Project"/>
+                <MenuButton text="Load">
+                    <items>
+                        <MenuItem fx:id="loadModelMenuItem" text="Load Model" />
+                        <MenuItem fx:id="loadProjectMenuItem" text="Load Project" />
+                    </items>
+                </MenuButton>
+                <MenuButton text="Export">
+                    <items>
+                        <MenuItem fx:id="exportPreviewMenuItem" text="Export Preview" />
+                        <MenuItem fx:id="exportProjectMenuItem" text="Export Project" />
+                    </items>
+                </MenuButton>
+                <MenuButton text="View">
+                    <items>
+                        <MenuItem fx:id="resetViewMenuItem" text="Reset View" />
+                    </items>
+                </MenuButton>
             </children>
         </HBox>
     </top>

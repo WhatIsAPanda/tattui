@@ -26,6 +26,31 @@
   -fx-text-fill: #000000;
 }
 
+.menu-button {
+  -fx-background-color: linear-gradient(to bottom, #4b4b4b, black);
+  -fx-text-fill: #f8fafc;
+  -fx-border-color: rgba(129, 133, 138, 0.406);
+  -fx-border-width: 1;
+  -fx-background-radius: 8;
+  -fx-border-radius: 8;
+  -fx-padding: 0 16 0 16;
+}
+
+.menu-button .label {
+  -fx-text-fill: #f8fafc;
+}
+
+.menu-button:hover,
+.menu-button:showing {
+  -fx-background-color: #c0c0c0;
+  -fx-text-fill: #000000;
+}
+
+.menu-button:hover .label,
+.menu-button:showing .label {
+  -fx-text-fill: #000000;
+}
+
 .combo-box,
 .text-field {
   -fx-background-color: #4b4b4b;
@@ -58,6 +83,40 @@
   -fx-border-color: transparent transparent transparent transparent;
   -fx-border-width: 0 0 1 0;
   -fx-effect: none;
+}
+
+.export-status-overlay {
+  -fx-background-color: rgba(0, 0, 0, 0.6);
+  -fx-padding: 32;
+}
+
+.export-status-card {
+  -fx-background-color: rgba(15, 15, 15, 0.92);
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-border-color: rgba(255, 255, 255, 0.15);
+  -fx-padding: 24;
+  -fx-spacing: 12;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.65), 25, 0.3, 0, 10);
+}
+
+.export-status-card.success {
+  -fx-border-color: rgba(74, 222, 128, 0.9);
+}
+
+.export-status-card.error {
+  -fx-border-color: rgba(248, 113, 113, 0.9);
+}
+
+.export-status-label {
+  -fx-text-fill: #f8fafc;
+  -fx-font-size: 16px;
+  -fx-font-weight: 600;
+  -fx-text-alignment: center;
+}
+
+.export-status-progress {
+  -fx-progress-color: #38bdf8;
 }
 
 .tattoo-history-thumb {
@@ -136,7 +195,6 @@
 .sidebar-scroll,
 .sidebar-scroll:focused {
   -fx-background-color: #0d0d0d;
-  -fx-background: #0d0d0d;
   -fx-border-color: transparent;
   -fx-border-width: 0;
   -fx-focus-color: transparent;
@@ -185,7 +243,6 @@
 .tattoo-scroll,
 .tattoo-scroll:focused {
   -fx-background-color: #121212;
-  -fx-background: #121212;
   -fx-border-color: rgba(255, 255, 255, 0.05);
   -fx-focus-color: transparent;
   -fx-faint-focus-color: transparent;
@@ -208,22 +265,17 @@
 
 .neutral-card,
 .neutral-card * {
-    -fx-padding: 0;
-    -fx-background-insets: 0;
-    -fx-border-width: 0;
-    -fx-background-color: white;
-    -fx-border-width: 0;
-    -fx-padding: 0;
-    -fx-text-fill: black;
-    -fx-border-color: transparent;
-    -fx-effect: null;
-
+  -fx-background-insets: 0;
+  -fx-background-color: white;
+  -fx-border-width: 0;
+  -fx-padding: 0;
+  -fx-text-fill: black;
+  -fx-border-color: transparent;
+  -fx-effect: null;
 }
 
 #Title {
   -fx-font-family: "Times New Roman";
   -fx-font-size: 14px;
   -fx-font-weight: bold;
-  
 }
-

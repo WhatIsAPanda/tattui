@@ -7,6 +7,7 @@ import app.entity.CameraState;
 import app.entity.Tattoo;
 import app.loader.ObjLoader;
 import app.view3d.LightingSystem;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -14,6 +15,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -34,12 +36,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -74,6 +78,7 @@ import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -193,16 +198,21 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
     @FXML private BorderPane rootPane;
     @FXML private HBox toolbarBox;
-    @FXML private Button loadModelButton;
-    @FXML private Button loadProjectButton;
-    @FXML private Button resetViewButton;
-    @FXML private Button exportPreviewButton;
-    @FXML private Button exportProjectButton;
+    @FXML private MenuItem loadModelMenuItem;
+    @FXML private MenuItem loadProjectMenuItem;
+    @FXML private MenuItem resetViewMenuItem;
+    @FXML private MenuItem exportPreviewMenuItem;
+    @FXML private MenuItem exportProjectMenuItem;
     private ComboBox<LightingSystem.Mode> lightingModeCombo;
     @FXML private SplitPane contentSplit;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
     @FXML private StackPane viewerPane;
+    private StackPane exportStatusOverlay;
+    private VBox exportStatusCard;
+    private Label exportStatusLabel;
+    private ProgressIndicator exportProgressIndicator;
+    private PauseTransition exportStatusPause;
 
     private boolean bootstrapped;
 
@@ -326,20 +336,20 @@ public final class WorkspaceBoundary implements WorkspaceController {
     }
 
     private void setupToolbar() {
-        if (loadModelButton != null) {
-            loadModelButton.setOnAction(evt -> showLoadDialog(resolveStage()));
+        if (loadModelMenuItem != null) {
+            loadModelMenuItem.setOnAction(evt -> showLoadDialog(resolveStage()));
         }
-        if (loadProjectButton != null) {
-            loadProjectButton.setOnAction(evt -> handleLoadProject());
+        if (loadProjectMenuItem != null) {
+            loadProjectMenuItem.setOnAction(evt -> handleLoadProject());
         }
-        if (resetViewButton != null) {
-            resetViewButton.setOnAction(evt -> cameraRig.reset());
+        if (resetViewMenuItem != null) {
+            resetViewMenuItem.setOnAction(evt -> cameraRig.reset());
         }
-        if (exportPreviewButton != null) {
-            exportPreviewButton.setOnAction(evt -> handleExportPreview());
+        if (exportPreviewMenuItem != null) {
+            exportPreviewMenuItem.setOnAction(evt -> handleExportPreview());
         }
-        if (exportProjectButton != null) {
-            exportProjectButton.setOnAction(evt -> handleExportProject());
+        if (exportProjectMenuItem != null) {
+            exportProjectMenuItem.setOnAction(evt -> handleExportProject());
         }
     }
 
@@ -843,11 +853,38 @@ public final class WorkspaceBoundary implements WorkspaceController {
         if (target == null) {
             return;
         }
-        try {
-            exportProjectArchive(target.toPath());
-        } catch (IOException ex) {
-            showError("Failed to export project", ex);
+        runProjectExport(target.toPath());
+    }
+
+    private void runProjectExport(Path targetPath) {
+        if (targetPath == null) {
+            return;
         }
+        showExportProgress("Exporting project...");
+        Task<Path> exportTask = new Task<>() {
+            @Override
+            protected Path call() throws Exception {
+                exportProjectArchive(targetPath);
+                return targetPath;
+            }
+        };
+        exportTask.setOnSucceeded(evt -> {
+            Path completed = exportTask.getValue();
+            showExportOutcome("Project exported", true);
+            showInfo("Export complete", completed != null ? "Saved to " + completed.toAbsolutePath() : "Project exported successfully.");
+        });
+        exportTask.setOnFailed(evt -> {
+            Throwable error = exportTask.getException();
+            showExportOutcome("Export failed", false);
+            if (error instanceof Exception exception) {
+                showError("Failed to export project", exception);
+            } else {
+                showError("Failed to export project", new IOException("Unexpected export failure", error));
+            }
+        });
+        Thread exporter = new Thread(exportTask, "tattui-project-export");
+        exporter.setDaemon(true);
+        exporter.start();
     }
 
     private void exportProjectArchive(Path requestedTarget) throws IOException {
@@ -1337,11 +1374,105 @@ public final class WorkspaceBoundary implements WorkspaceController {
 
         viewerPane.getChildren().setAll(subScene);
         StackPane.setMargin(subScene, Insets.EMPTY);
+        ensureExportStatusOverlay();
 
         viewerPane.setMinSize(0, 0);
         viewerPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         subScene.widthProperty().bind(viewerPane.widthProperty());
         subScene.heightProperty().bind(viewerPane.heightProperty());
+    }
+
+    private void ensureExportStatusOverlay() {
+        if (viewerPane == null) {
+            return;
+        }
+        if (exportStatusOverlay == null) {
+            exportProgressIndicator = new ProgressIndicator();
+            exportProgressIndicator.getStyleClass().add("export-status-progress");
+            exportProgressIndicator.setMaxSize(72, 72);
+
+            exportStatusLabel = new Label();
+            exportStatusLabel.getStyleClass().add("export-status-label");
+
+            exportStatusCard = new VBox(12, exportProgressIndicator, exportStatusLabel);
+            exportStatusCard.setAlignment(Pos.CENTER);
+            exportStatusCard.getStyleClass().add("export-status-card");
+
+            exportStatusOverlay = new StackPane(exportStatusCard);
+            exportStatusOverlay.getStyleClass().add("export-status-overlay");
+            exportStatusOverlay.setVisible(false);
+            exportStatusOverlay.setMouseTransparent(true);
+        }
+        if (!viewerPane.getChildren().contains(exportStatusOverlay)) {
+            viewerPane.getChildren().add(exportStatusOverlay);
+            StackPane.setAlignment(exportStatusOverlay, Pos.CENTER);
+        }
+    }
+
+    private void showExportProgress(String message) {
+        Platform.runLater(() -> {
+            ensureExportStatusOverlay();
+            if (exportStatusOverlay == null) {
+                return;
+            }
+            if (exportStatusPause != null) {
+                exportStatusPause.stop();
+            }
+            exportStatusOverlay.setVisible(true);
+            exportStatusOverlay.setMouseTransparent(false);
+            if (exportStatusLabel != null) {
+                exportStatusLabel.setText(message);
+            }
+            if (exportProgressIndicator != null) {
+                exportProgressIndicator.setVisible(true);
+                exportProgressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+            }
+            if (exportStatusCard != null) {
+                ObservableList<String> classes = exportStatusCard.getStyleClass();
+                classes.removeAll("success", "error");
+            }
+        });
+    }
+
+    private void showExportOutcome(String message, boolean success) {
+        Platform.runLater(() -> {
+            ensureExportStatusOverlay();
+            if (exportStatusOverlay == null) {
+                return;
+            }
+            if (exportStatusPause != null) {
+                exportStatusPause.stop();
+            }
+            exportStatusOverlay.setVisible(true);
+            exportStatusOverlay.setMouseTransparent(true);
+            if (exportStatusLabel != null) {
+                exportStatusLabel.setText(message);
+            }
+            if (exportProgressIndicator != null) {
+                exportProgressIndicator.setVisible(false);
+            }
+            if (exportStatusCard != null) {
+                ObservableList<String> classes = exportStatusCard.getStyleClass();
+                classes.removeAll("success", "error");
+                classes.add(success ? "success" : "error");
+            }
+            exportStatusPause = new PauseTransition(Duration.seconds(2.2));
+            exportStatusPause.setOnFinished(evt -> hideExportStatusOverlay());
+            exportStatusPause.play();
+        });
+    }
+
+    private void hideExportStatusOverlay() {
+        Platform.runLater(() -> {
+            if (exportStatusOverlay == null) {
+                return;
+            }
+            exportStatusOverlay.setVisible(false);
+            exportStatusOverlay.setMouseTransparent(true);
+            if (exportProgressIndicator != null) {
+                exportProgressIndicator.setVisible(false);
+            }
+        });
     }
 
     private void configureSplitPane() {
@@ -2505,6 +2636,13 @@ public final class WorkspaceBoundary implements WorkspaceController {
         public String toString() {
             return label;
         }
+    }
+
+    private void showInfo(String message, String details) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(message);
+        alert.setContentText(details);
+        alert.show();
     }
 
     private void showError(String message, Exception ex) {
