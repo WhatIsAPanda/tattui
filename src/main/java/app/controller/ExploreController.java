@@ -345,7 +345,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
 
     private void openArtistPage(String artistName) {
         try {
-            var loader = new javafx.fxml.FXMLLoader(getClass().getResource("/app/ArtistProfile.fxml"));
+            var loader = new javafx.fxml.FXMLLoader(getClass().getResource("/app/view/ArtistProfile.fxml"));
             javafx.scene.Parent root = loader.load();  // ✅ Parent
 
             ArtistProfileController controller = loader.getController();
