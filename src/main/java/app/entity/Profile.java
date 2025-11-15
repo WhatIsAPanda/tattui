@@ -15,7 +15,7 @@ public class Profile {
     private String profile_picture_url;
     private Image profile_picture_image;
     private String address;
-    private double longtitude;
+    private double longitude;
     private double latitude;
     private String tags;
 
@@ -28,7 +28,7 @@ public class Profile {
         this.biography = biography;
         this.profile_picture_image = new Image(profile_picture_url);
         this.address = address;
-        this.longtitude = longtitude;
+        this.longitude = longtitude;
         this.latitude = latitude;
         this.tags = tags;
     }
@@ -65,8 +65,8 @@ public class Profile {
         return address;
     }
 
-    public double getLongtitude() {
-        return longtitude;
+    public double getLongitude() {
+        return longitude;
     }
 
     public double getLatitude() {

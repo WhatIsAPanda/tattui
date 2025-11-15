@@ -20,6 +20,8 @@ public class Main extends Application {
         scene.getStylesheets().add(
             Objects.requireNonNull(Main.class.getResource("/app/css/main.css")).toExternalForm()
         );
+        scene.getRoot().lookupAll("*").forEach(n -> n.setFocusTraversable(false));
+
 
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("/icons/code.png")));
         stage.setTitle("Tattui");

@@ -6,6 +6,22 @@
   -fx-text-fill: #e2e8f0;
   -fx-accent: #1f2937;
   -fx-font-family: "Times New Roman";
+  -fx-background-insets: 0;   /* kills Modena highlight layers */
+  -fx-effect: none;
+}
+.list-cell:focused,
+.table-row-cell:focused,
+.combo-box:focused,
+.combo-box:selected,
+.list-cell:selected,
+.table-row-cell:selected,
+.tree-cell:selected,
+.vbox:focused,
+.hbox:focused {
+    -fx-background-color: inherit;
+    -fx-border-color: inherit;
+    -fx-text-fill: inherit;
+    
 }
 
 .label {

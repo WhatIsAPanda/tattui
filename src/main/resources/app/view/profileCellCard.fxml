@@ -7,9 +7,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<HBox fx:id="profileCard" fillHeight="false" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="88.0" styleClass="neutral-card" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="profileCard" fillHeight="false" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="88.0" styleClass="neutral-card" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <ImageView fitHeight="88.0" fitWidth="88.0" preserveRatio="false">
+      <ImageView fitHeight="88.0" fitWidth="78.0" preserveRatio="false">
          <HBox.margin>
             <Insets right="10.0" />
          </HBox.margin>
@@ -36,4 +36,7 @@
          </HBox.margin>
       </VBox>
    </children>
+   <padding>
+      <Insets right="10.0" />
+   </padding>
 </HBox>
