@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="1120.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.WorkspaceBoundary">
+
+    <top>
+        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-border-color: transparent transparent white transparent; -border-width: 0 0 1 0;" styleClass="toolbar" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+            </padding>
+            <children>
+                <MenuButton text="Load">
+                    <items>
+                        <MenuItem fx:id="loadModelMenuItem" text="Load Model" />
+                        <MenuItem fx:id="loadProjectMenuItem" text="Load Project" />
+                    </items>
+                </MenuButton>
+                <MenuButton text="Export">
+                    <items>
+                        <MenuItem fx:id="exportPreviewMenuItem" text="Export Preview" />
+                        <MenuItem fx:id="exportProjectMenuItem" text="Export Project" />
+                    </items>
+                </MenuButton>
+                <MenuButton text="View">
+                    <items>
+                        <MenuItem fx:id="resetViewMenuItem" text="Reset View" />
+                    </items>
+                </MenuButton>
+            </children>
+        </HBox>
+    </top>
+
+    <center>
+        <StackPane fx:id="viewerPane" styleClass="workspace-viewer" BorderPane.alignment="CENTER" />
+    </center>
+
+    <right>
+        <ScrollPane fx:id="controlScroll" fitToWidth="true" focusTraversable="false" hbarPolicy="NEVER" style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" styleClass="sidebar-scroll" vbarPolicy="AS_NEEDED" BorderPane.alignment="CENTER">
+            <content>
+                <VBox fx:id="controlsContainer" alignment="TOP_LEFT" spacing="12.0" styleClass="control-pane" />
+            </content>
+        </ScrollPane>
+    </right>
+
+</BorderPane>

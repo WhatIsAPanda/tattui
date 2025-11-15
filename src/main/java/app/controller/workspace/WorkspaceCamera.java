@@ -1,5 +1,6 @@
 package app.controller.workspace;
 
+import app.entity.CameraState;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Bounds;
@@ -25,8 +26,8 @@ public final class WorkspaceCamera {
     private final double pitchMin;
     private final double pitchMax;
 
-    private static final double DEFAULT_YAW = 210.0;
-    private static final double DEFAULT_PITCH = -20.0;
+    private static final double DEFAULT_YAW = 180.0;
+    private static final double DEFAULT_PITCH = -5.0;
 
     private final DoubleProperty yaw = new SimpleDoubleProperty(DEFAULT_YAW);
     private final DoubleProperty pitch = new SimpleDoubleProperty(DEFAULT_PITCH);
@@ -36,6 +37,9 @@ public final class WorkspaceCamera {
 
     private Bounds bounds;
     private Point3D target = new Point3D(0, 0, 0);
+    private double panX;
+    private double panY;
+    private double panZ;
     private double lastMouseX;
     private double lastMouseY;
 
@@ -78,9 +82,10 @@ public final class WorkspaceCamera {
         double centerZ = (bounds.getMinZ() + bounds.getMaxZ()) * 0.5;
         double floor = bounds.getMinY();
         double height = bounds.getHeight();
-        double targetY = floor + height * 0.55;
+        double targetY = floor + height * 0.50;
 
         target = new Point3D(centerX, targetY, centerZ);
+        panX = panY = panZ = 0.0;
         yaw.set(DEFAULT_YAW);
         pitch.set(DEFAULT_PITCH);
 
@@ -125,6 +130,35 @@ public final class WorkspaceCamera {
         }
     }
 
+    public CameraState snapshot() {
+        return new CameraState(
+            yaw.get(),
+            pitch.get(),
+            distance.get(),
+            target.getX(),
+            target.getY(),
+            target.getZ(),
+            panX,
+            panY,
+            panZ
+        );
+    }
+
+    public void apply(CameraState state) {
+        if (state == null) {
+            return;
+        }
+        Point3D desiredTarget = new Point3D(state.targetX(), state.targetY(), state.targetZ());
+        target = bounds != null ? clampTarget(desiredTarget, bounds) : desiredTarget;
+        panX = state.panX();
+        panY = state.panY();
+        panZ = state.panZ();
+        yaw.set(normalizeAngle(state.yaw()));
+        pitch.set(clamp(state.pitch(), pitchMin, pitchMax));
+        distance.set(clamp(state.distance(), minDistance, maxDistance));
+        updateCameraTransform();
+    }
+
     private void orbit(double dx, double dy) {
         yaw.set(normalizeAngle(yaw.get() - dx * orbitSensitivity));
         pitch.set(clamp(pitch.get() - dy * orbitSensitivity, pitchMin, pitchMax));
@@ -135,10 +169,20 @@ public final class WorkspaceCamera {
             return;
         }
         double factor = distance.get() / 800.0;
-        double newX = target.getX() - dx * panSensitivity * factor;
-        double newY = target.getY() + dy * panSensitivity * factor;
-        double newZ = target.getZ() + dx * panSensitivity * factor * 0.6;
-        target = clampTarget(new Point3D(newX, newY, newZ), bounds);
+        double yawRadians = Math.toRadians(yaw.get());
+        double cosYaw = Math.cos(yawRadians);
+        double sinYaw = Math.sin(yawRadians);
+
+        double rightX = cosYaw;
+        double rightZ = -sinYaw;
+        double forwardX = sinYaw;
+        double forwardZ = cosYaw;
+
+        panX -= dx * panSensitivity * factor * rightX;
+        panZ -= dx * panSensitivity * factor * rightZ;
+        panX += dy * panSensitivity * factor * forwardX * 0.6;
+        panZ += dy * panSensitivity * factor * forwardZ * 0.6;
+        panY += dy * panSensitivity * factor;
         updateCameraTransform();
     }
 
@@ -152,7 +196,8 @@ public final class WorkspaceCamera {
             new Translate(target.getX(), target.getY(), target.getZ()),
             new Rotate(yaw.get(), Rotate.Y_AXIS),
             new Rotate(pitch.get(), Rotate.X_AXIS),
-            new Translate(0, 0, -clampedDistance)
+            new Translate(0, 0, -clampedDistance),
+            new Translate(panX, panY, panZ)
         );
     }
 

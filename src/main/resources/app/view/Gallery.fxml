@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="app.controller.GalleryController">
+
+    <children>
+        <!-- Root VBox fills the window -->
+        <VBox alignment="TOP_CENTER"
+              spacing="10"
+              AnchorPane.topAnchor="0.0"
+              AnchorPane.bottomAnchor="0.0"
+              AnchorPane.leftAnchor="0.0"
+              AnchorPane.rightAnchor="0.0"
+              style="-fx-padding:15;">
+            
+            <!-- Title -->
+            <Label text="Gallery" style="-fx-font-family: 'Times New Roman';">
+                <font>
+                    <Font name="Times New Roman" size="25.0"/>
+                </font>
+            </Label>
+
+            <Label text="Your previous Files" style="-fx-font-family: 'Times New Roman';">
+                <font>
+                    <Font name="Times New Roman" size="15.0"/>
+                </font>
+            </Label>
+
+            <!-- Scrollable grid of images -->
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <content>
+                    <GridPane fx:id="galleryGrid" hgap="10" vgap="10" alignment="CENTER">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="33.33"/>
+                            <ColumnConstraints percentWidth="33.33"/>
+                            <ColumnConstraints percentWidth="33.33"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints percentHeight="33.33"/>
+                            <RowConstraints percentHeight="33.33"/>
+                            <RowConstraints percentHeight="33.33"/>
+                        </rowConstraints>
+                    </GridPane>
+                </content>
+            </ScrollPane>
+
+            <!-- Upload button aligned bottom-right -->
+            <HBox alignment="CENTER_RIGHT" VBox.vgrow="NEVER" style="-fx-padding:10;">
+                <Button fx:id="uploadButton" text="Upload" prefWidth="80" onAction="#handleUpload"/>
+            </HBox>
+        </VBox>
+    </children>
+</AnchorPane>
