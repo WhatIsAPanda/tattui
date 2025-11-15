@@ -140,7 +140,7 @@ public class MapController implements PageAware {
         task.setOnSucceeded(e -> {
             depopulateMap();
             DotLayer layer = task.getValue();
-            layer.markDirty();
+            //layer.markDirty();
             map.addLayer(layer);
             layers.add(layer);
             if (!allResults.isEmpty()) {

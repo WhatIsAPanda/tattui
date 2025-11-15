@@ -9,19 +9,19 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import app.controller.RootController.PageAware;
-
-public class TaskbarController implements PageAware, RootController.ProfileAware {
+public class TaskbarController implements RootController.PageAware, RootController.ProfileAware {
 
     private static final Logger LOG = Logger.getLogger(TaskbarController.class.getName());
 
-    //THis shit handles navigation
+    // Handles navigation and profile routing
     private Consumer<String> onPageRequest;
     private Consumer<Profile> onProfileRequest;
 
+    @Override
     public void setOnPageRequest(Consumer<String> handler) {
         this.onPageRequest = handler;
     }
+
     @Override
     public void setProfileProvider(Consumer<Profile> provider) {
         this.onProfileRequest = provider;
@@ -39,11 +39,12 @@ public class TaskbarController implements PageAware, RootController.ProfileAware
 
         switch (b.getId()) {
             case "workspaceButton" -> onPageRequest.accept("workspace");
-            case "galleryButton" -> onPageRequest.accept("gallery");
+            case "exploreButton" -> onPageRequest.accept("explore");
             case "mapButton" -> onPageRequest.accept("map");
             case "loginButton" -> onPageRequest.accept("login");
             case "logoButton" -> onProfileRequest.accept(LoggedInUser.getInstance());
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
+        
     }
 }

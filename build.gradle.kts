@@ -22,7 +22,8 @@ javafx {
         "javafx.controls",
         "javafx.graphics",
         "javafx.fxml",
-        "javafx.web"
+        "javafx.web",
+        "javafx.swing"
     )
 }
 
