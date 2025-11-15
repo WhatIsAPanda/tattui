@@ -23,7 +23,7 @@ public final class TattooWorkspace {
     private final List<Tattoo> tattoos = new ArrayList<>();
     private final List<PhongMaterial> materials = new ArrayList<>();
     private Color skinTone = Color.WHITE;
-    private final String TATTOO = "tattoo";
+    private static final String TATTOO = "tattoo";
 
     private int selectedIndex = -1;
     private Image pendingImage;
