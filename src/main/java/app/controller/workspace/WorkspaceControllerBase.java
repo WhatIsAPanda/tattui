@@ -11,6 +11,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -38,11 +39,17 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableRow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -62,6 +69,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
@@ -88,9 +96,11 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,7 +110,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Deque;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -156,6 +165,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         Color.rgb(255, 242, 224),
         Color.rgb(255, 247, 236)
     );
+    private static final double DEFAULT_ESTIMATE_HEIGHT = 66.0;
+    private static final double PIXEL_TO_SQUARE_INCH = 1.0 / 500.0;
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
@@ -264,7 +275,15 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private Bounds currentBounds;
     private SubScene subScene;
     private boolean adjustingSliders;
+    private static final double BASE_TATTOO_RATE = 100.0;
+    private static final double RATE_PER_INCH = 150.0;
+    private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("$#,##0.00");
+    private static final DecimalFormat INCH_FORMAT = new DecimalFormat("0.0");
     private final Deque<TattooWorkspace.RemovedTattoo> deletedTattooHistory = new ArrayDeque<>();
+    private TextField estimateHeightField;
+    private Label estimateValueLabel;
+    private TableView<EstimateRow> estimateBreakdownTable;
+    private final ObservableList<EstimateRow> estimateRows = FXCollections.observableArrayList();
 
     public WorkspaceControllerBase() {
         initializePartGroups();
@@ -447,6 +466,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         lockAspectRatioToggle = new ToggleButton("Lock Aspect Ratio");
         lockAspectRatioToggle.setMaxWidth(Double.MAX_VALUE);
         lockAspectRatioToggle.getStyleClass().add("lock-aspect-toggle");
+        lockAspectRatioToggle.setSelected(true);
         lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> handleAspectLockChange(newVal));
 
         Label historyLabel = new Label("Loaded Tattoos");
@@ -472,7 +492,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         );
         tattooControls.setFillWidth(true);
 
-        controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls));
+        controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls, true));
 
         VBox modelProperties = new VBox(6,
             buildSkinToneSelector(),
@@ -480,7 +500,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         );
         modelProperties.setFillWidth(true);
 
-        controlsContainer.getChildren().add(createDropdownPanel("Model Properties", modelProperties));
+        controlsContainer.getChildren().add(createDropdownPanel("Model Properties", modelProperties, false));
+        controlsContainer.getChildren().add(createDropdownPanel("Price Calculator", buildPriceCalculatorPane(), false));
         syncSkinToneSelection();
 
         if (controlScroll != null) {
@@ -502,6 +523,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
             return;
         }
         tattooWorkspace.updateSelection(updater);
+        refreshEstimateDisplay();
     }
 
     private void onTattooDimensionChange(TattooDimension dimension, Slider source, double value) {
@@ -668,10 +690,140 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return spacer;
     }
 
-    private TitledPane createDropdownPanel(String title, Node content) {
+    private VBox buildPriceCalculatorPane() {
+        estimateHeightField = new TextField();
+        estimateHeightField.setPromptText("Height (in)");
+        estimateHeightField.setPrefColumnCount(6);
+        estimateHeightField.setMaxWidth(130);
+        estimateHeightField.textProperty().addListener((obs, oldVal, newVal) -> refreshEstimateDisplay());
+        estimateValueLabel = new Label("--");
+        estimateValueLabel.getStyleClass().add("price-estimate-label");
+        estimateValueLabel.setMinWidth(Region.USE_PREF_SIZE);
+        estimateValueLabel.setMaxWidth(Region.USE_PREF_SIZE);
+        Label totalLabel = new Label("Total:");
+        totalLabel.setStyle("-fx-font-weight: bold;");
+        Label formulaHint = new Label(
+            "Cost = $" + (int) BASE_TATTOO_RATE + " base + $" + (int) RATE_PER_INCH + " × largest dimension"
+        );
+        formulaHint.setWrapText(true);
+        formulaHint.setStyle("-fx-text-fill: #9ca3af; -fx-font-size: 11px;");
+        formulaHint.setMaxWidth(Double.MAX_VALUE);
+        HBox heightBox = new HBox(10, new Label("Height:"), estimateHeightField);
+        heightBox.setAlignment(Pos.CENTER_LEFT);
+
+        HBox totalBox = new HBox(6, totalLabel, estimateValueLabel);
+        totalBox.setAlignment(Pos.CENTER_RIGHT);
+        totalBox.setMinWidth(110);
+        totalBox.setPrefWidth(110);
+        totalBox.setMaxWidth(110);
+
+        GridPane row = new GridPane();
+        row.setHgap(10);
+        ColumnConstraints leftCol = new ColumnConstraints();
+        leftCol.setHgrow(Priority.ALWAYS);
+        ColumnConstraints rightCol = new ColumnConstraints();
+        rightCol.setPrefWidth(130);
+        rightCol.setMinWidth(130);
+        rightCol.setMaxWidth(130);
+        row.getColumnConstraints().addAll(leftCol, rightCol);
+        row.add(heightBox, 0, 0);
+        row.add(totalBox, 1, 0);
+        estimateBreakdownTable = buildEstimateTable();
+        StackPane tableWrapper = new StackPane(estimateBreakdownTable);
+        tableWrapper.setMinWidth(0);
+        tableWrapper.setMaxWidth(Double.MAX_VALUE);
+        estimateBreakdownTable.prefWidthProperty().bind(tableWrapper.widthProperty());
+        VBox box = new VBox(6, row, formulaHint, tableWrapper);
+        box.setFillWidth(true);
+        Platform.runLater(this::refreshEstimateDisplay);
+        return box;
+    }
+
+    private TableView<EstimateRow> buildEstimateTable() {
+        TableView<EstimateRow> table = new TableView<>(estimateRows);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setFixedCellSize(32);
+        table.setMinWidth(Region.USE_COMPUTED_SIZE);
+        table.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        table.setMaxWidth(Double.MAX_VALUE);
+        table.setPlaceholder(new Label("Enter height and add tattoos to see details."));
+        table.getStyleClass().add("estimate-table");
+
+        TableColumn<EstimateRow, String> tattooCol = new TableColumn<>("Tattoo");
+        tattooCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().label()));
+        tattooCol.setSortable(false);
+        tattooCol.setMinWidth(120);
+        tattooCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+
+        TableColumn<EstimateRow, String> widthCol = new TableColumn<>("Width");
+        widthCol.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().width(), data.getValue().height())));
+        widthCol.setSortable(false);
+        widthCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+
+        TableColumn<EstimateRow, String> heightCol = new TableColumn<>("Height");
+        heightCol.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().height(), data.getValue().width())));
+        heightCol.setSortable(false);
+        heightCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+
+        TableColumn<EstimateRow, String> priceCol = new TableColumn<>("Price");
+        priceCol.setCellValueFactory(data -> new SimpleStringProperty(formatMoney(data.getValue().price())));
+        priceCol.setSortable(false);
+        priceCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+        priceCol.setMinWidth(90);
+        priceCol.setMaxWidth(140);
+        priceCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+
+        table.getColumns().setAll(tattooCol, widthCol, heightCol, priceCol);
+        table.setStyle("-fx-text-fill: white;");
+        table.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(EstimateRow item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else if (tattooWorkspace.selected().isPresent() && tattooWorkspace.selected().get() == item.tattoo()) {
+                    setStyle("-fx-background-color: rgba(56,189,248,0.25);");
+                } else {
+                    setStyle("-fx-background-color: transparent;");
+                }
+            }
+        });
+        return table;
+    }
+
+    private static String formatInches(double inches) {
+        return INCH_FORMAT.format(inches) + "\"";
+    }
+
+    private static String formatSizedInches(double target, double other) {
+        String base = formatInches(target);
+        return target >= other - 1e-6 ? "*" + base : base;
+    }
+
+    private TableCell<EstimateRow, String> createWhiteTextCell(Pos alignment) {
+        return new TableCell<>() {
+            {
+                setAlignment(alignment);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                setTextFill(Color.WHITE);
+                setStyle("-fx-text-fill: white;");
+            }
+        };
+    }
+
+    private static String formatMoney(double amount) {
+        return MONEY_FORMAT.format(amount);
+    }
+
+    private TitledPane createDropdownPanel(String title, Node content, boolean expanded) {
         TitledPane pane = new TitledPane(title, content);
         pane.setCollapsible(true);
-        pane.setExpanded(true);
+        pane.setExpanded(expanded);
         pane.setFocusTraversable(false);
         pane.getStyleClass().add("sidebar-titled-pane");
         pane.setMaxWidth(Double.MAX_VALUE);
@@ -1559,6 +1711,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private void handleWorkspaceKey(KeyEvent event) {
+        if (isTextInputEvent(event)) {
+            return;
+        }
         if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
             if (tattooWorkspace.selected().isPresent()) {
                 handleDeleteTattoo();
@@ -1566,6 +1721,23 @@ public class WorkspaceControllerBase implements WorkspaceController {
             return;
         }
         cameraRig.handleKey(event);
+    }
+
+    private boolean isTextInputEvent(KeyEvent event) {
+        Object target = event.getTarget();
+        if (target instanceof TextInputControl) {
+            return true;
+        }
+        if (target instanceof Node node) {
+            Node current = node;
+            while (current != null) {
+                if (current instanceof TextInputControl) {
+                    return true;
+                }
+                current = current.getParent();
+            }
+        }
+        return false;
     }
 
     private void showLoadDialog(Stage stage) {
@@ -1756,6 +1928,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         double u = clamp(uv.getX() - tattooDragOffsetU, 0.0, 1.0);
         double v = clamp(uv.getY() - tattooDragOffsetV, 0.0, 1.0);
         tattooWorkspace.updateSelectedTattoo(current.withUV(u, v));
+        refreshEstimateDisplay();
         event.consume();
     }
 
@@ -2065,6 +2238,22 @@ public class WorkspaceControllerBase implements WorkspaceController {
             reflectTattooButton.setDisable(selectedPreset == null);
         }
         updateUndoButtonState();
+        refreshEstimateDisplay();
+    }
+
+    private double calculateEstimate(double userHeightInches, List<Tattoo> tattoos) {
+        double heightScale = Math.max(0.5, Math.min(1.8, userHeightInches / DEFAULT_ESTIMATE_HEIGHT));
+        double total = 0.0;
+        for (Tattoo tattoo : tattoos) {
+            double imageWidth = tattoo.image() != null ? tattoo.image().getWidth() : 256.0;
+            double imageHeight = tattoo.image() != null ? tattoo.image().getHeight() : 256.0;
+            double scaledWidth = imageWidth * tattoo.widthScale();
+            double scaledHeight = imageHeight * tattoo.heightScale();
+            double dominantPixels = Math.max(scaledWidth, scaledHeight);
+            double dominantInches = Math.max(0.5, dominantPixels * Math.sqrt(heightScale * PIXEL_TO_SQUARE_INCH));
+            total += 100.0 + (150.0 * dominantInches);
+        }
+        return Math.max(0.0, total);
     }
 
     private void updateCurrentBounds() {
@@ -2081,6 +2270,106 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private void clearDeletedTattooHistory() {
         deletedTattooHistory.clear();
         updateUndoButtonState();
+        refreshEstimateDisplay();
+    }
+
+    private void refreshEstimateDisplay() {
+        if (estimateValueLabel == null) {
+            return;
+        }
+        Double height = parseHeightFromField();
+        List<Tattoo> tattoos = tattooWorkspace.exportableTattoos();
+        if (height == null) {
+            estimateValueLabel.setText("--");
+            updateEstimateBreakdown(height, tattoos);
+            return;
+        }
+        if (tattoos.isEmpty()) {
+            estimateValueLabel.setText("$0.00");
+            updateEstimateBreakdown(height, tattoos);
+            return;
+        }
+        double estimate = calculateEstimate(height, tattoos);
+        estimateValueLabel.setText(formatMoney(estimate));
+        updateEstimateBreakdown(height, tattoos);
+    }
+
+    private Double parseHeightFromField() {
+        if (estimateHeightField == null) {
+            return null;
+        }
+        String text = estimateHeightField.getText();
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        try {
+            double parsed = Double.parseDouble(text.trim());
+            return parsed > 0 ? parsed : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private void updateEstimateBreakdown(Double height, List<Tattoo> tattoos) {
+        estimateRows.clear();
+        if (estimateBreakdownTable == null || height == null || tattoos == null) {
+            updateEstimateTableHeight(0);
+            return;
+        }
+        if (tattoos.isEmpty()) {
+            estimateBreakdownTable.refresh();
+            updateEstimateTableHeight(0);
+            return;
+        }
+        double heightScale = Math.max(0.5, Math.min(1.8, height / DEFAULT_ESTIMATE_HEIGHT));
+        double scaleFactor = Math.sqrt(heightScale * PIXEL_TO_SQUARE_INCH);
+        int index = 1;
+        for (Tattoo tattoo : tattoos) {
+            double widthPixels = (tattoo.image() != null ? tattoo.image().getWidth() : 256.0) * tattoo.widthScale();
+            double heightPixels = (tattoo.image() != null ? tattoo.image().getHeight() : 256.0) * tattoo.heightScale();
+            double widthInches = Math.max(0.1, widthPixels * scaleFactor);
+            double heightInches = Math.max(0.1, heightPixels * scaleFactor);
+            double dominantInches = Math.max(widthInches, heightInches);
+            double rateCost = RATE_PER_INCH * dominantInches;
+            double cost = BASE_TATTOO_RATE + rateCost;
+            String label = resolveTattooLabel(tattoo, index);
+            estimateRows.add(new EstimateRow(label, widthInches, heightInches, cost, tattoo));
+            index++;
+        }
+        estimateBreakdownTable.refresh();
+        updateEstimateTableHeight(estimateRows.size());
+    }
+
+    private void updateEstimateTableHeight(int rowCount) {
+        if (estimateBreakdownTable == null) {
+            return;
+        }
+        double rowHeight = estimateBreakdownTable.getFixedCellSize() > 0 ? estimateBreakdownTable.getFixedCellSize() : 32.0;
+        double header = 30.0;
+        int rows = rowCount > 0 ? rowCount : 1;
+        double totalHeight = rows * rowHeight + header;
+        estimateBreakdownTable.setPrefHeight(totalHeight);
+        estimateBreakdownTable.setMinHeight(totalHeight);
+        estimateBreakdownTable.setMaxHeight(totalHeight);
+    }
+
+    private String resolveTattooLabel(Tattoo tattoo, int index) {
+        if (tattoo == null || tattoo.image() == null) {
+            return "Tattoo " + index;
+        }
+        String url = tattoo.image().getUrl();
+        if (url == null || url.isBlank()) {
+            return "Tattoo " + index;
+        }
+        url = url.replace('\\', '/');
+        int slash = url.lastIndexOf('/');
+        if (slash >= 0 && slash < url.length() - 1) {
+            String name = url.substring(slash + 1);
+            if (!name.isBlank()) {
+                return name;
+            }
+        }
+        return "Tattoo " + index;
     }
 
     private ObjLoader.LoadedModel createPlaceholderModel() {
@@ -2668,6 +2957,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private double clamp(double value, double min, double max) {
         return Math.clamp(value, min, max);
     }
+
+    private record EstimateRow(String label, double width, double height, double price, Tattoo tattoo) {}
 
     private record WorkspacePreferences(CameraState camera, Color skinTone, LightingSystem.Mode lightingMode) {}
 
