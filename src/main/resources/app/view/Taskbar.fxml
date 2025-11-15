@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 
-<VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
+<VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
 
     <opaqueInsets>
         <Insets right="1.0" />

@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="1120.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.WorkspaceBoundary">
+<BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="1120.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.WorkspaceBoundary">
 
     <top>
         <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-border-color: transparent transparent white transparent; -border-width: 0 0 1 0;" styleClass="toolbar" BorderPane.alignment="CENTER">

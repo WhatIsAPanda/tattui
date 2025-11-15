@@ -42,7 +42,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<HBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox>
          <children>

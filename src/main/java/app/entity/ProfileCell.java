@@ -55,8 +55,8 @@ public class ProfileCell extends ListCell<Profile> {
                         double y = (height - size) / 2;
 
                         image.setViewport(new Rectangle2D(x, y, size, size));
-                        image.setFitWidth(88);
-                        image.setFitHeight(88);
+                        image.setFitWidth(78);
+                        image.setFitHeight(78);
                         image.setPreserveRatio(false);
                     }
                 });

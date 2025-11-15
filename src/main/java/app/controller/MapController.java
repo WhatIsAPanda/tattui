@@ -2,10 +2,16 @@ package app.controller;
 
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javafx.concurrent.Task;
+import java.util.ArrayList;
+import java.util.List;
+import javafx.application.Platform;
+
 
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 
+import app.controller.MapController.DotLayer;
 import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -24,6 +30,7 @@ import javafx.util.Pair;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,6 +42,8 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -53,6 +62,8 @@ public class MapController implements PageAware {
     private StackPane mapContainer; 
 
     private MapView map;
+    
+    private final List<MapLayer> layers = new LinkedList<>();
 
     private Consumer<String> onPageRequest;
 
@@ -66,7 +77,7 @@ public class MapController implements PageAware {
         MapPoint center = new MapPoint(41.892718, 12.476259);
         map.setCenter(center);
         map.setZoom(10);
-        map.addLayer(new DotLayer(center));
+        // map.addLayer(new DotLayer(center));
         mapContainer.getChildren().add(map);
 
         resultsList.setCellFactory(listView -> new ProfileCell());
@@ -75,52 +86,130 @@ public class MapController implements PageAware {
 
     // Inner layer class
     static class DotLayer extends MapLayer {
-        private final MapPoint p;
-        DotLayer(MapPoint p) { this.p = p; }
+        private final List<MapPoint> points;
+        DotLayer(List<MapPoint> points) { this.points = points; }
         @Override
         protected void layoutLayer() {
             getChildren().clear();
-            Node dot = new Circle(5, Color.BLACK);
-            Point2D mp = getMapPoint(p.getLatitude(), p.getLongitude());
-            dot.setTranslateX(mp.getX());
-            dot.setTranslateY(mp.getY());
-            getChildren().add(dot);
+            for (MapPoint p : points) {
+                Point2D mp = getMapPoint(p.getLatitude(), p.getLongitude());
+                Node dot = new Circle(4, Color.RED);
+                dot.setTranslateX(mp.getX());
+                dot.setTranslateY(mp.getY());
+                getChildren().add(dot);
+        }
         }
     }
 
     @FXML
     private void handleSearch(ActionEvent event) {
+        resultsList.getItems().clear();
         String query = searchField.getText();
         if (query == null || query.trim().isEmpty()) {
             return;
         }
         if(query.charAt(0) == '#') {
             tagSearch(query);
-        
         }
-        citySearch(query);
-        populateMap();
+        boolean foundCity = citySearch(query);
+        if (!foundCity) {
+            usernameSearch(query);
+        }
+        populateMapAsync();
+        resultsList.getItems().setAll(allResults);
     }
-    private void populateMap() {
-        if (map == null || allResults == null) return;
-        for (Profile target : allResults) {
-            MapPoint p = new MapPoint(target.getLatitude(), target.getLongtitude());
-            map.addLayer(new DotLayer(p));
-        }   
+
+   private void populateMapAsync() {
+        if (allResults == null || allResults.isEmpty()) return;
+
+        depopulateMap(); // clear old markers first
+
+        Task<DotLayer> task = new Task<>() {
+            @Override
+            protected DotLayer call() {
+                List<MapPoint> points = new ArrayList<>();
+                int count = allResults.size();
+                for (int i = 0; i < count; i++) {
+                    Profile target = allResults.get(i);
+                    points.add(new MapPoint(target.getLatitude(), target.getLongitude()));
+                }
+                return new DotLayer(points);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            depopulateMap();
+            DotLayer layer = task.getValue();
+            layer.markDirty();
+            map.addLayer(layer);
+            layers.add(layer);
+            if (!allResults.isEmpty()) {
+                double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
+                double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
+
+                for (Profile p : allResults) {
+                    double lat = p.getLatitude();
+                    double lon = p.getLongitude();
+                    minLat = Math.min(minLat, lat);
+                    maxLat = Math.max(maxLat, lat);
+                    minLon = Math.min(minLon, lon);
+                    maxLon = Math.max(maxLon, lon);
+                }
+
+                // center point
+                double centerLat = (minLat + maxLat) / 2.0;
+                double centerLon = (minLon + maxLon) / 2.0;
+
+                // approximate zoom level based on spread
+                double latDiff = maxLat - minLat;
+                double lonDiff = maxLon - minLon;
+                double spread = Math.max(latDiff, lonDiff);
+
+                int zoom;
+                if (spread < 0.01) zoom = 14;
+                else if (spread < 0.05) zoom = 12;
+                else if (spread < 0.2) zoom = 10;
+                else if (spread < 1.0) zoom = 8;
+                else zoom = 6;
+
+                map.setCenter(new MapPoint(centerLat, centerLon));
+                map.setZoom(zoom);
+            }
+
+            map.requestLayout(); // ensure refresh
+            double z = map.getZoom();
+            map.setZoom(z + 0.0001);
+            map.setZoom(z);
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+
+    private void depopulateMap() {
+        for (MapLayer layer : layers) {
+            map.removeLayer(layer);
+        }
+        layers.clear();
     }
 
     private void tagSearch(String query){
         System.out.println("unhandled");
     }
 
-    private void citySearch(String query){
+    private boolean citySearch(String query){
         try {//Geocode city name
 
             Pair<Double, Double> center = geocodeCity(query.trim());
             if (center == null) {
-                System.out.println("City not found: " + query);
-                resultsList.getItems().clear();
-                return;
+                return false;
             }
 
             double lat = center.getKey();
@@ -135,23 +224,21 @@ public class MapController implements PageAware {
 
             //Query database for users within bounds
             List<Profile> profiles = DatabaseConnector.getProfilesWithinBounds(latFrom, latTo, lonFrom, lonTo);
-
             //ui update
             if (profiles != null && !profiles.isEmpty()) {
                 //add style fitler logic here
                 allResults = new LinkedList<>(profiles);
-                resultsList.getItems().setAll(allResults);
             } else {
-                resultsList.getItems().clear();
-                System.out.println("No profiles found near " + query);
+                return false;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error searching by city: " + e.getMessage());
         }
+        return false;
     }
-    
+
         
     private Pair<Double, Double> geocodeCity(String city) {
         try {
@@ -169,6 +256,8 @@ public class MapController implements PageAware {
                     double lat = obj.getDouble("lat");
                     double lon = obj.getDouble("lon");
                     return new Pair<>(lat, lon);
+                } else {
+                    return null;
                 }
             }
         } catch (Exception e) {
@@ -184,9 +273,7 @@ public class MapController implements PageAware {
 
             if (profiles != null && !profiles.isEmpty()) {
                 allResults = new LinkedList<>(profiles);
-                resultsList.getItems().setAll(allResults);
             } else {
-                resultsList.getItems().clear();
                 System.out.println("No matching profiles found.");
             }
 
@@ -198,6 +285,7 @@ public class MapController implements PageAware {
     
     @FXML
     private void handleClear(ActionEvent event) {
+        depopulateMap();
         if (searchField != null) {
             searchField.clear();
         }

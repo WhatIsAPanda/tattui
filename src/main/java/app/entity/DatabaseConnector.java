@@ -61,7 +61,7 @@ public class DatabaseConnector {
             "SELECT * FROM Users AS U \n" +
             "LEFT JOIN PostOwnerships AS PO ON PO.user_id = U.id\n" +
             "LEFT JOIN Posts AS P ON PO.post_id = P.id\n" +
-            "WHERE U.username ILIKE ?;"
+            "WHERE U.username LIKE ?;"
         );
         stmt.setString(1, "%" + pattern + "%");
         ResultSet rs = stmt.executeQuery();
