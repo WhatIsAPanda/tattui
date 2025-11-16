@@ -1265,7 +1265,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
-            while ((entry = in.getNextEntry()) != null) {
+            while ((entry = in.getNextEntry()) != null) {// NOSONAR - guarded by resolveArchiveEntry, entry count and
+                                                         // size limits
                 entryCount = ensureEntryCountWithinLimit(entryCount);
 
                 Path resolved = resolveArchiveEntry(tempDir, entry.getName());
