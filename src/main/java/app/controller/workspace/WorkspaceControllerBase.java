@@ -1212,7 +1212,10 @@ public class WorkspaceControllerBase implements WorkspaceController {
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
-                Path resolved = tempDir.resolve(entry.getName()).normalize();
+                String entryName = entry.getName();
+                verifySafeArchiveEntry(entryName);
+                Path relativeEntry = Paths.get(entryName).normalize();
+                Path resolved = tempDir.resolve(relativeEntry).normalize();
                 if (!resolved.startsWith(tempDir)) {
                     throw new IOException("Archive entry resolves outside target directory: " + entry.getName());
                 }
@@ -2839,6 +2842,26 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private double clamp(double value, double min, double max) {
         return Math.clamp(value, min, max);
+    }
+
+    private static void verifySafeArchiveEntry(String entryName) throws IOException {
+        if (entryName == null || entryName.isBlank()) {
+            throw new IOException("Archive entry name is invalid");
+        }
+        Path raw;
+        try {
+            raw = Paths.get(entryName);
+        } catch (InvalidPathException ex) {
+            throw new IOException("Archive entry contains invalid path: " + entryName, ex);
+        }
+        if (raw.isAbsolute()) {
+            throw new IOException("Archive entry uses absolute path: " + entryName);
+        }
+        for (Path part : raw) {
+            if ("..".equals(part.toString())) {
+                throw new IOException("Archive entry attempts directory traversal: " + entryName);
+            }
+        }
     }
 
     private static FileAttribute<?>[] buildSecureTempDirAttributes() {
