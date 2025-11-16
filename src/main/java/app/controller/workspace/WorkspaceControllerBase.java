@@ -129,12 +129,14 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final Color DEFAULT_SKIN_TONE = Color.rgb(245, 208, 157);
     private static final double DEFAULT_ESTIMATE_HEIGHT = 66.0;
     private static final double PIXEL_TO_SQUARE_INCH = 1.0 / 500.0;
-    private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE =
-        FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+    private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE = FileSystems.getDefault()
+            .supportedFileAttributeViews().contains("posix");
     private static final FileAttribute<?>[] SECURE_TEMP_DIR_ATTRIBUTES = buildSecureTempDirAttributes();
     private static final int MAX_ARCHIVE_ENTRIES = 2048;
     private static final long MAX_UNCOMPRESSED_ARCHIVE_BYTES = 200L * 1024 * 1024;
-    private static final long MAX_SINGLE_ENTRY_BYTES = 50L * 1024 * 1024;
+    private static final int MAX_ENTRIES = 10_000;
+    private static final long MAX_SINGLE_ENTRY_BYTES = 50L * 1024 * 1024; // 50 MB per entry
+    private static final long MAX_TOTAL_BYTES = 200L * 1024 * 1024; // 200 MB total
     private static final double MAX_ARCHIVE_COMPRESSION_RATIO = 3.0;
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
@@ -151,27 +153,27 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String LOCK_ASPECT_SELECTED_CLASS = "workspace-toggle-button-selected";
 
     private static final List<String> BODY_PARTS = List.of(
-        "Head",
-        "Neck",
-        TORSO,
-        "Pelvis",
-        "Upper Arm L",
-        "Lower Arm L",
-        "Hand L",
-        "Upper Arm R",
-        "Lower Arm R",
-        "Hand R",
-        "Upper Leg L",
-        "Lower Leg L",
-        "Foot L",
-        "Upper Leg R",
-        "Lower Leg R",
-        "Foot R"
-    );
+            "Head",
+            "Neck",
+            TORSO,
+            "Pelvis",
+            "Upper Arm L",
+            "Lower Arm L",
+            "Hand L",
+            "Upper Arm R",
+            "Lower Arm R",
+            "Hand R",
+            "Upper Leg L",
+            "Lower Leg L",
+            "Foot L",
+            "Upper Leg R",
+            "Lower Leg R",
+            "Foot R");
 
     private static final String DEFAULT_MODEL_FILENAME = "human.obj";
-    private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
-    private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
+    private static final String DEFAULT_MODEL_RESOURCE = "/models/" + DEFAULT_MODEL_FILENAME;
+    private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models",
+            DEFAULT_MODEL_FILENAME);
     private static final double TATTOO_ICON_BUTTON_WIDTH = 28.0;
     private static final double SIDEBAR_PREF_WIDTH = 460.0;
 
@@ -181,54 +183,98 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private final Group overallScaleGroup = new Group(partRoot);
     private final Group modelRoot = new Group(overallScaleGroup);
 
-    private enum TattooDimension { WIDTH, HEIGHT }
+    private enum TattooDimension {
+        WIDTH, HEIGHT
+    }
 
     private final Group root3D = new Group(modelRoot);
     private final LightingSystem lightingSystem = new LightingSystem();
     private LightingSystem.Mode lightingMode = LightingSystem.Mode.UNLIT;
 
-    @FXML private BorderPane rootPane;
-    @FXML private HBox toolbarBox;
-    @FXML private MenuItem loadModelMenuItem;
-    @FXML private MenuItem loadProjectMenuItem;
-    @FXML private MenuItem resetViewMenuItem;
-    @FXML private MenuItem exportPreviewMenuItem;
-    @FXML private MenuItem exportProjectMenuItem;
-    @FXML private ComboBox<LightingSystem.Mode> lightingModeCombo;
-    @FXML private SplitPane contentSplit;
-    @FXML private ScrollPane controlScroll;
-    @FXML private VBox controlsContainer;
-    @FXML private StackPane viewerPane;
-    @FXML private StackPane exportStatusOverlay;
-    @FXML private VBox exportStatusCard;
-    @FXML private Label exportStatusLabel;
-    @FXML private ProgressIndicator exportProgressIndicator;
-    @FXML private Button loadTattooButton;
-    @FXML private Button unloadTattooButton;
-    @FXML private Button removeBackgroundButton;
-    @FXML private Button invertTattooButton;
-    @FXML private Button reflectTattooButton;
-    @FXML private Button deleteTattooButton;
-    @FXML private Button undoTattooButton;
-    @FXML private ToggleButton lockAspectRatioToggle;
-    @FXML private FlowPane tattooHistoryGallery;
-    @FXML private ScrollPane tattooHistoryScroll;
-    @FXML private Slider tattooSizeSlider;
-    @FXML private Slider tattooWidthSlider;
-    @FXML private Slider tattooHeightSlider;
-    @FXML private Slider tattooOpacitySlider;
-    @FXML private Slider tattooRotationSlider;
-    @FXML private VBox tattooSizeControl;
-    @FXML private VBox tattooWidthControl;
-    @FXML private VBox tattooHeightControl;
-    @FXML private ToggleGroup skinToneToggleGroup;
-    @FXML private TextField estimateHeightField;
-    @FXML private Label estimateValueLabel;
-    @FXML private TableView<EstimateRow> estimateBreakdownTable;
-    @FXML private TableColumn<EstimateRow, String> estimateTattooColumn;
-    @FXML private TableColumn<EstimateRow, String> estimateWidthColumn;
-    @FXML private TableColumn<EstimateRow, String> estimateHeightColumn;
-    @FXML private TableColumn<EstimateRow, String> estimatePriceColumn;
+    @FXML
+    private BorderPane rootPane;
+    @FXML
+    private HBox toolbarBox;
+    @FXML
+    private MenuItem loadModelMenuItem;
+    @FXML
+    private MenuItem loadProjectMenuItem;
+    @FXML
+    private MenuItem resetViewMenuItem;
+    @FXML
+    private MenuItem exportPreviewMenuItem;
+    @FXML
+    private MenuItem exportProjectMenuItem;
+    @FXML
+    private ComboBox<LightingSystem.Mode> lightingModeCombo;
+    @FXML
+    private SplitPane contentSplit;
+    @FXML
+    private ScrollPane controlScroll;
+    @FXML
+    private VBox controlsContainer;
+    @FXML
+    private StackPane viewerPane;
+    @FXML
+    private StackPane exportStatusOverlay;
+    @FXML
+    private VBox exportStatusCard;
+    @FXML
+    private Label exportStatusLabel;
+    @FXML
+    private ProgressIndicator exportProgressIndicator;
+    @FXML
+    private Button loadTattooButton;
+    @FXML
+    private Button unloadTattooButton;
+    @FXML
+    private Button removeBackgroundButton;
+    @FXML
+    private Button invertTattooButton;
+    @FXML
+    private Button reflectTattooButton;
+    @FXML
+    private Button deleteTattooButton;
+    @FXML
+    private Button undoTattooButton;
+    @FXML
+    private ToggleButton lockAspectRatioToggle;
+    @FXML
+    private FlowPane tattooHistoryGallery;
+    @FXML
+    private ScrollPane tattooHistoryScroll;
+    @FXML
+    private Slider tattooSizeSlider;
+    @FXML
+    private Slider tattooWidthSlider;
+    @FXML
+    private Slider tattooHeightSlider;
+    @FXML
+    private Slider tattooOpacitySlider;
+    @FXML
+    private Slider tattooRotationSlider;
+    @FXML
+    private VBox tattooSizeControl;
+    @FXML
+    private VBox tattooWidthControl;
+    @FXML
+    private VBox tattooHeightControl;
+    @FXML
+    private ToggleGroup skinToneToggleGroup;
+    @FXML
+    private TextField estimateHeightField;
+    @FXML
+    private Label estimateValueLabel;
+    @FXML
+    private TableView<EstimateRow> estimateBreakdownTable;
+    @FXML
+    private TableColumn<EstimateRow, String> estimateTattooColumn;
+    @FXML
+    private TableColumn<EstimateRow, String> estimateWidthColumn;
+    @FXML
+    private TableColumn<EstimateRow, String> estimateHeightColumn;
+    @FXML
+    private TableColumn<EstimateRow, String> estimatePriceColumn;
     private PauseTransition exportStatusPause;
 
     private boolean bootstrapped;
@@ -236,8 +282,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private final javafx.scene.PerspectiveCamera camera = new javafx.scene.PerspectiveCamera(true);
     private final WorkspaceCamera cameraRig = new WorkspaceCamera(
-        camera, MIN_DISTANCE, MAX_DISTANCE, ORBIT_SENSITIVITY, PAN_SENSITIVITY, PITCH_MIN, PITCH_MAX
-    );
+            camera, MIN_DISTANCE, MAX_DISTANCE, ORBIT_SENSITIVITY, PAN_SENSITIVITY, PITCH_MIN, PITCH_MAX);
     private final TattooWorkspace tattooWorkspace = new TattooWorkspace();
     private final DoubleProperty overallScale = new SimpleDoubleProperty(1.0);
     private final ObjectProperty<Color> skinTone = new SimpleObjectProperty<>(DEFAULT_SKIN_TONE);
@@ -438,27 +483,25 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private void configureTattooSliders() {
         if (tattooSizeSlider != null) {
-            tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooSizeChange(newVal.doubleValue()));
+            tattooSizeSlider.valueProperty()
+                    .addListener((obs, oldVal, newVal) -> onTattooSizeChange(newVal.doubleValue()));
         }
         if (tattooWidthSlider != null) {
-            tattooWidthSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-                onTattooDimensionChange(TattooDimension.WIDTH, tattooWidthSlider, newVal.doubleValue())
-            );
+            tattooWidthSlider.valueProperty().addListener((obs, oldVal,
+                    newVal) -> onTattooDimensionChange(TattooDimension.WIDTH, tattooWidthSlider, newVal.doubleValue()));
         }
         if (tattooHeightSlider != null) {
-            tattooHeightSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-                onTattooDimensionChange(TattooDimension.HEIGHT, tattooHeightSlider, newVal.doubleValue())
-            );
+            tattooHeightSlider.valueProperty()
+                    .addListener((obs, oldVal, newVal) -> onTattooDimensionChange(TattooDimension.HEIGHT,
+                            tattooHeightSlider, newVal.doubleValue()));
         }
         if (tattooOpacitySlider != null) {
-            tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) ->
-                onTattooAdjustment(t -> t.withAlpha(newVal.doubleValue()))
-            );
+            tattooOpacitySlider.valueProperty()
+                    .addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withAlpha(newVal.doubleValue())));
         }
         if (tattooRotationSlider != null) {
-            tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-                onTattooAdjustment(t -> t.withRotation(newVal.doubleValue()))
-            );
+            tattooRotationSlider.valueProperty().addListener(
+                    (obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withRotation(newVal.doubleValue())));
         }
     }
 
@@ -490,8 +533,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
                     button.getProperties().put("baseStyle", base);
                 }
                 String border = toggle.isSelected()
-                    ? "-fx-border-color: #ffffff; -fx-border-width: 2;"
-                    : "-fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 1;";
+                        ? "-fx-border-color: #ffffff; -fx-border-width: 2;"
+                        : "-fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 1;";
                 button.setStyle(base + " " + border);
             }
         }
@@ -549,7 +592,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setStyle("");
-                    } else if (tattooWorkspace.selected().isPresent() && tattooWorkspace.selected().get() == item.tattoo()) {
+                    } else if (tattooWorkspace.selected().isPresent()
+                            && tattooWorkspace.selected().get() == item.tattoo()) {
                         setStyle("-fx-background-color: rgba(56,189,248,0.25);");
                     } else {
                         setStyle("-fx-background-color: transparent;");
@@ -564,17 +608,20 @@ public class WorkspaceControllerBase implements WorkspaceController {
             estimateTattooColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
         }
         if (estimateWidthColumn != null) {
-            estimateWidthColumn.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().width(), data.getValue().height())));
+            estimateWidthColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                    formatSizedInches(data.getValue().width(), data.getValue().height())));
             estimateWidthColumn.setSortable(false);
             estimateWidthColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
         }
         if (estimateHeightColumn != null) {
-            estimateHeightColumn.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().height(), data.getValue().width())));
+            estimateHeightColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                    formatSizedInches(data.getValue().height(), data.getValue().width())));
             estimateHeightColumn.setSortable(false);
             estimateHeightColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
         }
         if (estimatePriceColumn != null) {
-            estimatePriceColumn.setCellValueFactory(data -> new SimpleStringProperty(formatMoney(data.getValue().price())));
+            estimatePriceColumn
+                    .setCellValueFactory(data -> new SimpleStringProperty(formatMoney(data.getValue().price())));
             estimatePriceColumn.setSortable(false);
             estimatePriceColumn.setStyle("-fx-alignment: CENTER-RIGHT;");
             estimatePriceColumn.setMinWidth(90);
@@ -736,11 +783,10 @@ public class WorkspaceControllerBase implements WorkspaceController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Tattoo Image");
         chooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Image Files", PNG_PATTERN, "*.jpg", "*.jpeg", "*.svg"),
-            new FileChooser.ExtensionFilter("PNG", PNG_PATTERN),
-            new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
-            new FileChooser.ExtensionFilter("SVG", "*.svg")
-        );
+                new FileChooser.ExtensionFilter("Image Files", PNG_PATTERN, "*.jpg", "*.jpeg", "*.svg"),
+                new FileChooser.ExtensionFilter("PNG", PNG_PATTERN),
+                new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("SVG", "*.svg"));
         File file = chooser.showOpenDialog(targetStage);
         if (file == null) {
             return;
@@ -948,7 +994,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         exportTask.setOnSucceeded(evt -> {
             Path completed = exportTask.getValue();
             showExportOutcome("Project exported", true);
-            showInfo("Export complete", completed != null ? "Saved to " + completed.toAbsolutePath() : "Project exported successfully.");
+            showInfo("Export complete",
+                    completed != null ? "Saved to " + completed.toAbsolutePath() : "Project exported successfully.");
         });
         exportTask.setOnFailed(evt -> {
             Throwable error = exportTask.getException();
@@ -998,12 +1045,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
         List<Tattoo> exportedTattoos = tattooWorkspace.exportableTattoos();
         List<TattooPreset> historySnapshot = snapshotTattooHistory();
         writeTattooMetadata(
-            metadataPath,
-            tattooDir,
-            exportedTattoos,
-            historySnapshot,
-            writtenBaseTexture
-        );
+                metadataPath,
+                tattooDir,
+                exportedTattoos,
+                historySnapshot,
+                writtenBaseTexture);
         writeWorkspacePreferences(preferencesPath, captureWorkspacePreferences());
     }
 
@@ -1025,12 +1071,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private void processMaterialDirective(
-        String line,
-        Set<String> referenced,
-        List<CopiedMaterial> copiedMaterials,
-        Path sourceParent,
-        Path targetDir
-    ) throws IOException {
+            String line,
+            Set<String> referenced,
+            List<CopiedMaterial> copiedMaterials,
+            Path sourceParent,
+            Path targetDir) throws IOException {
         if (!isMtllibDirective(line)) {
             return;
         }
@@ -1045,12 +1090,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private void addMaterialReference(
-        String token,
-        Set<String> referenced,
-        List<CopiedMaterial> copiedMaterials,
-        Path sourceParent,
-        Path targetDir
-    ) throws IOException {
+            String token,
+            Set<String> referenced,
+            List<CopiedMaterial> copiedMaterials,
+            Path sourceParent,
+            Path targetDir) throws IOException {
         String reference = token.trim();
         if (reference.isEmpty() || !referenced.add(reference)) {
             return;
@@ -1116,9 +1160,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
         String lower = trimmed.toLowerCase(Locale.ROOT);
         boolean textureDirective = lower.startsWith("map_")
-            || lower.startsWith("bump")
-            || lower.startsWith("disp")
-            || lower.startsWith("refl");
+                || lower.startsWith("bump")
+                || lower.startsWith("disp")
+                || lower.startsWith("refl");
         if (!textureDirective) {
             return null;
         }
@@ -1129,7 +1173,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return reference;
     }
 
-    private void copyRelatedResource(Path sourceBase, Path targetBase, Path exportRoot, String reference) throws IOException {
+    private void copyRelatedResource(Path sourceBase, Path targetBase, Path exportRoot, String reference)
+            throws IOException {
         Path relative = parseReference(reference);
         if (relative == null || sourceBase == null || targetBase == null) {
             return;
@@ -1224,12 +1269,17 @@ public class WorkspaceControllerBase implements WorkspaceController {
                 entryCount = ensureEntryCountWithinLimit(entryCount);
 
                 Path resolved = resolveArchiveEntry(tempDir, entry.getName());
-
                 if (entry.isDirectory()) {
                     Files.createDirectories(resolved);
                 } else {
-                    long written = copyZipEntry(in, resolved, entry, maxEntryBytes(entry));
-                    totalBytes = accumulateUncompressedBytes(totalBytes, written);
+                    long written = copyZipEntry(
+                            in,
+                            resolved,
+                            entry,
+                            MAX_SINGLE_ENTRY_BYTES,
+                            MAX_TOTAL_BYTES,
+                            totalBytes);
+                    totalBytes += written;
                 }
 
                 in.closeEntry();
@@ -1248,10 +1298,10 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
         try (Stream<Path> walk = Files.walk(directory)) {
             return walk
-                .filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".obj"))
-                .findFirst()
-                .orElse(null);
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".obj"))
+                    .findFirst()
+                    .orElse(null);
         }
     }
 
@@ -1286,20 +1336,25 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
     }
 
-    private void deleteRecursively(Path path) {
-        if (path == null || !Files.exists(path)) {
+    private static void deleteRecursively(Path root) {
+        if (root == null) {
             return;
         }
-        try (Stream<Path> walk = Files.walk(path)) {
-            walk.sorted(Comparator.reverseOrder()).forEach(candidate -> {
-                try {
-                    Files.deleteIfExists(candidate);
-                } catch (IOException _) {
-                    // Swallow cleanup failures silently.
-                }
-            });
+        try {
+            if (Files.notExists(root)) {
+                return;
+            }
+            Files.walk(root)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException _) {
+                            // Best-effort cleanup; log if you care
+                        }
+                    });
         } catch (IOException _) {
-            // Ignore cleanup failures.
+            // Best-effort cleanup; log if you care
         }
     }
 
@@ -1312,7 +1367,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
             }
             return image;
         } catch (Exception ex) {
-            showError("Failed to load tattoo image: " + file.getName(), ex instanceof IOException ioexception ? ioexception : new IOException(ex));
+            showError("Failed to load tattoo image: " + file.getName(),
+                    ex instanceof IOException ioexception ? ioexception : new IOException(ex));
             return null;
         }
     }
@@ -1383,9 +1439,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
             }
             updateTattooControlsState();
         });
-        button.hoverProperty().addListener((obs, oldVal, isHovering) ->
-            graphic.setStyle(isHovering ? HISTORY_THUMB_HOVER_STYLE : HISTORY_THUMB_STYLE)
-        );
+        button.hoverProperty().addListener((obs, oldVal, isHovering) -> graphic
+                .setStyle(isHovering ? HISTORY_THUMB_HOVER_STYLE : HISTORY_THUMB_STYLE));
         return button;
     }
 
@@ -1525,7 +1580,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
                 exportProgressIndicator.setVisible(false);
             }
             if (exportStatusCard != null) {
-                exportStatusCard.setStyle(exportStatusCardBaseStyle + (success ? EXPORT_CARD_SUCCESS_STYLE : EXPORT_CARD_ERROR_STYLE));
+                exportStatusCard.setStyle(
+                        exportStatusCardBaseStyle + (success ? EXPORT_CARD_SUCCESS_STYLE : EXPORT_CARD_ERROR_STYLE));
             }
             exportStatusPause = new PauseTransition(Duration.seconds(2.2));
             exportStatusPause.setOnFinished(evt -> hideExportStatusOverlay());
@@ -1575,7 +1631,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         subScene.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::handleCameraMouseDragged);
         subScene.addEventHandler(ScrollEvent.SCROLL, cameraRig::handleScroll);
         subScene.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.MIDDLE || (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
+            if (event.getButton() == MouseButton.MIDDLE
+                    || (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)) {
                 cameraRig.reset();
             }
         });
@@ -1653,7 +1710,6 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
     }
 
-
     private void softenSpecular(Parent root) {
         traverse(root, node -> {
             if (node instanceof Shape3D shape) {
@@ -1669,7 +1725,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         applySkinToneToMaterials();
         tattooWorkspace.updateSkinTone(selectedTone);
         if (skinToneToggleGroup != null && !skinToneToggleGroup.getToggles().isEmpty()) {
-            skinToneToggleGroup.selectToggle(skinToneToggleGroup.getToggles().get(skinToneToggleGroup.getToggles().size() - 1));
+            skinToneToggleGroup
+                    .selectToggle(skinToneToggleGroup.getToggles().get(skinToneToggleGroup.getToggles().size() - 1));
         }
         if (lightingModeCombo != null) {
             lightingModeCombo.setValue(lightingMode);
@@ -1833,7 +1890,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private void syncTattooControls(Tattoo tattoo) {
         if (tattoo == null || tattooWidthSlider == null || tattooHeightSlider == null
-            || tattooOpacitySlider == null || tattooRotationSlider == null) {
+                || tattooOpacitySlider == null || tattooRotationSlider == null) {
             return;
         }
         adjustingSliders = true;
@@ -1955,8 +2012,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
             }
 
             modelHasUVs = loadedModel.parts().stream()
-                .map(ObjLoader.ModelPart::node)
-                .anyMatch(this::nodeHasUVs);
+                    .map(ObjLoader.ModelPart::node)
+                    .anyMatch(this::nodeHasUVs);
 
             if (loadedModel.requiresYAxisFlip()) {
                 partRoot.getTransforms().add(new Scale(1, -1, 1));
@@ -2236,7 +2293,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (estimateBreakdownTable == null) {
             return;
         }
-        double rowHeight = estimateBreakdownTable.getFixedCellSize() > 0 ? estimateBreakdownTable.getFixedCellSize() : 32.0;
+        double rowHeight = estimateBreakdownTable.getFixedCellSize() > 0 ? estimateBreakdownTable.getFixedCellSize()
+                : 32.0;
         double header = 30.0;
         int rows = rowCount > 0 ? rowCount : 1;
         double totalHeight = rows * rowHeight + header;
@@ -2356,14 +2414,12 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return Objects.requireNonNull(partGroups.get(TORSO));
     }
 
-
     private void writeTattooMetadata(
-        Path metadataPath,
-        Path tattooDir,
-        List<Tattoo> tattoos,
-        List<TattooPreset> history,
-        Path baseTexturePath
-    ) throws IOException {
+            Path metadataPath,
+            Path tattooDir,
+            List<Tattoo> tattoos,
+            List<TattooPreset> history,
+            Path baseTexturePath) throws IOException {
         Properties props = new Properties();
         props.setProperty(VERSION, "2");
         Path baseDir = metadataPath.getParent();
@@ -2658,8 +2714,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         Double panY = parseNullableDouble(props.getProperty("camera.panY"));
         Double panZ = parseNullableDouble(props.getProperty("camera.panZ"));
         if (yaw == null || pitch == null || distance == null
-            || targetX == null || targetY == null || targetZ == null
-            || panX == null || panY == null || panZ == null) {
+                || targetX == null || targetY == null || targetZ == null
+                || panX == null || panY == null || panZ == null) {
             return null;
         }
         return new CameraState(yaw, pitch, distance, targetX, targetY, targetZ, panX, panY, panZ);
@@ -2819,7 +2875,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 Color color = reader.getColor(x, y);
-                Color negated = new Color(1.0 - color.getRed(), 1.0 - color.getGreen(), 1.0 - color.getBlue(), color.getOpacity());
+                Color negated = new Color(1.0 - color.getRed(), 1.0 - color.getGreen(), 1.0 - color.getBlue(),
+                        color.getOpacity());
                 writer.setColor(x, y, negated);
             }
         }
@@ -2850,13 +2907,19 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return Math.clamp(value, min, max);
     }
 
-    private Path resolveArchiveEntry(Path root, String entryName) throws IOException {
-        verifySafeArchiveEntry(entryName);
-        Path relativeEntry = Paths.get(entryName).normalize();
-        Path resolved = root.resolve(relativeEntry).normalize();
-        if (!resolved.startsWith(root)) {
-            throw new IOException("Archive entry resolves outside target directory: " + entryName);
+    private static Path resolveArchiveEntry(Path root, String entryName) throws IOException {
+        if (entryName == null || entryName.isBlank()) {
+            throw new IOException("Invalid ZIP entry name");
         }
+
+        // Resolve path and normalize to collapse "..", ".", etc.
+        Path resolved = root.resolve(entryName).normalize();
+
+        // Zip-slip protection: must stay inside root
+        if (!resolved.startsWith(root)) {
+            throw new IOException("Blocked ZIP entry outside target dir: " + entryName);
+        }
+
         return resolved;
     }
 
@@ -2892,11 +2955,10 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private static int ensureEntryCountWithinLimit(int currentCount) throws IOException {
-        int next = currentCount + 1;
-        if (next > MAX_ARCHIVE_ENTRIES) {
-            throw new IOException("Archive contains more entries than permitted.");
+        if (currentCount >= MAX_ENTRIES) {
+            throw new IOException("ZIP archive has too many entries (>" + MAX_ENTRIES + ")");
         }
-        return next;
+        return currentCount + 1;
     }
 
     private static long accumulateUncompressedBytes(long current, long addition) throws IOException {
@@ -2912,54 +2974,64 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return next;
     }
 
-    private long copyZipEntry(ZipInputStream in, Path target, ZipEntry entry, long maxEntryBytes) throws IOException {
-        long compressedSize = entry.getCompressedSize();
-        double ratioLimit = compressedSize > 0
-            ? compressedSize * MAX_ARCHIVE_COMPRESSION_RATIO
-            : Double.POSITIVE_INFINITY;
-        if (target.getParent() != null) {
-            Files.createDirectories(target.getParent());
+    private static long copyZipEntry(
+            ZipInputStream in,
+            Path dest,
+            ZipEntry entry,
+            long maxEntryBytes,
+            long maxTotalBytes,
+            long totalSoFar) throws IOException {
+
+        Path parent = dest.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
         }
-        try (OutputStream out = Files.newOutputStream(
-                target,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE)) {
-            byte[] buffer = new byte[8192];
-            long written = 0;
+
+        long written = 0L;
+        byte[] buffer = new byte[8192];
+
+        try (OutputStream out = Files.newOutputStream(dest)) {
             int read;
             while ((read = in.read(buffer)) != -1) {
                 written += read;
+
+                // Per-entry guard
                 if (written > maxEntryBytes) {
-                    throw new IOException("Archive entry " + entry.getName() + " exceeds maximum allowed size.");
+                    throw new IOException("ZIP entry exceeds allowed size: " + entry.getName());
                 }
-                if (ratioLimit != Double.POSITIVE_INFINITY && written > ratioLimit) {
-                    throw new IOException("Archive entry " + entry.getName() + " exceeds compression ratio limits.");
+
+                // Total uncompressed guard
+                if (totalSoFar + written > maxTotalBytes) {
+                    throw new IOException("Total uncompressed size of archive exceeds limit");
                 }
+
                 out.write(buffer, 0, read);
             }
-            return written;
         }
+
+        return written;
     }
 
     private static FileAttribute<?>[] buildSecureTempDirAttributes() {
         if (!POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE) {
             return new FileAttribute<?>[0];
         }
-        return new FileAttribute<?>[]{
-            PosixFilePermissions.asFileAttribute(EnumSet.of(
-                PosixFilePermission.OWNER_READ,
-                PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE
-            ))
+        return new FileAttribute<?>[] {
+                PosixFilePermissions.asFileAttribute(EnumSet.of(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE))
         };
     }
 
-    private record EstimateRow(String label, double width, double height, double price, Tattoo tattoo) {}
+    private record EstimateRow(String label, double width, double height, double price, Tattoo tattoo) {
+    }
 
-    private record WorkspacePreferences(CameraState camera, Color skinTone, LightingSystem.Mode lightingMode) {}
+    private record WorkspacePreferences(CameraState camera, Color skinTone, LightingSystem.Mode lightingMode) {
+    }
 
-    private record CopiedMaterial(Path source, Path target) {}
+    private record CopiedMaterial(Path source, Path target) {
+    }
 
     private record TattooPreset(String label, Image image) {
         @Override
