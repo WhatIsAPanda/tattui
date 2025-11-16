@@ -12,15 +12,13 @@ import javafx.scene.text.Text;
 
 import java.util.List;
 
-public class ViewMyProfileBoundary{
+public class ViewProfileBoundary{
     @FXML
     private Circle profilePicture;
     @FXML
     private Text biographyField;
     @FXML
-    private Text artistNameField1;
-    @FXML
-    private Text artistNameField2;
+    private Text artistNameField;
     @FXML
     private GridPane postsPanel;
     @FXML
@@ -29,7 +27,7 @@ public class ViewMyProfileBoundary{
     @FXML
     public void setProfile(Profile userProfile) {
         this.profile = userProfile;
-        if(artistNameField1 == null) {
+        if(artistNameField == null) {
             System.out.println("ERROR");
         }
 
@@ -37,8 +35,7 @@ public class ViewMyProfileBoundary{
     }
     @FXML
     public void loadProfile() {
-        artistNameField1.setText("@" + profile.getUsername());
-        artistNameField2.setText("@" + profile.getUsername());
+        artistNameField.setText("@" + profile.getUsername());
         Image profile_picture = profile.getProfile_picture_image();
         ImagePattern pfpImagePattern = new ImagePattern(profile_picture);
         profilePicture.setFill(pfpImagePattern);

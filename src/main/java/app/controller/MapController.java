@@ -242,7 +242,7 @@ public class MapController implements PageAware {
         
     private Pair<Double, Double> geocodeCity(String city) {
         try {
-            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + java.net.URLEncoder.encode(city, "UTF-8");
+            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + java.net.URLEncoder.encode(city.toLowerCase(), "UTF-8");
             HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
             conn.setRequestProperty("User-Agent", "JavaFXApp");
             conn.setRequestMethod("GET");

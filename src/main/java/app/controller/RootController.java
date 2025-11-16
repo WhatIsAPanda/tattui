@@ -1,6 +1,6 @@
 package app.controller;
 
-import app.boundary.ViewMyProfileBoundary;
+import app.boundary.ViewProfileBoundary;
 import app.entity.Profile;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -31,7 +31,8 @@ public class RootController {
         WORKSPACE_PAGE, "/app/view/Workspace.fxml",
         "map", "/app/view/Map.fxml",
         "login", "/app/view/Login.fxml",
-        "viewProfile", "/app/view/viewMyProfile.fxml",
+        "EditMyProfile", "/app/view/EditMyProfile.fxml",
+        "viewProfile", "/app/view/viewProfile.fxml",
         "explore", "/app/view/Explore.fxml"
     );
 
@@ -121,9 +122,9 @@ public class RootController {
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
             if (cntrl instanceof ProfileAware aware) {
-                aware.setProfileProvider((a) -> this.showPage("viewProfile",Optional.of(a)));
+                aware.setProfileProvider((a) -> this.showPage("EditMyProfile",Optional.of(a))); //not elegant but works need to add view profile later
             }
-            if(cntrl instanceof ViewMyProfileBoundary viewBoundary) {
+            if(cntrl instanceof ViewProfileBoundary viewBoundary) {
                 profile.ifPresent(viewBoundary::setProfile);
             }
 
