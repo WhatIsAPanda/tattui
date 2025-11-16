@@ -87,7 +87,11 @@ public class MapController implements PageAware {
     // Inner layer class
     static class DotLayer extends MapLayer {
         private final List<MapPoint> points;
-        DotLayer(List<MapPoint> points) { this.points = points; }
+
+        DotLayer(List<MapPoint> points) {
+            this.points = points;
+        }
+
         @Override
         protected void layoutLayer() {
             getChildren().clear();

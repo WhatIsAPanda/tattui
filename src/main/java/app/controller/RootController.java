@@ -96,6 +96,9 @@ public class RootController {
             showDatabaseAlert();
             return;
         }
+        if(key.equals("login")) {
+            pageCache.clear();
+        }
 
         Parent view = pageCache.computeIfAbsent(key, k ->{
             if (profile.isPresent()) {

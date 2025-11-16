@@ -13,7 +13,7 @@ public class LoginController {
         }
         if(account.getPassword().equals(password)) {
             LoggedInAccount.setInstance(account);
-            Profile artistProfile = DatabaseConnector.getProfileByUsername2(username);
+            Profile artistProfile = DatabaseConnector.getProfileByUsername(username);
             LoggedInProfile.setInstance(artistProfile);
             return true;
         }
