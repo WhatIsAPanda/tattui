@@ -61,6 +61,7 @@ public class RootController {
     public void initialize() {
         loadView("/app/view/Taskbar.fxml");
         showPage(WORKSPACE_PAGE);
+        DatabaseConnector.ensureConnection();
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
             if (n != null && n.getWindow() instanceof Stage stage)
