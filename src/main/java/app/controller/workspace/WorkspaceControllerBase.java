@@ -508,7 +508,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (data instanceof String colorString && !colorString.isBlank()) {
             try {
                 return Color.web(colorString);
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException _) {
                 return null;
             }
         }
