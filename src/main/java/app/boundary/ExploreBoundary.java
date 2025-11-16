@@ -161,7 +161,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                         exportToWorkspace(iv.getImage(), item.title());
                     }
                 }
-                case COMPLETED_TATTOOS -> enlargeImage(iv.getImage(), item.title());
+                case COMPLETED_TATTOOS -> showCompletedTattooModal(item, iv.getImage());
                 case ARTISTS -> openArtistPage(item.title());
                 default -> System.out.println("[ExploreBoundary] clicked " + item.title());
             }
@@ -252,4 +252,79 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             e.printStackTrace();
         }
     }
+
+    /** Enlarged view for completed tattoos with caption (bottom) + square avatar (top-right). */
+    private void showCompletedTattooModal(ExploreControl.SearchItem item, Image baseImage) {
+        if (baseImage == null) return;
+
+        // Big image
+        ImageView big = new ImageView(baseImage);
+        big.setPreserveRatio(true);
+        big.setFitWidth(1000); // adjust to taste, window is 1100x760 below
+
+        // ----- caption (bottom) -----
+        Label caption = new Label(item.hoverText());
+        caption.setWrapText(true);
+        caption.setAlignment(javafx.geometry.Pos.CENTER);
+        caption.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        caption.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-line-spacing: 2px;");
+
+        StackPane captionBar = new StackPane(caption);
+        captionBar.setStyle("""
+        -fx-background-color: rgba(0,0,0,0.72);
+        -fx-padding: 12;
+        -fx-background-radius: 0 0 12 12;
+    """);
+        // IMPORTANT: keep it only as tall as its content (prevents the gray wash across the whole image)
+        captionBar.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+
+        // position + width constraint
+        caption.setMaxWidth(1000 - 2*20); // scene width minus margins
+        captionBar.setMaxWidth(1000 - 2*20);
+        StackPane.setAlignment(captionBar, javafx.geometry.Pos.BOTTOM_CENTER);
+        StackPane.setMargin(captionBar, new javafx.geometry.Insets(0, 20, 20, 20));
+
+        // ----- avatar (top-right, SQUARE) -----
+        String artistName = parseArtistTag(item.tags()).orElse("Unknown");
+        String avatarPath = avatarForArtist(artistName);
+
+        ImageView avatar = new ImageView();
+        var ares = getClass().getResourceAsStream(avatarPath);
+        if (ares != null) {
+            avatar.setImage(new Image(ares, 56, 56, true, true));
+            avatar.setFitWidth(56);
+            avatar.setFitHeight(56);
+            avatar.setPreserveRatio(true);
+        }
+        // NO circular clip — keep it square
+        StackPane.setAlignment(avatar, javafx.geometry.Pos.TOP_RIGHT);
+        StackPane.setMargin(avatar, new javafx.geometry.Insets(20, 20, 0, 0));
+        avatar.setOnMouseClicked(e -> { e.consume(); openArtistPage(artistName); });
+
+        // Root: image + overlays
+        StackPane root = new StackPane(big, captionBar, avatar);
+        root.setStyle("-fx-background-color: black; -fx-padding: 10;");
+
+        // Scene + Stage (slightly wider than image to allow margins)
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 1100, 760);
+        javafx.stage.Stage stage = new javafx.stage.Stage();
+        stage.setTitle(item.title());
+        stage.setScene(scene);
+        stage.show();
+    }
+
+
+    private java.util.Optional<String> parseArtistTag(java.util.List<String> tags) {
+        return tags.stream()
+                .filter(t -> t.toLowerCase(java.util.Locale.ROOT).startsWith("artist:"))
+                .map(t -> t.substring("artist:".length()).trim())
+                .findFirst();
+    }
+
+    private String avatarForArtist(String artistName) {
+        if ("Raven".equalsIgnoreCase(artistName)) return "/icons/artist_raven.jpg";
+        return "/icons/artist_raven.jpg"; // fallback
+    }
+
+
 }
