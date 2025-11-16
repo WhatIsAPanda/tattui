@@ -8,6 +8,7 @@ import java.util.List;
 import javafx.application.Platform;
 
 
+import app.entity.Profile;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import app.entity.Profile;
 import app.entity.ProfileCell;
 import app.entity.DatabaseConnector;
 
@@ -62,7 +62,7 @@ public class MapController implements PageAware {
     private StackPane mapContainer; 
 
     private MapView map;
-    
+
     private final List<MapLayer> layers = new LinkedList<>();
 
     private Consumer<String> onPageRequest;
@@ -98,9 +98,8 @@ public class MapController implements PageAware {
                 dot.setTranslateY(mp.getY());
                 getChildren().add(dot);
         }
-        }
     }
-
+}
     @FXML
     private void handleSearch(ActionEvent event) {
         resultsList.getItems().clear();
@@ -238,7 +237,7 @@ public class MapController implements PageAware {
         }
         return false;
     }
-
+    
         
     private Pair<Double, Double> geocodeCity(String city) {
         try {
@@ -305,7 +304,7 @@ public class MapController implements PageAware {
     private void applyFilter(String tag) {
         resultsList.getItems().setAll(
             allResults.stream()
-                .filter(item -> item.getTags().contains(tag))
+                .filter(item -> item.getStylesList().contains(tag))
                 .collect(Collectors.toList())
         );
     }
