@@ -1,7 +1,6 @@
 package app.entity;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ public class DatabaseConnector {
     private static final String URL = System.getenv("DATABASE_URL");
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
+    private static final String ACCOUNT_ID_STRING = "account_id";
     private DatabaseConnector() {}
 
     static {
@@ -118,11 +118,12 @@ public class DatabaseConnector {
     }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
-        PreparedStatement stmt = DatabaseConnector.conn.prepareStatement(
-                "SELECT * \n" +
-                        "FROM Accounts AS A\n" +
-                        "LEFT JOIN AccountStylePreferences AS ASP ON ASP.account_id = A.account_id\n" +
-                        "WHERE A.username = ?;");
+        PreparedStatement stmt = DatabaseConnector.conn.prepareStatement("""
+                SELECT *
+                FROM Accounts AS A
+                LEFT JOIN AccountStylePreferences AS ASP ON ASP.account_id = A.account_id
+                WHERE A.username = ?;
+                """);
         stmt.setString(1, queryUsername);
         ResultSet rs = stmt.executeQuery();
         return convertToAccount(rs);
@@ -131,28 +132,29 @@ public class DatabaseConnector {
         if(!rs.next()){
             return null;
         }
-        List<String> styles_list = new ArrayList<>();
-        int id = rs.getInt("account_id");
+        List<String> stylesList = new ArrayList<>();
+        int id = rs.getInt(ACCOUNT_ID_STRING);
         String username = rs.getString("username");
         String password = rs.getString("password");
-        String profile_picture_url = rs.getString("profile_picture_url");
-        double home_latitude = rs.getDouble("home_latitude");
-        double home_longitude = rs.getDouble("home_longitude");
+        String profilePictureUrl = rs.getString("profile_picture_url");
+        double homeLatitude = rs.getDouble("home_latitude");
+        double homeLongitude = rs.getDouble("home_longitude");
         String style = rs.getString("style_name");
         do {
-            styles_list.add(style);
+            stylesList.add(style);
         } while (rs.next());
-        return new Account(id,username,password,profile_picture_url,home_latitude,home_longitude,styles_list);
+        return new Account(id,username,password,profilePictureUrl,homeLatitude,homeLongitude,stylesList);
     }
 
     public static Profile getProfileByUsername(String queryUsername) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
-                "SELECT * \n" +
-                        "FROM Artists AS A\n" +
-                        "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
-                        "LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id\n" +
-                        "LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id\n" +
-                        "WHERE username = ? ;");
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
+                SELECT *
+                FROM Artists AS A
+                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id
+                WHERE username = ? ;
+                """);
         profileQueryStatement.setString(1, queryUsername);
         ResultSet rs = profileQueryStatement.executeQuery();
         List<Profile> artistProfilesList = convertToArtistProfiles(rs);
@@ -164,13 +166,13 @@ public class DatabaseConnector {
         }
         List<Profile> artistProfiles = new ArrayList<>();
         while(!rs.isAfterLast()) {
-            int account_id = rs.getInt("account_id");
+            int accountId = rs.getInt(ACCOUNT_ID_STRING);
             String username = rs.getString("username");
-            String profile_picture_url = rs.getString("profile_picture_url");
+            String profilePictureUrl = rs.getString("profile_picture_url");
             String biography = rs.getString("biography");
-            String work_address = rs.getString("work_address");
-            double work_longitude = rs.getDouble("work_longitude");
-            double work_latitude = rs.getDouble("work_latitude");
+            String workAddress = rs.getString("work_address");
+            double workLongitude = rs.getDouble("work_longitude");
+            double workLatitude = rs.getDouble("work_latitude");
 
             List<String> styles = new ArrayList<>();
             String style = rs.getString("style_name");
@@ -178,39 +180,40 @@ public class DatabaseConnector {
                 styles.add(style);
             }
             while(rs.next()) {
-                if(!(rs.getInt("account_id") == account_id)) {
+                if(rs.getInt(ACCOUNT_ID_STRING) != accountId) {
                     break;
                 }
                 styles.add(style);
             }
-            artistProfiles.add(new Profile(account_id, username, profile_picture_url,biography, work_address, work_longitude, work_latitude, styles));
+            artistProfiles.add(new Profile(accountId, username, profilePictureUrl,biography, workAddress, workLongitude, workLatitude, styles));
         }
         return artistProfiles;
 
     }
 
     public static List<Profile> getProfilesLike(String pattern) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement(
-            "SELECT * \n" +
-                    "FROM Artists AS A\n" +
-                    "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
-                    "LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id\n" +
-                    "LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id\n" +
-                    "WHERE username LIKE ?"
-        );
+        PreparedStatement stmt = conn.prepareStatement("""
+                SELECT *
+                FROM Artists AS A
+                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                WHERE username LIKE ?
+                """);
         stmt.setString(1, "%" + pattern + "%");
         ResultSet rs = stmt.executeQuery();
         return convertToArtistProfiles(rs);
     }
 
     public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
-                "SELECT * \n" +
-                        "FROM Artists AS A\n" +
-                        "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
-                        "LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id\n" +
-                        "LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id\n" +
-                        "WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;");
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
+                SELECT *
+                FROM Artists AS A
+                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
+                """);
         profileQueryStatement.setDouble(1, latitudeFrom);
         profileQueryStatement.setDouble(2, latitudeTo);
         profileQueryStatement.setDouble(3, longitudeFrom);
@@ -226,10 +229,10 @@ public class DatabaseConnector {
     }
 
     public static void createUser(String username, String password, boolean isArtist) throws SQLException {
-        PreparedStatement insertAccountsStmt = DatabaseConnector.conn.prepareStatement(
-                "INSERT INTO Accounts(username, password) " +
-                        "VALUES (?, ?);",
-                Statement.RETURN_GENERATED_KEYS
+        PreparedStatement insertAccountsStmt = DatabaseConnector.conn.prepareStatement("""
+                INSERT INTO Accounts(username, password)
+                VALUES (?, ?);
+                """, Statement.RETURN_GENERATED_KEYS
         );
         insertAccountsStmt.setString(1, username);
         insertAccountsStmt.setString(2, password);
@@ -238,13 +241,13 @@ public class DatabaseConnector {
 
         ResultSet rs = insertAccountsStmt.getGeneratedKeys();
         if(rs.next()) {
-            int user_id = rs.getInt(1);
+            int userId = rs.getInt(1);
             if(isArtist) {
-                PreparedStatement insertArtistsStmt = DatabaseConnector.conn.prepareStatement(
-                        "INSERT INTO Artists(account_id)" +
-                                "VALUES (?);"
-                );
-                insertArtistsStmt.setInt(1, user_id);
+                PreparedStatement insertArtistsStmt = DatabaseConnector.conn.prepareStatement("""
+                        INSERT INTO Artists(account_id)
+                        VALUES (?);
+                        """);
+                insertArtistsStmt.setInt(1, userId);
                 insertArtistsStmt.executeUpdate();
             }
         }

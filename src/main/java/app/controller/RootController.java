@@ -29,12 +29,13 @@ public class RootController {
     private WorkspaceController workspaceController;
     private final Map<String, Parent> pageCache = new HashMap<>();
     private static final String WORKSPACE_PAGE = "workspace";
+    private static final String LOGIN_PAGE = "login";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
         WORKSPACE_PAGE, "/app/view/Workspace.fxml",
         "map", "/app/view/Map.fxml",
         "gallery", "/app/view/Gallery.fxml",
-        "login", "/app/view/Login.fxml",
+        LOGIN_PAGE, "/app/view/Login.fxml",
         "viewProfile", "/app/view/viewMyProfile.fxml",
         "explore", "/app/view/Explore.fxml",
             "register","/app/view/Register.fxml"
@@ -96,7 +97,7 @@ public class RootController {
             showDatabaseAlert();
             return;
         }
-        if(key.equals("login")) {
+        if(key.equals(LOGIN_PAGE)) {
             pageCache.clear();
         }
 
@@ -110,7 +111,7 @@ public class RootController {
             });
 
         //Hide taskbar for pages on login
-        boolean showTaskbar = !key.equals("login") && !key.equals("register");
+        boolean showTaskbar = !key.equals(LOGIN_PAGE) && !key.equals("register");
         taskbarContainer.setVisible(showTaskbar);
         taskbarContainer.setManaged(showTaskbar);
 
