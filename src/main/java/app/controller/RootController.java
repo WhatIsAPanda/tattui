@@ -32,7 +32,8 @@ public class RootController {
         "map", "/app/view/Map.fxml",
         "gallery", "/app/view/Gallery.fxml",
         "login", "/app/view/Login.fxml",
-        "viewProfile", "/app/view/viewMyProfile.fxml"
+        "viewProfile", "/app/view/viewMyProfile.fxml",
+            "register","/app/view/Register.fxml"
     );
 
     public RootController() {
@@ -96,7 +97,7 @@ public class RootController {
             });
 
         //Hide taskbar for pages on login
-        boolean showTaskbar = !"login".equals(key);
+        boolean showTaskbar = !key.equals("login") && !key.equals("register");
         taskbarContainer.setVisible(showTaskbar);
         taskbarContainer.setManaged(showTaskbar);
 

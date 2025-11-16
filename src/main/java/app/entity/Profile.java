@@ -1,79 +1,65 @@
 package app.entity;
 
-import javafx.scene.SubScene;
 import javafx.scene.image.Image;
+
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class Profile {
-    private int id;
+    private int account_id;
     private String username;
-    private String password;
-    private List<Post> posts;
     private String biography;
     private String profile_picture_url;
-    private Image profile_picture_image;
-    private String address;
-    private double longtitude;
-    private double latitude;
-    private String tags;
+    private Image profile_picture;
+    private String work_address;
+    private double work_longitude;
+    private double work_latitude;
+    private List<String> styles_list;
 
-    public Profile(int id, String username, String password, String profile_picture_url, List<Post> posts, String biography, String address, double longtitude, double latitude, String tags) {
-        this.id = id;
+    public Profile(int account_id,  String username, String profile_picture_url, String biography, String work_address, double work_longitude, double work_latitude, List<String> styles_list) {
+        this.account_id = account_id;
         this.username = username;
-        this.password = password;
-        this.profile_picture_url = profile_picture_url;
-        this.posts = posts;
         this.biography = biography;
-        this.profile_picture_image = new Image(profile_picture_url);
-        this.address = address;
-        this.longtitude = longtitude;
-        this.latitude = latitude;
-        this.tags = tags;
+        this.work_address = work_address;
+        this.work_longitude = work_longitude;
+        this.work_latitude = work_latitude;
+        this.styles_list = styles_list;
+        this.profile_picture_url = profile_picture_url;
+        this.profile_picture = new Image(profile_picture_url);
     }
 
-    public int getId() {
-        return id;
+    public int getAccountId() {
+        return account_id;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public List<Post> getPosts() {
-        return posts;
-    }
-
     public String getBiography() {
         return biography;
     }
 
-    public String getProfile_picture_url() {
+    public String getProfilePictureURL() {
         return profile_picture_url;
     }
 
-    public Image getProfile_picture_image() {
-        return profile_picture_image;
-    }
-
     public String getAddress() {
-        return address;
+        return work_address;
     }
 
-    public double getLongtitude() {
-        return longtitude;
+    public double getLongitude() {
+        return work_longitude;
     }
 
     public double getLatitude() {
-        return latitude;
+        return work_latitude;
     }
 
-    public String getTags() {
-        return tags;
+    public List<String> getStylesList() {
+        return styles_list;
     }
+    public Image getProfilePicture() {
+        return profile_picture;
+    }
+
 }

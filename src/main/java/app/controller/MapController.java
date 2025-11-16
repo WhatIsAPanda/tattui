@@ -3,6 +3,7 @@ package app.controller;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import app.entity.Profile;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 
@@ -21,13 +22,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Pair;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
-import app.entity.Profile;
 import app.entity.ProfileCell;
 import app.entity.DatabaseConnector;
 
@@ -104,7 +101,7 @@ public class MapController implements PageAware {
     private void populateMap() {
         if (map == null || allResults == null) return;
         for (Profile target : allResults) {
-            MapPoint p = new MapPoint(target.getLatitude(), target.getLongtitude());
+            MapPoint p = new MapPoint(target.getLatitude(), target.getLongitude());
             map.addLayer(new DotLayer(p));
         }   
     }
@@ -217,7 +214,7 @@ public class MapController implements PageAware {
     private void applyFilter(String tag) {
         resultsList.getItems().setAll(
             allResults.stream()
-                .filter(item -> item.getTags().contains(tag))
+                .filter(item -> item.getStylesList().contains(tag))
                 .collect(Collectors.toList())
         );
     }

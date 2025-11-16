@@ -10,7 +10,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.io.IOException;
-import app.entity.Profile;
+import java.util.List;
 
 public class ProfileCell extends ListCell<Profile> {
 
@@ -39,10 +39,15 @@ public class ProfileCell extends ListCell<Profile> {
             title.setText(profile.getUsername());
             desc.setText(profile.getBiography());
             address.setText(profile.getAddress());
-            tag.setText(profile.getTags());
+            List<String> styles_list = profile.getStylesList();
+            StringBuilder styles = new StringBuilder();
+            for(String style : styles_list) {
+                styles.append(style);
+            }
+            tag.setText(styles.toString());
 
-            if (profile.getProfile_picture_url() != null && !profile.getProfile_picture_url().isEmpty()) {
-                Image img = new Image(profile.getProfile_picture_url(), true);
+            if (profile.getProfilePicture() != null) {
+                Image img = profile.getProfilePicture();
                 image.setImage(img);
 
                 // Wait until image loads to set the viewport (image must have real dimensions)
