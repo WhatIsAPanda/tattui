@@ -14,6 +14,7 @@ public class Profile {
     private double work_longitude;
     private double work_latitude;
     private List<String> styles_list;
+    private List<Post> artistPosts;
 
     public Profile(int account_id,  String username, String profile_picture_url, String biography, String work_address, double work_longitude, double work_latitude, List<String> styles_list) {
         this.account_id = account_id;
@@ -60,6 +61,12 @@ public class Profile {
     }
     public Image getProfilePicture() {
         return profile_picture;
+    }
+    public void setArtistPosts(List<Post> artistPosts) {
+        this.artistPosts = artistPosts;
+    }
+    public List<Post> getArtistPosts() {
+        return artistPosts;
     }
 
 }
