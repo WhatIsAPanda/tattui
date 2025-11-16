@@ -16,12 +16,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -41,7 +39,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ProgressIndicator;
@@ -163,9 +160,13 @@ public class WorkspaceControllerBase implements WorkspaceController {
     public static final String VERSION = "version";
     public static final String DOT_IMAGE = ".image";
     public static final String DOT_SCALE = ".scale";
-    public static final String SUCCESS = "success";
-    public static final String ERROR = "error";
     public static final String TATTOO_SPACE = "Tattoo ";
+    private static final String HISTORY_THUMB_STYLE = "-fx-background-color: #535353; -fx-padding: 4; -fx-background-radius: 6;";
+    private static final String HISTORY_THUMB_HOVER_STYLE = "-fx-background-color: #e0e0e0; -fx-padding: 4; -fx-background-radius: 6;";
+    private static final String HISTORY_TOGGLE_STYLE = "-fx-background-color: transparent; -fx-border-color: rgba(255,255,255,0.15); -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 2;";
+    private static final String HISTORY_TOGGLE_SELECTED_STYLE = "-fx-background-color: transparent; -fx-border-color: #ffffff; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 2;";
+    private static final String EXPORT_CARD_SUCCESS_STYLE = " -fx-border-color: rgba(74, 222, 128, 0.9);";
+    private static final String EXPORT_CARD_ERROR_STYLE = " -fx-border-color: rgba(248, 113, 113, 0.9);";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -211,18 +212,45 @@ public class WorkspaceControllerBase implements WorkspaceController {
     @FXML private MenuItem resetViewMenuItem;
     @FXML private MenuItem exportPreviewMenuItem;
     @FXML private MenuItem exportProjectMenuItem;
-    private ComboBox<LightingSystem.Mode> lightingModeCombo;
+    @FXML private ComboBox<LightingSystem.Mode> lightingModeCombo;
     @FXML private SplitPane contentSplit;
     @FXML private ScrollPane controlScroll;
     @FXML private VBox controlsContainer;
     @FXML private StackPane viewerPane;
-    private StackPane exportStatusOverlay;
-    private VBox exportStatusCard;
-    private Label exportStatusLabel;
-    private ProgressIndicator exportProgressIndicator;
+    @FXML private StackPane exportStatusOverlay;
+    @FXML private VBox exportStatusCard;
+    @FXML private Label exportStatusLabel;
+    @FXML private ProgressIndicator exportProgressIndicator;
+    @FXML private Button loadTattooButton;
+    @FXML private Button unloadTattooButton;
+    @FXML private Button removeBackgroundButton;
+    @FXML private Button invertTattooButton;
+    @FXML private Button reflectTattooButton;
+    @FXML private Button deleteTattooButton;
+    @FXML private Button undoTattooButton;
+    @FXML private ToggleButton lockAspectRatioToggle;
+    @FXML private FlowPane tattooHistoryGallery;
+    @FXML private ScrollPane tattooHistoryScroll;
+    @FXML private Slider tattooSizeSlider;
+    @FXML private Slider tattooWidthSlider;
+    @FXML private Slider tattooHeightSlider;
+    @FXML private Slider tattooOpacitySlider;
+    @FXML private Slider tattooRotationSlider;
+    @FXML private VBox tattooSizeControl;
+    @FXML private VBox tattooWidthControl;
+    @FXML private VBox tattooHeightControl;
+    @FXML private ToggleGroup skinToneToggleGroup;
+    @FXML private TextField estimateHeightField;
+    @FXML private Label estimateValueLabel;
+    @FXML private TableView<EstimateRow> estimateBreakdownTable;
+    @FXML private TableColumn<EstimateRow, String> estimateTattooColumn;
+    @FXML private TableColumn<EstimateRow, String> estimateWidthColumn;
+    @FXML private TableColumn<EstimateRow, String> estimateHeightColumn;
+    @FXML private TableColumn<EstimateRow, String> estimatePriceColumn;
     private PauseTransition exportStatusPause;
 
     private boolean bootstrapped;
+    private String exportStatusCardBaseStyle = "";
 
     private final javafx.scene.PerspectiveCamera camera = new javafx.scene.PerspectiveCamera(true);
     private final WorkspaceCamera cameraRig = new WorkspaceCamera(
@@ -238,26 +266,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private final ObservableList<TattooPreset> tattooHistory = FXCollections.observableArrayList();
 
-    private Button loadTattooButton;
-    private Button unloadTattooButton;
-    private Button removeBackgroundButton;
-    private Button invertTattooButton;
-    private Button reflectTattooButton;
-    private FlowPane tattooHistoryGallery;
     private ToggleGroup tattooHistoryToggleGroup;
-    private ScrollPane tattooHistoryScroll;
-    private Button deleteTattooButton;
-    private Button undoTattooButton;
-    private Slider tattooSizeSlider;
-    private Slider tattooWidthSlider;
-    private Slider tattooHeightSlider;
-    private VBox tattooSizeControl;
-    private VBox tattooWidthControl;
-    private VBox tattooHeightControl;
-    private Slider tattooOpacitySlider;
-    private Slider tattooRotationSlider;
-    private ToggleGroup skinToneToggleGroup;
-    private ToggleButton lockAspectRatioToggle;
     private boolean tattooDragActive;
     private double tattooDragOffsetU;
     private double tattooDragOffsetV;
@@ -275,9 +284,6 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("$#,##0.00");
     private static final DecimalFormat INCH_FORMAT = new DecimalFormat("0.0");
     private final Deque<TattooWorkspace.RemovedTattoo> deletedTattooHistory = new ArrayDeque<>();
-    private TextField estimateHeightField;
-    private Label estimateValueLabel;
-    private TableView<EstimateRow> estimateBreakdownTable;
     private final ObservableList<EstimateRow> estimateRows = FXCollections.observableArrayList();
 
     public WorkspaceControllerBase() {
@@ -290,6 +296,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
         setupControlPanel();
         setupViewer();
         configureSplitPane();
+        exportStatusCardBaseStyle = safeStyle(exportStatusCard != null ? exportStatusCard.getStyle() : null);
+        if (exportStatusOverlay != null) {
+            exportStatusOverlay.setVisible(false);
+            exportStatusOverlay.setMouseTransparent(true);
+        }
         if (rootPane != null) {
             rootPane.addEventFilter(KeyEvent.KEY_PRESSED, this::handleWorkspaceKey);
             rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -376,137 +387,13 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (controlsContainer == null) {
             return;
         }
-
-        controlsContainer.getChildren().clear();
-        controlsContainer.setSpacing(12);
-        controlsContainer.setPadding(new Insets(16));
-        controlsContainer.setFillWidth(true);
-        controlsContainer.setMinWidth(0);
-        controlsContainer.setPrefWidth(SIDEBAR_PREF_WIDTH);
-        controlsContainer.setMaxWidth(Double.MAX_VALUE);
-
-        loadTattooButton = new Button("+");
-        loadTattooButton.setOnAction(e -> handleLoadTattoo());
-        enforceTattooIconButtonWidth(loadTattooButton);
-        unloadTattooButton = new Button("-");
-        unloadTattooButton.setOnAction(e -> handleUnloadTattoo());
-        enforceTattooIconButtonWidth(unloadTattooButton);
-        removeBackgroundButton = new Button("Remove BG");
-        removeBackgroundButton.setOnAction(e -> handleRemoveBackground());
-        invertTattooButton = new Button("Invert Colors");
-        invertTattooButton.setOnAction(e -> handleInvertTattoo());
-        reflectTattooButton = new Button("Reflect Y-Axis");
-        reflectTattooButton.setOnAction(e -> handleReflectTattoo());
-        HBox tattooLoadRow = new HBox(10, loadTattooButton, unloadTattooButton, createSpacer(), removeBackgroundButton, invertTattooButton, reflectTattooButton);
-        tattooLoadRow.setFillHeight(true);
-
-        lightingModeCombo = new ComboBox<>();
-        lightingModeCombo.setItems(FXCollections.observableArrayList(LightingSystem.Mode.values()));
-        lightingModeCombo.setValue(lightingMode);
-        lightingModeCombo.valueProperty().addListener((obs, oldMode, newMode) -> {
-            if (newMode != null && newMode != lightingMode) {
-                lightingMode = newMode;
-                lightingSystem.apply(newMode);
-            }
-        });
-
-        skinToneToggleGroup = new ToggleGroup();
-
         tattooHistoryToggleGroup = new ToggleGroup();
-        tattooHistoryGallery = new FlowPane();
-        tattooHistoryGallery.setHgap(6);
-        tattooHistoryGallery.setVgap(6);
-        tattooHistoryGallery.setPrefWrapLength(180);
-        tattooHistoryGallery.getStyleClass().add("tattoo-history-gallery");
-
-        tattooHistoryScroll = new ScrollPane(tattooHistoryGallery);
-        tattooHistoryScroll.setFitToWidth(true);
-        tattooHistoryScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        tattooHistoryScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        tattooHistoryScroll.setPrefViewportHeight(120);
-        tattooHistoryScroll.setMaxHeight(150);
-        tattooHistoryScroll.setFocusTraversable(false);
-        tattooHistoryScroll.getStyleClass().add("tattoo-scroll");
-
-        tattooSizeSlider = new Slider(TATTOO_MIN_SCALE, TATTOO_MAX_SCALE, DEFAULT_TATTOO_SCALE);
-        tattooSizeSlider.getStyleClass().add(WP_SLIDER);
-        tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooSizeChange(newVal.doubleValue()));
-
-        tattooWidthSlider = new Slider(TATTOO_MIN_SCALE, TATTOO_MAX_SCALE, DEFAULT_TATTOO_SCALE);
-        tattooWidthSlider.getStyleClass().add(WP_SLIDER);
-        tattooWidthSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-            onTattooDimensionChange(TattooDimension.WIDTH, tattooWidthSlider, newVal.doubleValue())
-        );
-
-        tattooHeightSlider = new Slider(TATTOO_MIN_SCALE, TATTOO_MAX_SCALE, DEFAULT_TATTOO_SCALE);
-        tattooHeightSlider.getStyleClass().add(WP_SLIDER);
-        tattooHeightSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-            onTattooDimensionChange(TattooDimension.HEIGHT, tattooHeightSlider, newVal.doubleValue())
-        );
-
-        tattooOpacitySlider = new Slider(0.3, 1.0, 1.0);
-        tattooOpacitySlider.getStyleClass().add(WP_SLIDER);
-        tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withAlpha(newVal.doubleValue())));
-
-        tattooRotationSlider = new Slider(-180.0, 180.0, 0.0);
-        tattooRotationSlider.getStyleClass().add(WP_SLIDER);
-        tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooAdjustment(t -> t.withRotation(newVal.doubleValue())));
-
-        deleteTattooButton = new Button("Delete Tattoo");
-        deleteTattooButton.setMaxWidth(Double.MAX_VALUE);
-        deleteTattooButton.setOnAction(e -> handleDeleteTattoo());
-
-        undoTattooButton = new Button("Undo");
-        undoTattooButton.setDisable(true);
-        undoTattooButton.setOnAction(e -> handleUndoTattoo());
-
-        HBox tattooActionRow = new HBox(10, deleteTattooButton, undoTattooButton);
-        tattooActionRow.setFillHeight(true);
-        HBox.setHgrow(deleteTattooButton, Priority.ALWAYS);
-
-        lockAspectRatioToggle = new ToggleButton("Lock Aspect Ratio");
-        lockAspectRatioToggle.setMaxWidth(Double.MAX_VALUE);
-        lockAspectRatioToggle.getStyleClass().add("lock-aspect-toggle");
-        lockAspectRatioToggle.setSelected(true);
-        lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> handleAspectLockChange(newVal));
-
-        Label historyLabel = new Label("Loaded Tattoos");
-        VBox historyBox = new VBox(4, historyLabel, tattooHistoryScroll);
-        historyBox.setFillWidth(true);
-        historyBox.setFocusTraversable(false);
-        historyBox.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-        historyBox.getStyleClass().add("sidebar-card");
-        historyBox.setMinHeight(125);
-        historyBox.setMaxHeight(125);
-        
-        tattooSizeControl = createLabeledControl("Tattoo Size", tattooSizeSlider);
-        tattooWidthControl = createLabeledControl("Tattoo Width", tattooWidthSlider);
-        tattooHeightControl = createLabeledControl("Tattoo Height", tattooHeightSlider);
-        VBox tattooControls = new VBox(6,
-            historyBox,
-            tattooLoadRow,
-            lockAspectRatioToggle,
-            tattooSizeControl,
-            tattooWidthControl,
-            tattooHeightControl,
-            createLabeledControl("Tattoo Opacity", tattooOpacitySlider),
-            createLabeledControl("Tattoo Rotation", tattooRotationSlider),
-            tattooActionRow
-        );
-        tattooControls.setFillWidth(true);
-
-        controlsContainer.getChildren().add(createDropdownPanel("Tattoo Tools", tattooControls, true));
-
-        VBox modelProperties = new VBox(6,
-            buildSkinToneSelector(),
-            buildLightingSelector()
-        );
-        modelProperties.setFillWidth(true);
-
-        controlsContainer.getChildren().add(createDropdownPanel("Model Properties", modelProperties, false));
-        controlsContainer.getChildren().add(createDropdownPanel("Price Calculator", buildPriceCalculatorPane(), false));
+        configureTattooButtons();
+        configureTattooSliders();
+        configureSkinTonePalette();
+        configureLightingModeCombo();
+        configureEstimateSection();
         syncSkinToneSelection();
-
         if (controlScroll != null) {
             controlScroll.setFitToWidth(true);
             controlScroll.setFitToHeight(true);
@@ -517,9 +404,219 @@ public class WorkspaceControllerBase implements WorkspaceController {
             controlScroll.setPrefWidth(SIDEBAR_PREF_WIDTH);
             controlScroll.setMaxWidth(SIDEBAR_PREF_WIDTH);
         }
-
         refreshTattooHistoryGallery();
         updateTattooControlsState();
+    }
+
+    private void configureTattooButtons() {
+        if (loadTattooButton != null) {
+            loadTattooButton.setOnAction(e -> handleLoadTattoo());
+        }
+        if (unloadTattooButton != null) {
+            unloadTattooButton.setOnAction(e -> handleUnloadTattoo());
+        }
+        if (removeBackgroundButton != null) {
+            removeBackgroundButton.setOnAction(e -> handleRemoveBackground());
+        }
+        if (invertTattooButton != null) {
+            invertTattooButton.setOnAction(e -> handleInvertTattoo());
+        }
+        if (reflectTattooButton != null) {
+            reflectTattooButton.setOnAction(e -> handleReflectTattoo());
+        }
+        if (deleteTattooButton != null) {
+            deleteTattooButton.setOnAction(e -> handleDeleteTattoo());
+        }
+        if (undoTattooButton != null) {
+            undoTattooButton.setDisable(true);
+            undoTattooButton.setOnAction(e -> handleUndoTattoo());
+        }
+        if (lockAspectRatioToggle != null) {
+            lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> handleAspectLockChange(newVal));
+        }
+    }
+
+    private void configureTattooSliders() {
+        if (tattooSizeSlider != null) {
+            tattooSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> onTattooSizeChange(newVal.doubleValue()));
+        }
+        if (tattooWidthSlider != null) {
+            tattooWidthSlider.valueProperty().addListener((obs, oldVal, newVal) ->
+                onTattooDimensionChange(TattooDimension.WIDTH, tattooWidthSlider, newVal.doubleValue())
+            );
+        }
+        if (tattooHeightSlider != null) {
+            tattooHeightSlider.valueProperty().addListener((obs, oldVal, newVal) ->
+                onTattooDimensionChange(TattooDimension.HEIGHT, tattooHeightSlider, newVal.doubleValue())
+            );
+        }
+        if (tattooOpacitySlider != null) {
+            tattooOpacitySlider.valueProperty().addListener((obs, oldVal, newVal) ->
+                onTattooAdjustment(t -> t.withAlpha(newVal.doubleValue()))
+            );
+        }
+        if (tattooRotationSlider != null) {
+            tattooRotationSlider.valueProperty().addListener((obs, oldVal, newVal) ->
+                onTattooAdjustment(t -> t.withRotation(newVal.doubleValue()))
+            );
+        }
+    }
+
+    private void configureSkinTonePalette() {
+        if (skinToneToggleGroup == null) {
+            return;
+        }
+        skinToneToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle != null) {
+                Color tone = skinToneFromToggle(newToggle);
+                if (tone != null && !Objects.equals(tone, skinTone.get())) {
+                    skinTone.set(tone);
+                }
+            }
+            updateSkinToneButtonStyles();
+        });
+        updateSkinToneButtonStyles();
+    }
+
+    private void updateSkinToneButtonStyles() {
+        if (skinToneToggleGroup == null) {
+            return;
+        }
+        for (Toggle toggle : skinToneToggleGroup.getToggles()) {
+            if (toggle instanceof ToggleButton button) {
+                String base = (String) button.getProperties().get("baseStyle");
+                if (base == null) {
+                    base = safeStyle(button.getStyle());
+                    button.getProperties().put("baseStyle", base);
+                }
+                String border = toggle.isSelected()
+                    ? "-fx-border-color: #ffffff; -fx-border-width: 2;"
+                    : "-fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 1;";
+                button.setStyle(base + " " + border);
+            }
+        }
+    }
+
+    private Color skinToneFromToggle(Toggle toggle) {
+        if (toggle == null) {
+            return null;
+        }
+        Object data = toggle.getUserData();
+        if (data instanceof Color color) {
+            return color;
+        }
+        if (data instanceof String colorString && !colorString.isBlank()) {
+            try {
+                return Color.web(colorString);
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private void configureLightingModeCombo() {
+        if (lightingModeCombo == null) {
+            return;
+        }
+        lightingModeCombo.setItems(FXCollections.observableArrayList(LightingSystem.Mode.values()));
+        lightingModeCombo.setValue(lightingMode);
+        lightingModeCombo.valueProperty().addListener((obs, oldMode, newMode) -> {
+            if (newMode != null && newMode != lightingMode) {
+                lightingMode = newMode;
+                lightingSystem.apply(newMode);
+            }
+        });
+    }
+
+    private void configureEstimateSection() {
+        if (estimateHeightField != null) {
+            estimateHeightField.textProperty().addListener((obs, oldVal, newVal) -> refreshEstimateDisplay());
+        }
+        if (estimateValueLabel != null) {
+            estimateValueLabel.setText("--");
+        }
+        if (estimateBreakdownTable != null) {
+            estimateBreakdownTable.setItems(estimateRows);
+            estimateBreakdownTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            estimateBreakdownTable.setFixedCellSize(32);
+            Label placeholder = new Label("Enter height and add tattoos to see details.");
+            placeholder.setTextFill(Color.WHITE);
+            estimateBreakdownTable.setPlaceholder(placeholder);
+            estimateBreakdownTable.setRowFactory(tv -> new TableRow<>() {
+                @Override
+                protected void updateItem(EstimateRow item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setStyle("");
+                    } else if (tattooWorkspace.selected().isPresent() && tattooWorkspace.selected().get() == item.tattoo()) {
+                        setStyle("-fx-background-color: rgba(56,189,248,0.25);");
+                    } else {
+                        setStyle("-fx-background-color: transparent;");
+                    }
+                }
+            });
+        }
+        if (estimateTattooColumn != null) {
+            estimateTattooColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().label()));
+            estimateTattooColumn.setSortable(false);
+            estimateTattooColumn.setMinWidth(120);
+            estimateTattooColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+        }
+        if (estimateWidthColumn != null) {
+            estimateWidthColumn.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().width(), data.getValue().height())));
+            estimateWidthColumn.setSortable(false);
+            estimateWidthColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+        }
+        if (estimateHeightColumn != null) {
+            estimateHeightColumn.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().height(), data.getValue().width())));
+            estimateHeightColumn.setSortable(false);
+            estimateHeightColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+        }
+        if (estimatePriceColumn != null) {
+            estimatePriceColumn.setCellValueFactory(data -> new SimpleStringProperty(formatMoney(data.getValue().price())));
+            estimatePriceColumn.setSortable(false);
+            estimatePriceColumn.setStyle("-fx-alignment: CENTER-RIGHT;");
+            estimatePriceColumn.setMinWidth(90);
+            estimatePriceColumn.setMaxWidth(140);
+            estimatePriceColumn.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
+        }
+        Platform.runLater(this::refreshEstimateDisplay);
+    }
+
+    private static String formatInches(double inches) {
+        return INCH_FORMAT.format(inches) + "\"";
+    }
+
+    private static String formatSizedInches(double target, double other) {
+        String base = formatInches(target);
+        return target >= other - 1e-6 ? "*" + base : base;
+    }
+
+    private TableCell<EstimateRow, String> createWhiteTextCell(Pos alignment) {
+        return new WhiteTextTableCell(alignment);
+    }
+
+    private static final class WhiteTextTableCell extends TableCell<EstimateRow, String> {
+        WhiteTextTableCell(Pos alignment) {
+            setAlignment(alignment);
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(empty ? null : item);
+            setTextFill(Color.WHITE);
+            setStyle("-fx-text-fill: white;");
+        }
+    }
+
+    private static String formatMoney(double amount) {
+        return MONEY_FORMAT.format(amount);
+    }
+
+    private String safeStyle(String style) {
+        return style == null ? "" : style;
     }
 
     private void onTattooAdjustment(UnaryOperator<Tattoo> updater) {
@@ -615,13 +712,6 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
     }
 
-    private VBox createLabeledControl(String labelText, Slider slider) {
-        Label label = new Label(labelText);
-        VBox box = new VBox(4, label, slider);
-        box.setFillWidth(true);
-        return box;
-    }
-
     private void applyTattooDimensionVisibility(boolean aspectLocked) {
         setControlVisibility(tattooSizeControl, aspectLocked);
         boolean showDimensions = !aspectLocked;
@@ -635,214 +725,6 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
         node.setVisible(visible);
         node.setManaged(visible);
-    }
-
-    private VBox buildSkinToneSelector() {
-        Label label = new Label("Skin Tone");
-        FlowPane palette = new FlowPane(8, 8);
-        palette.setPrefWrapLength(200);
-        palette.setRowValignment(VPos.CENTER);
-        palette.setColumnHalignment(HPos.LEFT);
-        palette.setAlignment(Pos.CENTER_LEFT);
-        for (Color tone : SKIN_TONE_PALETTE) {
-            palette.getChildren().add(createSkinToneButton(tone));
-        }
-        VBox container = new VBox(4, label, palette);
-        container.setFillWidth(true);
-        return container;
-    }
-
-    private ToggleButton createSkinToneButton(Color tone) {
-        ToggleButton button = new ToggleButton();
-        button.setMinSize(32, 22);
-        button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        button.getStyleClass().add("skin-tone-chip");
-        button.setUserData(tone);
-        button.setToggleGroup(skinToneToggleGroup);
-        button.setStyle("-fx-background-color: " + toWebColor(tone) + ";");
-        button.setOnAction(e -> {
-            skinToneToggleGroup.selectToggle(button);
-            if (!Objects.equals(skinTone.get(), tone)) {
-                skinTone.set(tone);
-            }
-        });
-        if (Objects.equals(tone, skinTone.get()) && skinToneToggleGroup.getSelectedToggle() == null) {
-            skinToneToggleGroup.selectToggle(button);
-        }
-        return button;
-    }
-
-    private VBox buildLightingSelector() {
-        Label label = new Label("Lighting Mode");
-        HBox row = new HBox(8, lightingModeCombo);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setFillHeight(true);
-        HBox.setHgrow(lightingModeCombo, Priority.ALWAYS);
-        return new VBox(4, label, row);
-    }
-
-    private String toWebColor(Color color) {
-        int r = (int) Math.round(color.getRed() * 255);
-        int g = (int) Math.round(color.getGreen() * 255);
-        int b = (int) Math.round(color.getBlue() * 255);
-        return String.format("#%02x%02x%02x", r, g, b);
-    }
-
-    private Region createSpacer() {
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        return spacer;
-    }
-
-    private VBox buildPriceCalculatorPane() {
-        estimateHeightField = new TextField();
-        estimateHeightField.setPromptText("Height (in)");
-        estimateHeightField.setPrefColumnCount(6);
-        estimateHeightField.setMaxWidth(130);
-        estimateHeightField.textProperty().addListener((obs, oldVal, newVal) -> refreshEstimateDisplay());
-        estimateValueLabel = new Label("--");
-        estimateValueLabel.getStyleClass().add("price-estimate-label");
-        estimateValueLabel.setMinWidth(Region.USE_PREF_SIZE);
-        estimateValueLabel.setMaxWidth(Region.USE_PREF_SIZE);
-        Label totalLabel = new Label("Total:");
-        totalLabel.setStyle("-fx-font-weight: bold;");
-        Label formulaHint = new Label(
-            "Cost = $" + (int) BASE_TATTOO_RATE + " base + $" + (int) RATE_PER_INCH + " × largest dimension"
-        );
-        formulaHint.setWrapText(true);
-        formulaHint.setStyle("-fx-text-fill: #9ca3af; -fx-font-size: 11px;");
-        formulaHint.setMaxWidth(Double.MAX_VALUE);
-        HBox heightBox = new HBox(10, new Label("Height:"), estimateHeightField);
-        heightBox.setAlignment(Pos.CENTER_LEFT);
-
-        HBox totalBox = new HBox(6, totalLabel, estimateValueLabel);
-        totalBox.setAlignment(Pos.CENTER_RIGHT);
-        totalBox.setMinWidth(110);
-        totalBox.setPrefWidth(110);
-        totalBox.setMaxWidth(110);
-
-        GridPane row = new GridPane();
-        row.setHgap(10);
-        ColumnConstraints leftCol = new ColumnConstraints();
-        leftCol.setHgrow(Priority.ALWAYS);
-        ColumnConstraints rightCol = new ColumnConstraints();
-        rightCol.setPrefWidth(130);
-        rightCol.setMinWidth(130);
-        rightCol.setMaxWidth(130);
-        row.getColumnConstraints().addAll(leftCol, rightCol);
-        row.add(heightBox, 0, 0);
-        row.add(totalBox, 1, 0);
-        estimateBreakdownTable = buildEstimateTable();
-        StackPane tableWrapper = new StackPane(estimateBreakdownTable);
-        tableWrapper.setMinWidth(0);
-        tableWrapper.setMaxWidth(Double.MAX_VALUE);
-        estimateBreakdownTable.prefWidthProperty().bind(tableWrapper.widthProperty());
-        VBox box = new VBox(6, row, formulaHint, tableWrapper);
-        box.setFillWidth(true);
-        Platform.runLater(this::refreshEstimateDisplay);
-        return box;
-    }
-
-    private TableView<EstimateRow> buildEstimateTable() {
-        TableView<EstimateRow> table = new TableView<>(estimateRows);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setFixedCellSize(32);
-        table.setMinWidth(Region.USE_COMPUTED_SIZE);
-        table.setPrefWidth(Region.USE_COMPUTED_SIZE);
-        table.setMaxWidth(Double.MAX_VALUE);
-        table.setPlaceholder(new Label("Enter height and add tattoos to see details."));
-        table.getStyleClass().add("estimate-table");
-
-        TableColumn<EstimateRow, String> tattooCol = new TableColumn<>("Tattoo");
-        tattooCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().label()));
-        tattooCol.setSortable(false);
-        tattooCol.setMinWidth(120);
-        tattooCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
-
-        TableColumn<EstimateRow, String> widthCol = new TableColumn<>("Width");
-        widthCol.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().width(), data.getValue().height())));
-        widthCol.setSortable(false);
-        widthCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
-
-        TableColumn<EstimateRow, String> heightCol = new TableColumn<>("Height");
-        heightCol.setCellValueFactory(data -> new SimpleStringProperty(formatSizedInches(data.getValue().height(), data.getValue().width())));
-        heightCol.setSortable(false);
-        heightCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
-
-        TableColumn<EstimateRow, String> priceCol = new TableColumn<>("Price");
-        priceCol.setCellValueFactory(data -> new SimpleStringProperty(formatMoney(data.getValue().price())));
-        priceCol.setSortable(false);
-        priceCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-        priceCol.setMinWidth(90);
-        priceCol.setMaxWidth(140);
-        priceCol.setCellFactory(column -> createWhiteTextCell(Pos.CENTER));
-
-        table.getColumns().setAll(tattooCol, widthCol, heightCol, priceCol);
-        table.setStyle("-fx-text-fill: white;");
-        table.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(EstimateRow item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else if (tattooWorkspace.selected().isPresent() && tattooWorkspace.selected().get() == item.tattoo()) {
-                    setStyle("-fx-background-color: rgba(56,189,248,0.25);");
-                } else {
-                    setStyle("-fx-background-color: transparent;");
-                }
-            }
-        });
-        return table;
-    }
-
-    private static String formatInches(double inches) {
-        return INCH_FORMAT.format(inches) + "\"";
-    }
-
-    private static String formatSizedInches(double target, double other) {
-        String base = formatInches(target);
-        return target >= other - 1e-6 ? "*" + base : base;
-    }
-
-    private TableCell<EstimateRow, String> createWhiteTextCell(Pos alignment) {
-        return new WhiteTextTableCell(alignment);
-    }
-
-    private static final class WhiteTextTableCell extends TableCell<EstimateRow, String> {
-        WhiteTextTableCell(Pos alignment) {
-            setAlignment(alignment);
-        }
-
-        @Override
-        protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-            setText(empty ? null : item);
-            setTextFill(Color.WHITE);
-            setStyle("-fx-text-fill: white;");
-        }
-    }
-
-    private static String formatMoney(double amount) {
-        return MONEY_FORMAT.format(amount);
-    }
-
-    private TitledPane createDropdownPanel(String title, Node content, boolean expanded) {
-        TitledPane pane = new TitledPane(title, content);
-        pane.setCollapsible(true);
-        pane.setExpanded(expanded);
-        pane.setFocusTraversable(false);
-        pane.getStyleClass().add("sidebar-titled-pane");
-        pane.setMaxWidth(Double.MAX_VALUE);
-        return pane;
-    }
-
-    private void enforceTattooIconButtonWidth(Button button) {
-        if (button == null) {
-            return;
-        }
-        button.setMinWidth(TATTOO_ICON_BUTTON_WIDTH);
-        button.setPrefWidth(TATTOO_ICON_BUTTON_WIDTH);
-        button.setMaxWidth(TATTOO_ICON_BUTTON_WIDTH);
     }
 
     private void handleLoadTattoo() {
@@ -1479,16 +1361,17 @@ public class WorkspaceControllerBase implements WorkspaceController {
         view.setFitHeight(64);
         view.setPreserveRatio(true);
         StackPane graphic = new StackPane(view);
-        graphic.getStyleClass().add("tattoo-history-thumb");
+        graphic.setStyle(HISTORY_THUMB_STYLE);
 
         ToggleButton button = new ToggleButton();
         button.setGraphic(graphic);
         button.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
         button.setPrefSize(74, 74);
         button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        button.getStyleClass().add("tattoo-history-toggle");
+        button.setStyle(HISTORY_TOGGLE_STYLE);
         button.setUserData(preset);
         button.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            button.setStyle(isSelected ? HISTORY_TOGGLE_SELECTED_STYLE : HISTORY_TOGGLE_STYLE);
             if (isSelected) {
                 applySelectedHistoryTattoo();
             } else if (tattooHistoryToggleGroup != null && tattooHistoryToggleGroup.getSelectedToggle() == null) {
@@ -1496,6 +1379,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
             }
             updateTattooControlsState();
         });
+        button.hoverProperty().addListener((obs, oldVal, isHovering) ->
+            graphic.setStyle(isHovering ? HISTORY_THUMB_HOVER_STYLE : HISTORY_THUMB_STYLE)
+        );
         return button;
     }
 
@@ -1582,9 +1468,12 @@ public class WorkspaceControllerBase implements WorkspaceController {
         refreshLightingRig();
         softenSpecular(modelRoot);
 
-        viewerPane.getChildren().setAll(subScene);
+        viewerPane.getChildren().remove(subScene);
+        viewerPane.getChildren().add(0, subScene);
         StackPane.setMargin(subScene, Insets.EMPTY);
-        ensureExportStatusOverlay();
+        if (exportStatusOverlay != null && !viewerPane.getChildren().contains(exportStatusOverlay)) {
+            viewerPane.getChildren().add(exportStatusOverlay);
+        }
 
         viewerPane.setMinSize(0, 0);
         viewerPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -1592,36 +1481,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         subScene.heightProperty().bind(viewerPane.heightProperty());
     }
 
-    private void ensureExportStatusOverlay() {
-        if (viewerPane == null) {
-            return;
-        }
-        if (exportStatusOverlay == null) {
-            exportProgressIndicator = new ProgressIndicator();
-            exportProgressIndicator.getStyleClass().add("export-status-progress");
-            exportProgressIndicator.setMaxSize(72, 72);
-
-            exportStatusLabel = new Label();
-            exportStatusLabel.getStyleClass().add("export-status-label");
-
-            exportStatusCard = new VBox(12, exportProgressIndicator, exportStatusLabel);
-            exportStatusCard.setAlignment(Pos.CENTER);
-            exportStatusCard.getStyleClass().add("export-status-card");
-
-            exportStatusOverlay = new StackPane(exportStatusCard);
-            exportStatusOverlay.getStyleClass().add("export-status-overlay");
-            exportStatusOverlay.setVisible(false);
-            exportStatusOverlay.setMouseTransparent(true);
-        }
-        if (!viewerPane.getChildren().contains(exportStatusOverlay)) {
-            viewerPane.getChildren().add(exportStatusOverlay);
-            StackPane.setAlignment(exportStatusOverlay, Pos.CENTER);
-        }
-    }
-
     private void showExportProgress(String message) {
         Platform.runLater(() -> {
-            ensureExportStatusOverlay();
             if (exportStatusOverlay == null) {
                 return;
             }
@@ -1638,15 +1499,13 @@ public class WorkspaceControllerBase implements WorkspaceController {
                 exportProgressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
             }
             if (exportStatusCard != null) {
-                ObservableList<String> classes = exportStatusCard.getStyleClass();
-                classes.removeAll(SUCCESS, ERROR);
+                exportStatusCard.setStyle(exportStatusCardBaseStyle);
             }
         });
     }
 
     private void showExportOutcome(String message, boolean success) {
         Platform.runLater(() -> {
-            ensureExportStatusOverlay();
             if (exportStatusOverlay == null) {
                 return;
             }
@@ -1662,9 +1521,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
                 exportProgressIndicator.setVisible(false);
             }
             if (exportStatusCard != null) {
-                ObservableList<String> classes = exportStatusCard.getStyleClass();
-                classes.removeAll(SUCCESS, ERROR);
-                classes.add(success ? SUCCESS : ERROR);
+                exportStatusCard.setStyle(exportStatusCardBaseStyle + (success ? EXPORT_CARD_SUCCESS_STYLE : EXPORT_CARD_ERROR_STYLE));
             }
             exportStatusPause = new PauseTransition(Duration.seconds(2.2));
             exportStatusPause.setOnFinished(evt -> hideExportStatusOverlay());
@@ -1681,6 +1538,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
             exportStatusOverlay.setMouseTransparent(true);
             if (exportProgressIndicator != null) {
                 exportProgressIndicator.setVisible(false);
+            }
+            if (exportStatusCard != null) {
+                exportStatusCard.setStyle(exportStatusCardBaseStyle);
             }
         });
     }
@@ -1827,22 +1687,23 @@ public class WorkspaceControllerBase implements WorkspaceController {
             return;
         }
         Color target = skinTone.get() != null ? skinTone.get() : DEFAULT_SKIN_TONE;
-        ToggleButton bestMatch = null;
+        Toggle bestMatch = null;
         double bestDiff = Double.MAX_VALUE;
         for (Toggle toggle : skinToneToggleGroup.getToggles()) {
-            Object data = toggle.getUserData();
-            if (!(data instanceof Color color)) {
+            Color color = skinToneFromToggle(toggle);
+            if (color == null) {
                 continue;
             }
             double diff = colorDistanceSq(color, target);
             if (diff < bestDiff) {
                 bestDiff = diff;
-                bestMatch = (ToggleButton) toggle;
+                bestMatch = toggle;
             }
         }
         if (bestMatch != null) {
             skinToneToggleGroup.selectToggle(bestMatch);
         }
+        updateSkinToneButtonStyles();
     }
 
     private void applyInitialSkinTone() {
