@@ -83,6 +83,39 @@ public class DatabaseConnector {
         return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
     }
 
+    public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
+        PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
+                "SELECT * \n" +
+                    "FROM Artists AS A\n" +
+                    "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
+                    "LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id\n" +
+                        "WHERE ACC.username = ?;"
+        );
+        preparedStatement.setString(1, profileSkeleton.getUsername());
+        ResultSet resultSet = preparedStatement.executeQuery();
+        List<Post> artistPosts = getArtistPosts(resultSet);
+        profileSkeleton.setArtistPosts(artistPosts);
+        return profileSkeleton;
+
+    }
+
+    public static List<Post> getArtistPosts(ResultSet rs) throws SQLException {
+        if(!rs.next()) {
+            return null;
+        }
+        List<Post> posts = new ArrayList<>();
+        do {
+            int postId = rs.getInt("post_id");
+            String caption = rs.getString("caption");
+            int postOwner = rs.getInt("account_id");
+            String postPictureURL = rs.getString("post_picture_url");
+            String keyWords = rs.getString("keywords");
+            posts.add(new Post(postId,caption,postPictureURL,postOwner,keyWords));
+        }
+        while(rs.next());
+
+        return posts;
+    }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
         PreparedStatement stmt = DatabaseConnector.conn.prepareStatement("""
@@ -219,11 +252,4 @@ public class DatabaseConnector {
             }
         }
     }
-
-
-
-
-
-
-
 }

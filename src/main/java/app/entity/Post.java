@@ -6,6 +6,8 @@ public class Post {
     private int id;
     private String caption;
     private String postURL;
+    private String keyWords;
+    private int postOwnerId;
 
     // Lazy image; don't create during tests/headless contexts
     private volatile Image image;
@@ -15,10 +17,12 @@ public class Post {
 
     public static void setHeadless(boolean v) { HEADLESS = v; }
 
-    public Post(int id, String caption, String postURL) {
+    public Post(int id, String caption, String postURL, int postOwnerId, String keyWords) {
         this.id = id;
         this.caption = caption;
         this.postURL = postURL;
+        this.postOwnerId = postOwnerId;
+        this.keyWords = keyWords;
         // IMPORTANT: do NOT create Image here; we’re in plain Java/JUnit often.
         // The UI can call getImage() when a JavaFX toolkit exists.
     }
