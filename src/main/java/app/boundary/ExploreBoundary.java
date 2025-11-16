@@ -30,6 +30,12 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
 
+    private final app.controller.explore.ExploreDataProvider provider =
+            (System.getenv("EXPLORE_LIVE") != null)
+                    ? new app.controller.explore.JdbcExploreDataProvider()
+                    : new app.controller.explore.MockExploreDataProvider();
+
+
     @Override
     public void setWorkspaceProvider(Supplier<WorkspaceController> provider) {
         this.workspaceProvider = provider;
@@ -71,7 +77,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             default -> ExploreControl.Kind.ALL;
         };
 
-        List<ExploreControl.SearchItem> items = control.filter(q, kind);
+        List<ExploreControl.SearchItem> items = provider.fetch(q, kind);
 
         resultsPane.getChildren().setAll(
                 items.isEmpty()
@@ -86,12 +92,17 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     private Node card(ExploreControl.SearchItem item) {
         ImageView iv = new ImageView();
-        var res = getClass().getResourceAsStream(item.thumbnail());
-        if (res != null) {
-            iv.setImage(new Image(res, 220, 0, true, true));
-            iv.setFitWidth(220);
-            iv.setPreserveRatio(true);
+        String thumb = item.thumbnail();
+
+        if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://"))) {
+            iv.setImage(new Image(thumb, 220, 0, true, true));  // Cloudinary URL
+        } else {
+            var res = getClass().getResourceAsStream(thumb);
+            if (res != null) iv.setImage(new Image(res, 220, 0, true, true));
         }
+        iv.setFitWidth(220);
+        iv.setPreserveRatio(true);
+
 
         Label overlay = new Label(item.hoverText());
         overlay.setWrapText(true);
