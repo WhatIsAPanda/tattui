@@ -40,14 +40,14 @@ public final class ExploreControl {
                 "Dragon forearm (completed)",
                 Kind.COMPLETED_TATTOOS,
                 "/icons/completed_dragon_forearm.jpg",
-                List.of("forearm", "dragon", "completed"),
+                List.of("forearm", "dragon", "completed", "artist:Raven"),
                 "Healed forearm piece with a stylized dragon—placed in the 3D workspace."
         ));
         list.add(new SearchItem(
                 "Koi sleeve segment (completed)",
                 Kind.COMPLETED_TATTOOS,
                 "/icons/completed_koi_leg.jpg",
-                List.of("leg", "koi", "color", "completed"),
+                List.of("leg", "koi", "color", "completed", "artist:Raven"),
                 "Color koi segment wrapped on a darker skin tone for realistic preview."
         ));
 
