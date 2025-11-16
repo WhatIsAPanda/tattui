@@ -189,8 +189,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String DEFAULT_MODEL_FILENAME = "human.obj";
     private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
     private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
-    private static final double TATTOO_ICON_BUTTON_WIDTH = 36.0;
-    private static final double TATTOO_HISTORY_MIN_HEIGHT = 180.0;
+    private static final double TATTOO_ICON_BUTTON_WIDTH = 28.0;
+    private static final double SIDEBAR_PREF_WIDTH = 460.0;
 
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
 
@@ -382,6 +382,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         controlsContainer.setPadding(new Insets(16));
         controlsContainer.setFillWidth(true);
         controlsContainer.setMinWidth(0);
+        controlsContainer.setPrefWidth(SIDEBAR_PREF_WIDTH);
+        controlsContainer.setMaxWidth(Double.MAX_VALUE);
 
         loadTattooButton = new Button("+");
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
@@ -474,6 +476,8 @@ public class WorkspaceControllerBase implements WorkspaceController {
         historyBox.setFocusTraversable(false);
         historyBox.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         historyBox.getStyleClass().add("sidebar-card");
+        historyBox.setMinHeight(125);
+        historyBox.setMaxHeight(125);
         
         tattooSizeControl = createLabeledControl("Tattoo Size", tattooSizeSlider);
         tattooWidthControl = createLabeledControl("Tattoo Width", tattooWidthSlider);
@@ -509,8 +513,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
             controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             controlScroll.setPadding(Insets.EMPTY);
-            controlScroll.setMinWidth(0);
-            controlScroll.setMaxWidth(Double.MAX_VALUE);
+            controlScroll.setMinWidth(SIDEBAR_PREF_WIDTH);
+            controlScroll.setPrefWidth(SIDEBAR_PREF_WIDTH);
+            controlScroll.setMaxWidth(SIDEBAR_PREF_WIDTH);
         }
 
         refreshTattooHistoryGallery();
