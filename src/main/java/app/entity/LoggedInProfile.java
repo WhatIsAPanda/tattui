@@ -1,10 +1,10 @@
 package app.entity;
 
-public class LoggedInUser {
+public class LoggedInProfile {
     private static Profile loggedInProfile = null;
 
-    private LoggedInUser(Profile profile) {
-        LoggedInUser.loggedInProfile = profile;
+    private LoggedInProfile(Profile profile) {
+        LoggedInProfile.loggedInProfile = profile;
     }
 
     public static Profile getInstance() {
@@ -12,6 +12,6 @@ public class LoggedInUser {
     }
 
     public static void setInstance(Profile profile) {
-        LoggedInUser.loggedInProfile = profile;
+        LoggedInProfile.loggedInProfile = profile;
     }
 }

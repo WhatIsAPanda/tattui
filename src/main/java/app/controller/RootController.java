@@ -33,9 +33,11 @@ public class RootController {
     private static final Map<String, String> PAGE_PATHS = Map.of(
         WORKSPACE_PAGE, "/app/view/Workspace.fxml",
         "map", "/app/view/Map.fxml",
+        "gallery", "/app/view/Gallery.fxml",
         "login", "/app/view/Login.fxml",
         "viewProfile", "/app/view/viewMyProfile.fxml",
-        "explore", "/app/view/Explore.fxml"
+        "explore", "/app/view/Explore.fxml",
+            "register","/app/view/Register.fxml"
     );
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
 
@@ -94,6 +96,9 @@ public class RootController {
             showDatabaseAlert();
             return;
         }
+        if(key.equals("login")) {
+            pageCache.clear();
+        }
 
         Parent view = pageCache.computeIfAbsent(key, k ->{
             if (profile.isPresent()) {
@@ -105,7 +110,7 @@ public class RootController {
             });
 
         //Hide taskbar for pages on login
-        boolean showTaskbar = !"login".equals(key);
+        boolean showTaskbar = !key.equals("login") && !key.equals("register");
         taskbarContainer.setVisible(showTaskbar);
         taskbarContainer.setManaged(showTaskbar);
 

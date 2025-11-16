@@ -30,7 +30,7 @@
         <CheckBox text="Remember me" textFill="white" />
         <HBox alignment="CENTER" spacing="10">
            <Button fx:id="logInButton" onMouseClicked="#loginButtonClicked" prefWidth="100" text="Sign in" />
-         <Button fx:id="registerButton" onMouseClicked="#registerButtonClicked" prefWidth="100" text="Register" />
+         <Button fx:id="registerButton" onAction="#registerButtonClicked" onMouseClicked="#registerButtonClicked" prefWidth="100" text="Register" />
         </HBox>
         <Label style="-fx-font-size: 12px;" text="Or login with" textFill="white" />
       <HBox alignment="CENTER" spacing="10">

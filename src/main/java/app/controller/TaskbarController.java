@@ -1,6 +1,6 @@
 package app.controller;
 
-import app.entity.LoggedInUser;
+import app.entity.LoggedInProfile;
 import app.entity.Profile;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -42,7 +42,7 @@ public class TaskbarController implements RootController.PageAware, RootControll
             case "exploreButton" -> onPageRequest.accept("explore");
             case "mapButton" -> onPageRequest.accept("map");
             case "loginButton" -> onPageRequest.accept("login");
-            case "logoButton" -> onProfileRequest.accept(LoggedInUser.getInstance());
+            case "logoButton" -> onProfileRequest.accept(LoggedInProfile.getInstance());
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
         }
         
