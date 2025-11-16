@@ -84,6 +84,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -131,6 +132,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE =
         FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
     private static final FileAttribute<?>[] SECURE_TEMP_DIR_ATTRIBUTES = buildSecureTempDirAttributes();
+    private static final int MAX_ARCHIVE_ENTRIES = 2048;
+    private static final long MAX_UNCOMPRESSED_ARCHIVE_BYTES = 200L * 1024 * 1024;
+    private static final double MAX_ARCHIVE_COMPRESSION_RATIO = 3.0;
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
@@ -1209,9 +1213,15 @@ public class WorkspaceControllerBase implements WorkspaceController {
             throw new IOException("Archive not found");
         }
         Path tempDir = Files.createTempDirectory("tattui-project-", SECURE_TEMP_DIR_ATTRIBUTES);
+        long totalUncompressedBytes = 0;
+        int extractedEntries = 0;
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
+                extractedEntries++;
+                if (extractedEntries > MAX_ARCHIVE_ENTRIES) {
+                    throw new IOException("Archive contains more entries than permitted.");
+                }
                 String entryName = entry.getName();
                 verifySafeArchiveEntry(entryName);
                 Path relativeEntry = Paths.get(entryName).normalize();
@@ -1225,7 +1235,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
                     if (resolved.getParent() != null) {
                         Files.createDirectories(resolved.getParent());
                     }
-                    Files.copy(in, resolved, StandardCopyOption.REPLACE_EXISTING);
+                    long written = writeZipEntryContents(in, resolved, entry);
+                    totalUncompressedBytes = Math.addExact(totalUncompressedBytes, written);
+                    if (totalUncompressedBytes > MAX_UNCOMPRESSED_ARCHIVE_BYTES) {
+                        throw new IOException("Archive exceeds the maximum allowed uncompressed size.");
+                    }
                 }
                 in.closeEntry();
             }
@@ -2909,6 +2923,33 @@ public class WorkspaceControllerBase implements WorkspaceController {
         alert.setHeaderText("Tattoo placement unavailable");
         alert.setContentText("This model has no UVs; tattoo placement requires UVs.");
         alert.show();
+    }
+
+    private long writeZipEntryContents(ZipInputStream in, Path target, ZipEntry entry) throws IOException {
+        if (target.getParent() != null) {
+            Files.createDirectories(target.getParent());
+        }
+        long compressedSize = entry.getCompressedSize();
+        try (OutputStream out = Files.newOutputStream(
+                target,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE)) {
+            byte[] buffer = new byte[8192];
+            long written = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                written += read;
+                if (compressedSize > 0) {
+                    double ratio = written / (double) compressedSize;
+                    if (ratio > MAX_ARCHIVE_COMPRESSION_RATIO) {
+                        throw new IOException("Archive entry " + entry.getName() + " exceeds allowed compression ratio.");
+                    }
+                }
+                out.write(buffer, 0, read);
+            }
+            return written;
+        }
     }
 
 }
