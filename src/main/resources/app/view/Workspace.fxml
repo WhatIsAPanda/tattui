@@ -10,7 +10,7 @@
     </fx:define>
 
     <top>
-        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-background-color: #0d0d0d; -fx-border-color: transparent transparent #ffffff1a transparent; -fx-border-width: 0 0 1 0; -fx-effect: none;" BorderPane.alignment="CENTER">
+        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-background-color: #0d0d0d; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0; -fx-border-style: solid; -fx-effect: none;" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
             </padding>

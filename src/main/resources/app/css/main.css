@@ -9,19 +9,6 @@
   -fx-background-insets: 0;   /* kills Modena highlight layers */
   -fx-effect: none;
 }
-.list-cell:focused,
-.table-row-cell:focused,
-.list-cell:selected,
-.table-row-cell:selected,
-.tree-cell:selected,
-.vbox:focused,
-.hbox:focused {
-    -fx-background-color: inherit;
-    -fx-border-color: inherit;
-    -fx-text-fill: inherit;
-    
-}
-
 .label {
   -fx-text-fill: #e2e8f0;
 }
@@ -149,14 +136,9 @@
   -fx-padding: 6;
 }
 
-.workspace-toggle-button:selected {
+.workspace-toggle-button-selected {
   -fx-border-color: #ffffff;
   -fx-background-color: linear-gradient(#2a2a2a, #0b0b0b);
-}
-
-.workspace-toggle-button:selected:hover {
-  -fx-background-color: linear-gradient(#f0f0f0, #cdcdcd);
-  -fx-text-fill: #000000;
 }
 
 .slider .thumb {

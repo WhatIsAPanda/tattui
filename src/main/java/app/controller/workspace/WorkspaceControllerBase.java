@@ -18,7 +18,6 @@ import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
@@ -115,44 +114,13 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final double TARGET_HEIGHT = 1700.0;
     private static final double MIN_DISTANCE = 300.0;
     private static final double MAX_DISTANCE = 6000.0;
-    private static final double TATTOO_MIN_SCALE = 0.05;
-    private static final double TATTOO_MAX_SCALE = 1.0;
     private static final double DEFAULT_TATTOO_SCALE = 0.20;
     private static final double ORBIT_SENSITIVITY = 0.3;
     private static final double PAN_SENSITIVITY = 0.5;
     private static final double PITCH_MIN = -80.0;
     private static final double PITCH_MAX = 80.0;
     private static final int MAX_TATTOO_HISTORY = 12;
-    private static final Color DEFAULT_SKIN_TONE = Color.rgb(224, 172, 105);
-    private static final List<Color> SKIN_TONE_PALETTE = List.of(
-        Color.rgb(110, 66, 24),   // Darkest
-        Color.rgb(120, 72, 28),
-        Color.rgb(133, 80, 32),
-        Color.rgb(146, 90, 36),
-        Color.rgb(156, 97, 40),
-        Color.rgb(163, 103, 42),
-        Color.rgb(170, 108, 45),
-        Color.rgb(177, 114, 49),
-        Color.rgb(185, 121, 55),
-        Color.rgb(193, 128, 60),
-        Color.rgb(198, 134, 66),
-        Color.rgb(205, 143, 75),
-        Color.rgb(213, 153, 85),
-        Color.rgb(219, 163, 94),
-        Color.rgb(224, 172, 105),
-        Color.rgb(229, 178, 111),
-        Color.rgb(233, 183, 115),
-        Color.rgb(237, 189, 120),
-        Color.rgb(241, 194, 125),
-        Color.rgb(244, 201, 136),
-        Color.rgb(250, 212, 153),
-        Color.rgb(255, 219, 172),
-        Color.rgb(255, 227, 190),
-        Color.rgb(255, 234, 205),
-        Color.rgb(255, 237, 211),
-        Color.rgb(255, 242, 224),
-        Color.rgb(255, 247, 236)
-    );
+    private static final Color DEFAULT_SKIN_TONE = Color.rgb(245, 208, 157);
     private static final double DEFAULT_ESTIMATE_HEIGHT = 66.0;
     private static final double PIXEL_TO_SQUARE_INCH = 1.0 / 500.0;
     public static final String TORSO = "Torso";
@@ -167,6 +135,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String HISTORY_TOGGLE_SELECTED_STYLE = "-fx-background-color: transparent; -fx-border-color: #ffffff; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 2;";
     private static final String EXPORT_CARD_SUCCESS_STYLE = " -fx-border-color: rgba(74, 222, 128, 0.9);";
     private static final String EXPORT_CARD_ERROR_STYLE = " -fx-border-color: rgba(248, 113, 113, 0.9);";
+    private static final String LOCK_ASPECT_SELECTED_CLASS = "workspace-toggle-button-selected";
 
     private static final List<String> BODY_PARTS = List.of(
         "Head",
@@ -432,7 +401,25 @@ public class WorkspaceControllerBase implements WorkspaceController {
             undoTattooButton.setOnAction(e -> handleUndoTattoo());
         }
         if (lockAspectRatioToggle != null) {
-            lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> handleAspectLockChange(newVal));
+            lockAspectRatioToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                updateLockAspectToggleStyle(newVal);
+                handleAspectLockChange(newVal);
+            });
+            updateLockAspectToggleStyle(lockAspectRatioToggle.isSelected());
+        }
+    }
+
+    private void updateLockAspectToggleStyle(boolean selected) {
+        if (lockAspectRatioToggle == null) {
+            return;
+        }
+        ObservableList<String> classes = lockAspectRatioToggle.getStyleClass();
+        if (selected) {
+            if (!classes.contains(LOCK_ASPECT_SELECTED_CLASS)) {
+                classes.add(LOCK_ASPECT_SELECTED_CLASS);
+            }
+        } else {
+            classes.remove(LOCK_ASPECT_SELECTED_CLASS);
         }
     }
 
@@ -1660,7 +1647,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private void initializeSkinToneFromMaterials() {
-        Color selectedTone = SKIN_TONE_PALETTE.isEmpty() ? DEFAULT_SKIN_TONE : SKIN_TONE_PALETTE.get(SKIN_TONE_PALETTE.size() - 1);
+        Color selectedTone = DEFAULT_SKIN_TONE;
         skinTone.set(selectedTone);
         applySkinToneToMaterials();
         tattooWorkspace.updateSkinTone(selectedTone);
@@ -1707,10 +1694,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     }
 
     private void applyInitialSkinTone() {
-        if (SKIN_TONE_PALETTE.isEmpty()) {
-            return;
-        }
-        Color desired = SKIN_TONE_PALETTE.get(SKIN_TONE_PALETTE.size() - 1);
+        Color desired = DEFAULT_SKIN_TONE;
         if (!Objects.equals(skinTone.get(), desired)) {
             skinTone.set(desired);
         } else {
