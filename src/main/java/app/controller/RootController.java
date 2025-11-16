@@ -1,12 +1,14 @@
 package app.controller;
 
-import app.boundary.ViewProfileBoundary;
+import app.boundary.ViewMyProfileBoundary;
+import app.entity.DatabaseConnector;
 import app.entity.Profile;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -26,15 +29,18 @@ public class RootController {
     private WorkspaceController workspaceController;
     private final Map<String, Parent> pageCache = new HashMap<>();
     private static final String WORKSPACE_PAGE = "workspace";
+    private static final String LOGIN_PAGE = "login";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
         WORKSPACE_PAGE, "/app/view/Workspace.fxml",
         "map", "/app/view/Map.fxml",
-        "login", "/app/view/Login.fxml",
-        "EditMyProfile", "/app/view/EditMyProfile.fxml",
-        "viewProfile", "/app/view/viewProfile.fxml",
-        "explore", "/app/view/Explore.fxml"
+        "gallery", "/app/view/Gallery.fxml",
+        LOGIN_PAGE, "/app/view/Login.fxml",
+        "viewProfile", "/app/view/viewMyProfile.fxml",
+        "explore", "/app/view/Explore.fxml",
+            "register","/app/view/Register.fxml"
     );
+    private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
 
     public RootController() {
         // Default constructor required for JavaFX FXML loader.
@@ -58,6 +64,7 @@ public class RootController {
     public void initialize() {
         loadView("/app/view/Taskbar.fxml");
         showPage(WORKSPACE_PAGE);
+        DatabaseConnector.ensureConnection();
 
         rootPane.sceneProperty().addListener((obs, o, n) -> {
             if (n != null && n.getWindow() instanceof Stage stage)
@@ -86,6 +93,13 @@ public class RootController {
         String path = PAGE_PATHS.get(key);
         if (path == null)
             throw new IllegalArgumentException("Unknown page key: " + key);
+        if (DATABASE_PAGES.contains(key) && !DatabaseConnector.ensureConnection()) {
+            showDatabaseAlert();
+            return;
+        }
+        if(key.equals(LOGIN_PAGE)) {
+            pageCache.clear();
+        }
 
         Parent view = pageCache.computeIfAbsent(key, k ->{
             if (profile.isPresent()) {
@@ -97,7 +111,7 @@ public class RootController {
             });
 
         //Hide taskbar for pages on login
-        boolean showTaskbar = !"login".equals(key);
+        boolean showTaskbar = !key.equals(LOGIN_PAGE) && !key.equals("register");
         taskbarContainer.setVisible(showTaskbar);
         taskbarContainer.setManaged(showTaskbar);
 
@@ -169,5 +183,17 @@ public class RootController {
         public ViewLoadException(String message, Throwable cause) {
             super(message, cause);
         }
+    }
+
+    private void showDatabaseAlert() {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Database Connection");
+        alert.setHeaderText("Unable to reach the database");
+        alert.setContentText("Please check your network connection and try again.");
+        Stage stage = currentStage();
+        if (stage != null) {
+            alert.initOwner(stage);
+        }
+        alert.showAndWait();
     }
 }

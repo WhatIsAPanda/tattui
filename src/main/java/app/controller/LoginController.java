@@ -1,19 +1,20 @@
 package app.controller;
 import java.sql.*;
-import app.entity.DatabaseConnector;
-import app.entity.LoggedInUser;
-import app.entity.Profile;
+
+import app.entity.*;
 
 
 public class LoginController {
 
     public static boolean verifyUser(String username, String password) throws SQLException {
-        Profile profile = DatabaseConnector.getProfileByUsername(username);
-        if(profile == null) {
+        Account account = DatabaseConnector.getAccountByUsername(username);
+        if(account == null) {
             return false;
         }
-        if(profile.getPassword().equals(password)) {
-            LoggedInUser.setInstance(profile);
+        if(account.getPassword().equals(password)) {
+            LoggedInAccount.setInstance(account);
+            Profile artistProfile = DatabaseConnector.getProfileByUsername(username);
+            LoggedInProfile.setInstance(artistProfile);
             return true;
         }
         return false;

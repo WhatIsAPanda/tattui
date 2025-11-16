@@ -1,37 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.MenuButton?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
 <BorderPane fx:id="rootPane" prefHeight="800.0" prefWidth="1120.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.WorkspaceBoundary">
+    <fx:define>
+        <ToggleGroup fx:id="skinToneToggleGroup" />
+    </fx:define>
 
     <top>
-        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-border-color: transparent transparent white transparent; -border-width: 0 0 1 0;" styleClass="toolbar" BorderPane.alignment="CENTER">
+        <HBox fx:id="toolbarBox" alignment="CENTER_LEFT" prefHeight="51.0" spacing="10.0" style="-fx-background-color: #0d0d0d; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0; -fx-border-style: solid; -fx-effect: none;" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
             </padding>
             <children>
-                <MenuButton text="Load">
+                <MenuButton text="Load" styleClass="workspace-menu-button">
                     <items>
                         <MenuItem fx:id="loadModelMenuItem" text="Load Model" />
                         <MenuItem fx:id="loadProjectMenuItem" text="Load Project" />
                     </items>
                 </MenuButton>
-                <MenuButton text="Export">
+                <MenuButton text="Export" styleClass="workspace-menu-button">
                     <items>
                         <MenuItem fx:id="exportPreviewMenuItem" text="Export Preview" />
                         <MenuItem fx:id="exportProjectMenuItem" text="Export Project" />
                     </items>
                 </MenuButton>
-                <MenuButton text="View">
+                <MenuButton text="View" styleClass="workspace-menu-button">
                     <items>
                         <MenuItem fx:id="resetViewMenuItem" text="Reset View" />
                     </items>
@@ -41,15 +37,193 @@
     </top>
 
     <center>
-        <StackPane fx:id="viewerPane" styleClass="workspace-viewer" BorderPane.alignment="CENTER" />
-    </center>
+        <SplitPane fx:id="contentSplit" dividerPositions="0.68" BorderPane.alignment="CENTER">
+            <items>
+                <StackPane fx:id="viewerPane" style="-fx-background-color: #1f1f1f;">
+                    <children>
+                        <StackPane fx:id="exportStatusOverlay" alignment="CENTER" mouseTransparent="true" visible="false" style="-fx-background-color: rgba(0,0,0,0.6); -fx-padding: 32;">
+                            <children>
+                                <VBox fx:id="exportStatusCard" alignment="CENTER" spacing="12.0" style="-fx-background-color: rgba(15,15,15,0.92); -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: rgba(255,255,255,0.15); -fx-padding: 24; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.65), 25, 0.3, 0, 10);">
+                                    <children>
+                                        <ProgressIndicator fx:id="exportProgressIndicator" maxHeight="72.0" maxWidth="72.0" visible="false" style="-fx-progress-color: #38bdf8;" />
+                                        <Label fx:id="exportStatusLabel" alignment="CENTER" textFill="#f8fafc" style="-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-alignment: center;" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </StackPane>
+                    </children>
+                </StackPane>
+                <ScrollPane fx:id="controlScroll" fitToHeight="true" fitToWidth="true" focusTraversable="false" hbarPolicy="NEVER" prefWidth="420.0" style="-fx-background-color: #0d0d0d; -fx-border-color: transparent; -fx-border-width: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-background-insets: 0; -fx-padding: 0; -fx-effect: none;" vbarPolicy="AS_NEEDED">
+                    <content>
+                        <VBox fx:id="controlsContainer" alignment="TOP_LEFT" fillWidth="true" spacing="12.0" style="-fx-background-color: #0d0d0d; -fx-padding: 16;">
+                            <children>
+                                <TitledPane fx:id="tattooToolsPane" animated="false" expanded="true" text="Tattoo Tools" style="-fx-background-color: #101010; -fx-border-color: rgba(255,255,255,0.08); -fx-border-radius: 4; -fx-background-radius: 4;">
+                                    <content>
+                                        <VBox spacing="6.0" fillWidth="true" style="-fx-padding: 8;">
+                                            <children>
+                                                <VBox minHeight="125.0" prefHeight="125.0" maxHeight="125.0" spacing="4.0" style="-fx-background-color: #121212; -fx-border-color: rgba(255,255,255,0.08); -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 10 10 10;">
+                                                    <children>
+                                                        <Label text="Loaded Tattoos" textFill="#f8fafc" />
+                                                        <ScrollPane fx:id="tattooHistoryScroll" fitToWidth="true" focusTraversable="false" hbarPolicy="NEVER" prefViewportHeight="120.0" style="-fx-background-color: #121212; -fx-border-color: rgba(255,255,255,0.05); -fx-focus-color: transparent; -fx-faint-focus-color: transparent;" vbarPolicy="AS_NEEDED">
+                                                            <content>
+                                                                <FlowPane fx:id="tattooHistoryGallery" hgap="6.0" vgap="6.0" prefWrapLength="180.0" />
+                                                            </content>
+                                                        </ScrollPane>
+                                                    </children>
+                                                </VBox>
+                                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                                    <children>
+                                                        <Button fx:id="loadTattooButton" mnemonicParsing="false" prefWidth="28.0" styleClass="workspace-button" text="+" />
+                                                        <Button fx:id="unloadTattooButton" mnemonicParsing="false" prefWidth="28.0" styleClass="workspace-button" text="-" />
+                                                        <Region HBox.hgrow="ALWAYS" />
+                                                        <Button fx:id="removeBackgroundButton" mnemonicParsing="false" styleClass="workspace-button" text="Remove BG" />
+                                                        <Button fx:id="invertTattooButton" mnemonicParsing="false" styleClass="workspace-button" text="Invert Colors" />
+                                                        <Button fx:id="reflectTattooButton" mnemonicParsing="false" styleClass="workspace-button" text="Reflect Y-Axis" />
+                                                    </children>
+                                                </HBox>
+                                                <ToggleButton fx:id="lockAspectRatioToggle" maxWidth="Infinity" mnemonicParsing="false" selected="true" styleClass="workspace-button workspace-toggle-button" text="Lock Aspect Ratio" />
+                                                <VBox fx:id="tattooSizeControl" spacing="4.0">
+                                                    <children>
+                                                        <Label text="Tattoo Size" textFill="#f8fafc" />
+                                                        <Slider fx:id="tattooSizeSlider" max="1.0" min="0.05" value="0.2" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox fx:id="tattooWidthControl" spacing="4.0" visible="false" managed="false">
+                                                    <children>
+                                                        <Label text="Tattoo Width" textFill="#f8fafc" />
+                                                        <Slider fx:id="tattooWidthSlider" max="1.0" min="0.05" value="0.2" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox fx:id="tattooHeightControl" spacing="4.0" visible="false" managed="false">
+                                                    <children>
+                                                        <Label text="Tattoo Height" textFill="#f8fafc" />
+                                                        <Slider fx:id="tattooHeightSlider" max="1.0" min="0.05" value="0.2" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0">
+                                                    <children>
+                                                        <Label text="Tattoo Opacity" textFill="#f8fafc" />
+                                                        <Slider fx:id="tattooOpacitySlider" max="1.0" min="0.3" value="1.0" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0">
+                                                    <children>
+                                                        <Label text="Tattoo Rotation" textFill="#f8fafc" />
+                                                        <Slider fx:id="tattooRotationSlider" max="180.0" min="-180.0" value="0.0" />
+                                                    </children>
+                                                </VBox>
+                                                <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                                    <children>
+                                                        <Button fx:id="deleteTattooButton" mnemonicParsing="false" styleClass="workspace-button" text="Delete Tattoo" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+                                                        <Button fx:id="undoTattooButton" mnemonicParsing="false" prefWidth="90.0" styleClass="workspace-button" text="Undo" />
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+                                    </content>
+                                </TitledPane>
 
-    <right>
-        <ScrollPane fx:id="controlScroll" fitToWidth="true" focusTraversable="false" hbarPolicy="NEVER" style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" styleClass="sidebar-scroll" vbarPolicy="AS_NEEDED" BorderPane.alignment="CENTER">
-            <content>
-                <VBox fx:id="controlsContainer" alignment="TOP_LEFT" spacing="12.0" styleClass="control-pane" />
-            </content>
-        </ScrollPane>
-    </right>
+                                <TitledPane fx:id="modelPropertiesPane" animated="false" expanded="false" text="Model Properties" style="-fx-background-color: #101010; -fx-border-color: rgba(255,255,255,0.08); -fx-border-radius: 4; -fx-background-radius: 4;">
+                                    <content>
+                                        <VBox spacing="8.0" fillWidth="true" style="-fx-padding: 8;">
+                                            <children>
+                                                <VBox spacing="4.0">
+                                                    <children>
+                                                        <Label text="Skin Tone" textFill="#f8fafc" />
+                                                        <FlowPane fx:id="skinTonePalette" alignment="CENTER_LEFT" columnHalignment="LEFT" hgap="8.0" prefWrapLength="220.0" rowValignment="CENTER" vgap="8.0">
+                                                            <children>
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #40270fff;" toggleGroup="$skinToneToggleGroup" userData="#40270fff" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #5a3614ff;" toggleGroup="$skinToneToggleGroup" userData="#5a3614ff" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #6e4218;" toggleGroup="$skinToneToggleGroup" userData="#6e4218" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #78481c;" toggleGroup="$skinToneToggleGroup" userData="#78481c" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #855022;" toggleGroup="$skinToneToggleGroup" userData="#855022" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #926024;" toggleGroup="$skinToneToggleGroup" userData="#926024" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #9c6128;" toggleGroup="$skinToneToggleGroup" userData="#9c6128" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #a3672a;" toggleGroup="$skinToneToggleGroup" userData="#a3672a" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #aa6c2d;" toggleGroup="$skinToneToggleGroup" userData="#aa6c2d" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #b27231;" toggleGroup="$skinToneToggleGroup" userData="#b27231" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #b97937;" toggleGroup="$skinToneToggleGroup" userData="#b97937" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #c1803c;" toggleGroup="$skinToneToggleGroup" userData="#c1803c" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #c68642;" toggleGroup="$skinToneToggleGroup" userData="#c68642" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #cd8f4b;" toggleGroup="$skinToneToggleGroup" userData="#cd8f4b" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #d59a55;" toggleGroup="$skinToneToggleGroup" userData="#d59a55" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #dca361;" toggleGroup="$skinToneToggleGroup" userData="#dca361" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #e0ad69;" toggleGroup="$skinToneToggleGroup" userData="#e0ad69" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #e5b26f;" toggleGroup="$skinToneToggleGroup" userData="#e5b26f" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #e9b773;" toggleGroup="$skinToneToggleGroup" userData="#e9b773" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #edbd78;" toggleGroup="$skinToneToggleGroup" userData="#edbd78" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #f1c27d;" toggleGroup="$skinToneToggleGroup" userData="#f1c27d" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #f4c988;" toggleGroup="$skinToneToggleGroup" userData="#f4c988" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #fad499;" toggleGroup="$skinToneToggleGroup" userData="#fad499" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #ffdbae;" toggleGroup="$skinToneToggleGroup" userData="#ffdbae" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #ffe3be;" toggleGroup="$skinToneToggleGroup" userData="#ffe3be" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #ffead1;" toggleGroup="$skinToneToggleGroup" userData="#ffead1" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #ffeedd;" toggleGroup="$skinToneToggleGroup" userData="#ffeedd" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #fff1e4;" toggleGroup="$skinToneToggleGroup" userData="#fff1e4" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #fff6ef;" toggleGroup="$skinToneToggleGroup" userData="#fff6ef" />
+                                                                <ToggleButton maxWidth="Infinity" minWidth="32.0" prefHeight="22.0" style="-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0; -fx-background-color: #fff9f4;" toggleGroup="$skinToneToggleGroup" userData="#fff9f4" />
+                                                            </children>
+                                                        </FlowPane>
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0">
+                                                    <children>
+                                                        <Label text="Lighting Mode" textFill="#f8fafc" />
+                                                        <ComboBox fx:id="lightingModeCombo" prefWidth="200.0" />
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </VBox>
+                                    </content>
+                                </TitledPane>
+
+                                <TitledPane fx:id="priceCalculatorPane" animated="false" expanded="false" text="Price Calculator" style="-fx-background-color: #101010; -fx-border-color: rgba(255,255,255,0.08); -fx-border-radius: 4; -fx-background-radius: 4;">
+                                    <content>
+                                        <VBox spacing="10.0" fillWidth="true" style="-fx-padding: 8;">
+                                            <children>
+                                                <GridPane hgap="10.0" vgap="6.0">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="ALWAYS" />
+                                                        <ColumnConstraints minWidth="130.0" prefWidth="130.0" />
+                                                    </columnConstraints>
+                                                    <children>
+                                                        <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                                            <children>
+                                                                <Label text="Height:" textFill="#f8fafc" />
+                                                                <TextField fx:id="estimateHeightField" prefColumnCount="6" promptText="Height (in)" />
+                                                            </children>
+                                                        </HBox>
+                                                        <HBox alignment="CENTER_RIGHT" spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                                            <children>
+                                                                <Label text="Total:" style="-fx-font-weight: bold;" textFill="#f8fafc" />
+                                                                <Label fx:id="estimateValueLabel" text="--" textFill="#f8fafc" />
+                                                            </children>
+                                                        </HBox>
+                                                    </children>
+                                                </GridPane>
+                                                <Label text="Cost = $100 base + $150 × largest dimension" wrapText="true" style="-fx-text-fill: #9ca3af; -fx-font-size: 11px;" />
+                                                <StackPane>
+                                                    <children>
+                                                        <TableView fx:id="estimateBreakdownTable" prefHeight="240.0">
+                                                            <columns>
+                                                                <TableColumn fx:id="estimateTattooColumn" prefWidth="120.0" text="Tattoo" />
+                                                                <TableColumn fx:id="estimateWidthColumn" text="Width" />
+                                                                <TableColumn fx:id="estimateHeightColumn" text="Height" />
+                                                                <TableColumn fx:id="estimatePriceColumn" prefWidth="110.0" text="Price" />
+                                                            </columns>
+                                                        </TableView>
+                                                    </children>
+                                                </StackPane>
+                                            </children>
+                                        </VBox>
+                                    </content>
+                                </TitledPane>
+                            </children>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+            </items>
+        </SplitPane>
+    </center>
 
 </BorderPane>

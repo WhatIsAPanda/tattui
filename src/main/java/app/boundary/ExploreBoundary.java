@@ -10,13 +10,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 

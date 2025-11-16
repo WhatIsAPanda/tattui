@@ -9,19 +9,6 @@
   -fx-background-insets: 0;   /* kills Modena highlight layers */
   -fx-effect: none;
 }
-.list-cell:focused,
-.table-row-cell:focused,
-.list-cell:selected,
-.table-row-cell:selected,
-.tree-cell:selected,
-.vbox:focused,
-.hbox:focused {
-    -fx-background-color: inherit;
-    -fx-border-color: inherit;
-    -fx-text-fill: inherit;
-    
-}
-
 .label {
   -fx-text-fill: #e2e8f0;
 }
@@ -101,75 +88,46 @@
   -fx-background-color: rgba(15, 23, 42, 0.8);
 }
 
-.toolbar {
-  -fx-background-color: #0d0d0d;
-  -fx-border-color: transparent transparent transparent transparent;
-  -fx-border-width: 0 0 1 0;
-  -fx-effect: none;
-}
-
-.export-status-overlay {
-  -fx-background-color: rgba(0, 0, 0, 0.6);
-  -fx-padding: 32;
-}
-
-.export-status-card {
-  -fx-background-color: rgba(15, 15, 15, 0.92);
-  -fx-background-radius: 12;
-  -fx-border-radius: 12;
-  -fx-border-color: rgba(255, 255, 255, 0.15);
-  -fx-padding: 24;
-  -fx-spacing: 12;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.65), 25, 0.3, 0, 10);
-}
-
-.export-status-card.success {
-  -fx-border-color: rgba(74, 222, 128, 0.9);
-}
-
-.export-status-card.error {
-  -fx-border-color: rgba(248, 113, 113, 0.9);
-}
-
-.export-status-label {
+.workspace-menu-button {
+  -fx-background-color: linear-gradient(to bottom, #4b4b4b, #000000);
   -fx-text-fill: #f8fafc;
-  -fx-font-size: 16px;
-  -fx-font-weight: 600;
-  -fx-text-alignment: center;
-}
-
-.export-status-progress {
-  -fx-progress-color: #38bdf8;
-}
-
-.tattoo-history-thumb {
-  -fx-background-color: #535353;
-  -fx-padding: 4;
-  -fx-background-radius: 6;
-}
-
-.tattoo-history-thumb:hover {
-  -fx-background-color: #e0e0e0;
-}
-
-.tattoo-history-toggle,
-.tattoo-history-toggle:focused {
-  -fx-background-color: transparent;
-  -fx-border-color: rgba(255, 255, 255, 0.15);
-  -fx-border-width: 2;
-  -fx-border-radius: 8;
+  -fx-border-color: rgba(129, 133, 138, 0.4);
+  -fx-border-width: 1;
   -fx-background-radius: 8;
-  -fx-padding: 2;
+  -fx-border-radius: 8;
+  -fx-padding: 0 16 0 16;
 }
 
-.tattoo-history-toggle:selected,
-.tattoo-history-toggle:focused:selected {
-  -fx-border-color: #ffffff;
-  -fx-background-color: transparent;
+.workspace-menu-button .label {
+  -fx-text-fill: #f8fafc;
 }
 
-.lock-aspect-toggle,
-.lock-aspect-toggle:focused {
+.workspace-menu-button:hover,
+.workspace-menu-button:showing {
+  -fx-background-color: #d7d7d7;
+  -fx-text-fill: #000000;
+}
+
+.workspace-menu-button:hover .label,
+.workspace-menu-button:showing .label {
+  -fx-text-fill: #000000;
+}
+
+.workspace-button {
+  -fx-background-color: linear-gradient(to bottom, #4b4b4b, #000000);
+  -fx-text-fill: #f8fafc;
+  -fx-border-color: rgba(129, 133, 138, 0.4);
+  -fx-border-width: 1;
+  -fx-background-radius: 8;
+  -fx-border-radius: 8;
+}
+
+.workspace-button:hover {
+  -fx-background-color: #d7d7d7;
+  -fx-text-fill: #000000;
+}
+
+.workspace-toggle-button {
   -fx-background-color: linear-gradient(#1b1b1b, #050505);
   -fx-text-fill: #f8fafc;
   -fx-border-color: rgba(255, 255, 255, 0.15);
@@ -179,10 +137,8 @@
   -fx-padding: 6;
 }
 
-.lock-aspect-toggle:selected,
-.lock-aspect-toggle:focused:selected {
+.workspace-toggle-button-selected {
   -fx-border-color: #ffffff;
-  -fx-border-width: 2;
   -fx-background-color: linear-gradient(#2a2a2a, #0b0b0b);
 }
 
@@ -193,97 +149,11 @@
   -fx-background-radius: 10;
 }
 
-.skin-tone-chip {
-  -fx-background-radius: 6;
-  -fx-border-radius: 6;
-  -fx-border-color: rgba(255, 255, 255, 0.3);
-  -fx-border-width: 1;
-  -fx-pref-width: 34;
-  -fx-pref-height: 22;
-  -fx-padding: 0;
-}
-
-.skin-tone-chip:selected {
-  -fx-border-color: #ffffff;
-  -fx-border-width: 2;
-}
-
 .root,
 .vbox,
 .titled-pane,
 .titled-pane > .content {
   -fx-background-color: #1a1a1a;
-}
-
-.sidebar-scroll,
-.sidebar-scroll:focused {
-  -fx-background-color: #0d0d0d;
-  -fx-border-color: transparent;
-  -fx-border-width: 0;
-  -fx-focus-color: transparent;
-  -fx-faint-focus-color: transparent;
-  -fx-background-insets: 0;
-  -fx-padding: 0;
-  -fx-effect: none;
-}
-
-.sidebar-scroll > .viewport {
-  -fx-background-color: transparent;
-}
-
-.control-pane,
-.control-pane:focused {
-  -fx-background-color: #0d0d0d;
-  -fx-background-insets: 0;
-  -fx-padding: 16;
-}
-
-.sidebar-titled-pane,
-.sidebar-titled-pane:focused {
-  -fx-background-color: #101010;
-  -fx-focus-color: transparent;
-  -fx-faint-focus-color: transparent;
-  -fx-border-color: rgba(255, 255, 255, 0.08);
-  -fx-border-radius: 4;
-  -fx-background-radius: 4;
-}
-
-.sidebar-titled-pane > .title {
-  -fx-background-color: linear-gradient(#1b1b1b, #050505);
-  -fx-border-color: rgba(0, 0, 0, 0.7);
-  -fx-border-radius: 4;
-  -fx-background-radius: 4;
-}
-
-.sidebar-titled-pane:focused > .title {
-  -fx-background-color: linear-gradient(#1b1b1b, #050505);
-}
-
-.sidebar-titled-pane > .content {
-  -fx-background-color: #0d0d0d;
-}
-
-.tattoo-scroll,
-.tattoo-scroll:focused {
-  -fx-background-color: #121212;
-  -fx-border-color: rgba(255, 255, 255, 0.05);
-  -fx-focus-color: transparent;
-  -fx-faint-focus-color: transparent;
-}
-
-.tattoo-scroll > .viewport {
-  -fx-background-color: transparent;
-}
-
-.sidebar-card,
-.sidebar-card:focused {
-  -fx-background-color: #121212;
-  -fx-border-color: rgba(255, 255, 255, 0.08);
-  -fx-border-radius: 6;
-  -fx-background-radius: 6;
-  -fx-padding: 8 10 10 10;
-  -fx-focus-color: transparent;
-  -fx-faint-focus-color: transparent;
 }
 
 .neutral-card,
