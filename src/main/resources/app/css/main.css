@@ -11,8 +11,6 @@
 }
 .list-cell:focused,
 .table-row-cell:focused,
-.combo-box:focused,
-.combo-box:selected,
 .list-cell:selected,
 .table-row-cell:selected,
 .tree-cell:selected,
