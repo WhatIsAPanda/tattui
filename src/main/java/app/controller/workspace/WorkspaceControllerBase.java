@@ -190,6 +190,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
     private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
     private static final double TATTOO_ICON_BUTTON_WIDTH = 36.0;
+    private static final double TATTOO_HISTORY_MIN_HEIGHT = 180.0;
 
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
 

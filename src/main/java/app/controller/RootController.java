@@ -1,12 +1,14 @@
 package app.controller;
 
 import app.boundary.ViewMyProfileBoundary;
+import app.entity.DatabaseConnector;
 import app.entity.Profile;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -34,6 +37,7 @@ public class RootController {
         "viewProfile", "/app/view/viewMyProfile.fxml",
         "explore", "/app/view/Explore.fxml"
     );
+    private static final Set<String> DATABASE_REFRESH_PAGES = Set.of("explore", "map");
 
     public RootController() {
         // Default constructor required for JavaFX FXML loader.
@@ -85,6 +89,7 @@ public class RootController {
         String path = PAGE_PATHS.get(key);
         if (path == null)
             throw new IllegalArgumentException("Unknown page key: " + key);
+        maybeRefreshDatabaseConnection(key);
 
         Parent view = pageCache.computeIfAbsent(key, k ->{
             if (profile.isPresent()) {
@@ -137,6 +142,27 @@ public class RootController {
         } catch (IOException e) {
             throw new ViewLoadException("Failed to load " + path, e);
         }
+    }
+
+    private void maybeRefreshDatabaseConnection(String key) {
+        if (DATABASE_REFRESH_PAGES.contains(key)) {
+            boolean connected = DatabaseConnector.refreshConnection();
+            if (!connected) {
+                showDatabaseAlert();
+            }
+        }
+    }
+
+    private void showDatabaseAlert() {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Database Connection Failed");
+        alert.setHeaderText("Unable to reach the database");
+        alert.setContentText("Please check your network connection and try again.");
+        Stage stage = currentStage();
+        if (stage != null) {
+            alert.initOwner(stage);
+        }
+        alert.showAndWait();
     }
 
     // --- Stage helpers ---

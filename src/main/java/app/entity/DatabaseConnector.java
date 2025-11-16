@@ -1,7 +1,6 @@
 package app.entity;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,33 +13,75 @@ public class DatabaseConnector {
     private static final String URL = System.getenv("DATABASE_URL");
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
-    static{
-        try{
-            String dbUrl = URL;
-            String dbUser = USER;
-            String dbPassword = PASSWORD;
 
-            if (dbUrl == null || dbUser == null || dbPassword == null) {
-                Properties props = new Properties();
-                try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
-                    props.load(fis);
-                    dbUrl = props.getProperty("url");
-                    dbUser = props.getProperty("user");
-                    dbPassword = props.getProperty("password");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println(dbUser);
-                }
-            } 
-            conn = DriverManager.getConnection(dbUrl,dbUser,dbPassword);
-        }
-        catch (SQLException e) {
+    static {
+        conn = tryCreateConnection();
+    }
+
+    private static Connection tryCreateConnection() {
+        try {
+            return createConnection();
+        } catch (SQLException e) {
             e.printStackTrace();
+            return null;
         }
     }
 
+    private static Connection createConnection() throws SQLException {
+        String dbUrl = URL;
+        String dbUser = USER;
+        String dbPassword = PASSWORD;
+
+        if (dbUrl == null || dbUser == null || dbPassword == null) {
+            Properties props = new Properties();
+            try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
+                props.load(fis);
+                dbUrl = props.getProperty("url");
+                dbUser = props.getProperty("user");
+                dbPassword = props.getProperty("password");
+            } catch (IOException e) {
+                throw new SQLException("Unable to load database credentials from fallback file.", e);
+            }
+        }
+
+        if (dbUrl == null || dbUser == null || dbPassword == null) {
+            throw new SQLException("Database credentials are not configured.");
+        }
+
+        return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+    }
+
+    public static synchronized boolean refreshConnection() {
+        Connection newConnection = tryCreateConnection();
+        if (newConnection == null) {
+            return false;
+        }
+        closeConnection();
+        conn = newConnection;
+        return true;
+    }
+
+    private static void closeConnection() {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                conn = null;
+            }
+        }
+    }
+
+    private static synchronized Connection requireConnection() throws SQLException {
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Database connection is not available.");
+        }
+        return conn;
+    }
+
     public static Profile getProfileByUsername(String queryUsername) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+        PreparedStatement profileQueryStatement = requireConnection().prepareStatement(
                 "SELECT * FROM Users as U \n" +
                         "LEFT JOIN PostOwnerships as PO ON PO.user_id = U.id\n" +
                         "LEFT JOIN Posts as P ON PO.post_id = P.id\n" +
@@ -57,7 +98,7 @@ public class DatabaseConnector {
     }
 
     public static List<Profile> getProfilesLike(String pattern) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement(
+        PreparedStatement stmt = requireConnection().prepareStatement(
             "SELECT * FROM Users AS U \n" +
             "LEFT JOIN PostOwnerships AS PO ON PO.user_id = U.id\n" +
             "LEFT JOIN Posts AS P ON PO.post_id = P.id\n" +
@@ -69,7 +110,7 @@ public class DatabaseConnector {
     }
 
     public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+        PreparedStatement profileQueryStatement = requireConnection().prepareStatement(
                 "SELECT * FROM Users as U \n" +
                         "LEFT JOIN PostOwnerships as PO ON PO.user_id = U.id\n" +
                         "LEFT JOIN Posts as P ON PO.post_id = P.id\n" +
