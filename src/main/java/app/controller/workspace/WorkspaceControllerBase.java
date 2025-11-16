@@ -78,15 +78,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -123,6 +128,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final Color DEFAULT_SKIN_TONE = Color.rgb(245, 208, 157);
     private static final double DEFAULT_ESTIMATE_HEIGHT = 66.0;
     private static final double PIXEL_TO_SQUARE_INCH = 1.0 / 500.0;
+    private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE =
+        FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+    private static final FileAttribute<?>[] SECURE_TEMP_DIR_ATTRIBUTES = buildSecureTempDirAttributes();
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
@@ -956,7 +964,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
             throw new IOException("No export target specified");
         }
         Path zipTarget = ensureZipExtension(requestedTarget);
-        Path exportDir = Files.createTempDirectory("tattui-export-");
+        Path exportDir = Files.createTempDirectory("tattui-export-", SECURE_TEMP_DIR_ATTRIBUTES);
         try {
             String sourceFileName = currentModelPath != null ? currentModelPath.getFileName().toString() : "model.obj";
             Path objTarget = exportDir.resolve(sourceFileName);
@@ -1200,7 +1208,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (archive == null || !Files.exists(archive)) {
             throw new IOException("Archive not found");
         }
-        Path tempDir = Files.createTempDirectory("tattui-project-");
+        Path tempDir = Files.createTempDirectory("tattui-project-", SECURE_TEMP_DIR_ATTRIBUTES);
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
@@ -1877,7 +1885,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         URL resource = getClass().getResource(DEFAULT_MODEL_RESOURCE);
         if (resource != null) {
             try (InputStream stream = resource.openStream()) {
-                Path tempDir = Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), "tattui-model-");
+                Path tempDir = Files.createTempDirectory("tattui-model-", SECURE_TEMP_DIR_ATTRIBUTES);
                 tempDir.toFile().deleteOnExit();
                 Path temp = Files.createTempFile(tempDir, "human-model", ".obj");
                 temp.toFile().deleteOnExit();
@@ -2831,6 +2839,19 @@ public class WorkspaceControllerBase implements WorkspaceController {
 
     private double clamp(double value, double min, double max) {
         return Math.clamp(value, min, max);
+    }
+
+    private static FileAttribute<?>[] buildSecureTempDirAttributes() {
+        if (!POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE) {
+            return new FileAttribute<?>[0];
+        }
+        return new FileAttribute<?>[]{
+            PosixFilePermissions.asFileAttribute(EnumSet.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE
+            ))
+        };
     }
 
     private record EstimateRow(String label, double width, double height, double price, Tattoo tattoo) {}
