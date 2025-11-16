@@ -189,6 +189,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String DEFAULT_MODEL_FILENAME = "human.obj";
     private static final String DEFAULT_MODEL_RESOURCE = "/models/"+DEFAULT_MODEL_FILENAME;
     private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models", DEFAULT_MODEL_FILENAME);
+    private static final double TATTOO_ICON_BUTTON_WIDTH = 36.0;
 
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
 
@@ -237,6 +238,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private final ObservableList<TattooPreset> tattooHistory = FXCollections.observableArrayList();
 
     private Button loadTattooButton;
+    private Button unloadTattooButton;
     private Button removeBackgroundButton;
     private Button invertTattooButton;
     private Button reflectTattooButton;
@@ -380,15 +382,19 @@ public class WorkspaceControllerBase implements WorkspaceController {
         controlsContainer.setFillWidth(true);
         controlsContainer.setMinWidth(0);
 
-        loadTattooButton = new Button("Load Tattoo");
+        loadTattooButton = new Button("+");
         loadTattooButton.setOnAction(e -> handleLoadTattoo());
+        enforceTattooIconButtonWidth(loadTattooButton);
+        unloadTattooButton = new Button("-");
+        unloadTattooButton.setOnAction(e -> handleUnloadTattoo());
+        enforceTattooIconButtonWidth(unloadTattooButton);
         removeBackgroundButton = new Button("Remove BG");
         removeBackgroundButton.setOnAction(e -> handleRemoveBackground());
         invertTattooButton = new Button("Invert Colors");
         invertTattooButton.setOnAction(e -> handleInvertTattoo());
         reflectTattooButton = new Button("Reflect Y-Axis");
         reflectTattooButton.setOnAction(e -> handleReflectTattoo());
-        HBox tattooLoadRow = new HBox(10, loadTattooButton, createSpacer(), removeBackgroundButton, invertTattooButton, reflectTattooButton);
+        HBox tattooLoadRow = new HBox(10, loadTattooButton, unloadTattooButton, createSpacer(), removeBackgroundButton, invertTattooButton, reflectTattooButton);
         tattooLoadRow.setFillHeight(true);
 
         lightingModeCombo = new ComboBox<>();
@@ -824,6 +830,15 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return pane;
     }
 
+    private void enforceTattooIconButtonWidth(Button button) {
+        if (button == null) {
+            return;
+        }
+        button.setMinWidth(TATTOO_ICON_BUTTON_WIDTH);
+        button.setPrefWidth(TATTOO_ICON_BUTTON_WIDTH);
+        button.setMaxWidth(TATTOO_ICON_BUTTON_WIDTH);
+    }
+
     private void handleLoadTattoo() {
         if (!modelHasUVs) {
             showNoUVMessage();
@@ -853,6 +868,21 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (tattooHistoryToggleGroup != null) {
             tattooHistoryToggleGroup.selectToggle(null);
         }
+        updateTattooControlsState();
+    }
+
+    private void handleUnloadTattoo() {
+        TattooPreset preset = selectedHistoryPreset();
+        if (preset == null) {
+            return;
+        }
+        tattooHistory.remove(preset);
+        historyPlacementArmed = false;
+        tattooWorkspace.clearPendingTattoo();
+        if (tattooHistoryToggleGroup != null) {
+            tattooHistoryToggleGroup.selectToggle(null);
+        }
+        refreshTattooHistoryGallery();
         updateTattooControlsState();
     }
 
