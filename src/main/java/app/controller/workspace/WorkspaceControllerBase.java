@@ -84,6 +84,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -131,6 +132,10 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE =
         FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
     private static final FileAttribute<?>[] SECURE_TEMP_DIR_ATTRIBUTES = buildSecureTempDirAttributes();
+    private static final int MAX_ARCHIVE_ENTRIES = 2048;
+    private static final long MAX_UNCOMPRESSED_ARCHIVE_BYTES = 200L * 1024 * 1024;
+    private static final long MAX_SINGLE_ENTRY_BYTES = 50L * 1024 * 1024;
+    private static final double MAX_ARCHIVE_COMPRESSION_RATIO = 3.0;
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
@@ -1209,23 +1214,18 @@ public class WorkspaceControllerBase implements WorkspaceController {
             throw new IOException("Archive not found");
         }
         Path tempDir = Files.createTempDirectory("tattui-project-", SECURE_TEMP_DIR_ATTRIBUTES);
+        long totalBytes = 0;
+        int entryCount = 0;
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
-                String entryName = entry.getName();
-                verifySafeArchiveEntry(entryName);
-                Path relativeEntry = Paths.get(entryName).normalize();
-                Path resolved = tempDir.resolve(relativeEntry).normalize();
-                if (!resolved.startsWith(tempDir)) {
-                    throw new IOException("Archive entry resolves outside target directory: " + entry.getName());
-                }
+                entryCount = ensureEntryCountWithinLimit(entryCount);
+                Path resolved = resolveArchiveEntry(tempDir, entry.getName());
                 if (entry.isDirectory()) {
                     Files.createDirectories(resolved);
                 } else {
-                    if (resolved.getParent() != null) {
-                        Files.createDirectories(resolved.getParent());
-                    }
-                    Files.copy(in, resolved, StandardCopyOption.REPLACE_EXISTING);
+                    long written = copyZipEntry(in, resolved, entry, maxEntryBytes(entry));
+                    totalBytes = accumulateUncompressedBytes(totalBytes, written);
                 }
                 in.closeEntry();
             }
@@ -2844,6 +2844,16 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return Math.clamp(value, min, max);
     }
 
+    private Path resolveArchiveEntry(Path root, String entryName) throws IOException {
+        verifySafeArchiveEntry(entryName);
+        Path relativeEntry = Paths.get(entryName).normalize();
+        Path resolved = root.resolve(relativeEntry).normalize();
+        if (!resolved.startsWith(root)) {
+            throw new IOException("Archive entry resolves outside target directory: " + entryName);
+        }
+        return resolved;
+    }
+
     private static void verifySafeArchiveEntry(String entryName) throws IOException {
         if (entryName == null || entryName.isBlank()) {
             throw new IOException("Archive entry name is invalid");
@@ -2861,6 +2871,68 @@ public class WorkspaceControllerBase implements WorkspaceController {
             if ("..".equals(part.toString())) {
                 throw new IOException("Archive entry attempts directory traversal: " + entryName);
             }
+        }
+    }
+
+    private static long maxEntryBytes(ZipEntry entry) throws IOException {
+        long declaredSize = entry.getSize();
+        if (declaredSize > 0) {
+            if (declaredSize > MAX_SINGLE_ENTRY_BYTES) {
+                throw new IOException("Archive entry " + entry.getName() + " exceeds maximum allowed size.");
+            }
+            return declaredSize;
+        }
+        return MAX_SINGLE_ENTRY_BYTES;
+    }
+
+    private static int ensureEntryCountWithinLimit(int currentCount) throws IOException {
+        int next = currentCount + 1;
+        if (next > MAX_ARCHIVE_ENTRIES) {
+            throw new IOException("Archive contains more entries than permitted.");
+        }
+        return next;
+    }
+
+    private static long accumulateUncompressedBytes(long current, long addition) throws IOException {
+        long next;
+        try {
+            next = Math.addExact(current, addition);
+        } catch (ArithmeticException ex) {
+            throw new IOException("Archive size exceeds supported range.", ex);
+        }
+        if (next > MAX_UNCOMPRESSED_ARCHIVE_BYTES) {
+            throw new IOException("Archive exceeds the maximum allowed uncompressed size.");
+        }
+        return next;
+    }
+
+    private long copyZipEntry(ZipInputStream in, Path target, ZipEntry entry, long maxEntryBytes) throws IOException {
+        long compressedSize = entry.getCompressedSize();
+        double ratioLimit = compressedSize > 0
+            ? compressedSize * MAX_ARCHIVE_COMPRESSION_RATIO
+            : Double.POSITIVE_INFINITY;
+        if (target.getParent() != null) {
+            Files.createDirectories(target.getParent());
+        }
+        try (OutputStream out = Files.newOutputStream(
+                target,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE)) {
+            byte[] buffer = new byte[8192];
+            long written = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                written += read;
+                if (written > maxEntryBytes) {
+                    throw new IOException("Archive entry " + entry.getName() + " exceeds maximum allowed size.");
+                }
+                if (ratioLimit != Double.POSITIVE_INFINITY && written > ratioLimit) {
+                    throw new IOException("Archive entry " + entry.getName() + " exceeds compression ratio limits.");
+                }
+                out.write(buffer, 0, read);
+            }
+            return written;
         }
     }
 
