@@ -1213,22 +1213,28 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (archive == null || !Files.exists(archive)) {
             throw new IOException("Archive not found");
         }
+
         Path tempDir = Files.createTempDirectory("tattui-project-", SECURE_TEMP_DIR_ATTRIBUTES);
         long totalBytes = 0;
         int entryCount = 0;
+
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
                 entryCount = ensureEntryCountWithinLimit(entryCount);
+
                 Path resolved = resolveArchiveEntry(tempDir, entry.getName());
+
                 if (entry.isDirectory()) {
                     Files.createDirectories(resolved);
                 } else {
                     long written = copyZipEntry(in, resolved, entry, maxEntryBytes(entry));
                     totalBytes = accumulateUncompressedBytes(totalBytes, written);
                 }
+
                 in.closeEntry();
             }
+
             return tempDir;
         } catch (IOException ex) {
             deleteRecursively(tempDir);
