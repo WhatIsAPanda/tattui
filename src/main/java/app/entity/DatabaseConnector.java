@@ -13,7 +13,7 @@ public class DatabaseConnector {
     private static final String URL = System.getenv("DATABASE_URL");
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
-    private static final String ACCOUNT_ID_STRING = System.getenv("account_id");
+    private static final String ACCOUNT_ID_STRING = "account_id";
     private DatabaseConnector() {}
 
     static {
