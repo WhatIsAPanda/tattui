@@ -2923,55 +2923,11 @@ public class WorkspaceControllerBase implements WorkspaceController {
         return resolved;
     }
 
-    private static void verifySafeArchiveEntry(String entryName) throws IOException {
-        if (entryName == null || entryName.isBlank()) {
-            throw new IOException("Archive entry name is invalid");
-        }
-        Path raw;
-        try {
-            raw = Paths.get(entryName);
-        } catch (InvalidPathException ex) {
-            throw new IOException("Archive entry contains invalid path: " + entryName, ex);
-        }
-        if (raw.isAbsolute()) {
-            throw new IOException("Archive entry uses absolute path: " + entryName);
-        }
-        for (Path part : raw) {
-            if ("..".equals(part.toString())) {
-                throw new IOException("Archive entry attempts directory traversal: " + entryName);
-            }
-        }
-    }
-
-    private static long maxEntryBytes(ZipEntry entry) throws IOException {
-        long declaredSize = entry.getSize();
-        if (declaredSize > 0) {
-            if (declaredSize > MAX_SINGLE_ENTRY_BYTES) {
-                throw new IOException("Archive entry " + entry.getName() + " exceeds maximum allowed size.");
-            }
-            return declaredSize;
-        }
-        return MAX_SINGLE_ENTRY_BYTES;
-    }
-
     private static int ensureEntryCountWithinLimit(int currentCount) throws IOException {
         if (currentCount >= MAX_ENTRIES) {
             throw new IOException("ZIP archive has too many entries (>" + MAX_ENTRIES + ")");
         }
         return currentCount + 1;
-    }
-
-    private static long accumulateUncompressedBytes(long current, long addition) throws IOException {
-        long next;
-        try {
-            next = Math.addExact(current, addition);
-        } catch (ArithmeticException ex) {
-            throw new IOException("Archive size exceeds supported range.", ex);
-        }
-        if (next > MAX_UNCOMPRESSED_ARCHIVE_BYTES) {
-            throw new IOException("Archive exceeds the maximum allowed uncompressed size.");
-        }
-        return next;
     }
 
     private static long copyZipEntry(
