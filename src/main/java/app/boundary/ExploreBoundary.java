@@ -41,9 +41,48 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
 
-    private final app.controller.explore.ExploreDataProvider provider = (System.getenv("EXPLORE_LIVE") != null)
-            ? new app.controller.explore.MergedExploreDataProvider()
-            : new app.controller.explore.MockExploreDataProvider();
+    // ---- Explore provider selection ----
+// Priority:
+// 1) EXPLORE_MOCK => force mock
+// 2) EXPLORE_LIVE => force live
+// 3) Else: try live; if DB not configured/reachable, fall back to mock.
+    private final app.controller.explore.ExploreDataProvider provider = selectProvider();
+
+    private app.controller.explore.ExploreDataProvider selectProvider() {
+        try {
+            if (System.getenv("EXPLORE_MOCK") != null) {
+                dbg("[ExploreBoundary] Mode=MOCK (forced by EXPLORE_MOCK)");
+                return new app.controller.explore.MockExploreDataProvider();
+            }
+            if (System.getenv("EXPLORE_LIVE") != null) {
+                dbg("[ExploreBoundary] Mode=LIVE (forced by EXPLORE_LIVE)");
+                return new app.controller.explore.MergedExploreDataProvider();
+            }
+            // Default: prefer LIVE if DB is reachable
+            if (canConnectToDb()) {
+                dbg("[ExploreBoundary] Mode=LIVE (default; DB reachable)");
+                return new app.controller.explore.MergedExploreDataProvider();
+            } else {
+                dbg("[ExploreBoundary] Mode=MOCK (fallback; DB not reachable)");
+                return new app.controller.explore.MockExploreDataProvider();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            dbg("[ExploreBoundary] Mode=MOCK (fallback due to exception)");
+            return new app.controller.explore.MockExploreDataProvider();
+        }
+    }
+
+    // Tiny probe: attempt to open/close a DB connection.
+// Uses DbConnectionProvider to share the same credential paths teammates already use.
+    private boolean canConnectToDb() {
+        try (java.sql.Connection c = app.db.DbConnectionProvider.open()) {
+            return c != null && !c.isClosed();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
 
     @Override
     public void setWorkspaceProvider(Supplier<WorkspaceController> provider) {
