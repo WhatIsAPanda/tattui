@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Platform;
 
-
 import app.entity.Profile;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
@@ -47,9 +46,8 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-
 public class MapController implements PageAware {
-    
+
     @FXML
     private TextField searchField;
 
@@ -59,7 +57,7 @@ public class MapController implements PageAware {
     private LinkedList<Profile> allResults;
 
     @FXML
-    private StackPane mapContainer; 
+    private StackPane mapContainer;
 
     private MapView map;
 
@@ -83,7 +81,6 @@ public class MapController implements PageAware {
         resultsList.setCellFactory(listView -> new ProfileCell());
     }
 
-
     // Inner layer class
     static class DotLayer extends MapLayer {
         private final List<MapPoint> points;
@@ -101,9 +98,10 @@ public class MapController implements PageAware {
                 dot.setTranslateX(mp.getX());
                 dot.setTranslateY(mp.getY());
                 getChildren().add(dot);
+            }
         }
     }
-}
+
     @FXML
     private void handleSearch(ActionEvent event) {
         resultsList.getItems().clear();
@@ -111,7 +109,7 @@ public class MapController implements PageAware {
         if (query == null || query.trim().isEmpty()) {
             return;
         }
-        if(query.charAt(0) == '#') {
+        if (query.charAt(0) == '#') {
             tagSearch(query);
         }
         boolean foundCity = citySearch(query);
@@ -122,8 +120,9 @@ public class MapController implements PageAware {
         resultsList.getItems().setAll(allResults);
     }
 
-   private void populateMapAsync() {
-        if (allResults == null || allResults.isEmpty()) return;
+    private void populateMapAsync() {
+        if (allResults == null || allResults.isEmpty())
+            return;
 
         depopulateMap(); // clear old markers first
 
@@ -143,7 +142,7 @@ public class MapController implements PageAware {
         task.setOnSucceeded(e -> {
             depopulateMap();
             DotLayer layer = task.getValue();
-            //layer.markDirty();
+            // layer.markDirty();
             map.addLayer(layer);
             layers.add(layer);
             if (!allResults.isEmpty()) {
@@ -169,11 +168,16 @@ public class MapController implements PageAware {
                 double spread = Math.max(latDiff, lonDiff);
 
                 int zoom;
-                if (spread < 0.01) zoom = 14;
-                else if (spread < 0.05) zoom = 12;
-                else if (spread < 0.2) zoom = 10;
-                else if (spread < 1.0) zoom = 8;
-                else zoom = 6;
+                if (spread < 0.01)
+                    zoom = 14;
+                else if (spread < 0.05)
+                    zoom = 12;
+                else if (spread < 0.2)
+                    zoom = 10;
+                else if (spread < 1.0)
+                    zoom = 8;
+                else
+                    zoom = 6;
 
                 map.setCenter(new MapPoint(centerLat, centerLon));
                 map.setZoom(zoom);
@@ -187,14 +191,14 @@ public class MapController implements PageAware {
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            if (ex != null) ex.printStackTrace();
+            if (ex != null)
+                ex.printStackTrace();
         });
 
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
     }
-
 
     private void depopulateMap() {
         for (MapLayer layer : layers) {
@@ -203,12 +207,12 @@ public class MapController implements PageAware {
         layers.clear();
     }
 
-    private void tagSearch(String query){
+    private void tagSearch(String query) {
         System.out.println("unhandled");
     }
 
-    private boolean citySearch(String query){
-        try {//Geocode city name
+    private boolean citySearch(String query) {
+        try {// Geocode city name
 
             Pair<Double, Double> center = geocodeCity(query.trim());
             if (center == null) {
@@ -218,18 +222,18 @@ public class MapController implements PageAware {
             double lat = center.getKey();
             double lon = center.getValue();
 
-            //Define a search radius maybe slider later
+            // Define a search radius maybe slider later
             double radius = 0.5;
             double latFrom = lat - radius;
             double latTo = lat + radius;
             double lonFrom = lon - radius;
             double lonTo = lon + radius;
 
-            //Query database for users within bounds
+            // Query database for users within bounds
             List<Profile> profiles = DatabaseConnector.getProfilesWithinBounds(latFrom, latTo, lonFrom, lonTo);
-            //ui update
+            // ui update
             if (profiles != null && !profiles.isEmpty()) {
-                //add style fitler logic here
+                // add style fitler logic here
                 allResults = new LinkedList<>(profiles);
             } else {
                 return false;
@@ -241,18 +245,19 @@ public class MapController implements PageAware {
         }
         return false;
     }
-    
-        
+
     private Pair<Double, Double> geocodeCity(String city) {
         try {
-            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + java.net.URLEncoder.encode(city.toLowerCase(), "UTF-8");
+            String urlStr = "https://nominatim.openstreetmap.org/search?format=json&q="
+                    + java.net.URLEncoder.encode(city.toLowerCase(), "UTF-8");
             HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
             conn.setRequestProperty("User-Agent", "JavaFXApp");
             conn.setRequestMethod("GET");
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 StringBuilder sb = new StringBuilder();
                 String line;
-                while ((line = reader.readLine()) != null) sb.append(line);
+                while ((line = reader.readLine()) != null)
+                    sb.append(line);
                 JSONArray arr = new JSONArray(sb.toString());
                 if (arr.length() > 0) {
                     JSONObject obj = arr.getJSONObject(0);
@@ -285,7 +290,7 @@ public class MapController implements PageAware {
             System.err.println("Error retrieving profiles: " + e.getMessage());
         }
     }
-    
+
     @FXML
     private void handleClear(ActionEvent event) {
         depopulateMap();
@@ -307,9 +312,8 @@ public class MapController implements PageAware {
 
     private void applyFilter(String tag) {
         resultsList.getItems().setAll(
-            allResults.stream()
-                .filter(item -> item.getStylesList().contains(tag))
-                .collect(Collectors.toList())
-        );
+                allResults.stream()
+                        .filter(item -> item.getStylesList().contains(tag))
+                        .collect(Collectors.toList()));
     }
 }

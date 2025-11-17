@@ -253,4 +253,114 @@ public class DatabaseConnector {
             }
         }
     }
+
+    public static void modifyUser(String username, String bio, double longitude, double lattitude, String address,
+            String profile_picture_url) throws SQLException {
+        if (username == null || username.isBlank()) {
+            throw new SQLException("Username is required to modify user data");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+
+        int accountId;
+        try (PreparedStatement findAccount = conn
+                .prepareStatement("SELECT account_id FROM Accounts WHERE username = ?")) {
+            findAccount.setString(1, username);
+            try (ResultSet rs = findAccount.executeQuery()) {
+                if (!rs.next()) {
+                    throw new SQLException("Account not found for username: " + username);
+                }
+                accountId = rs.getInt(ACCOUNT_ID_STRING);
+            }
+        }
+
+        boolean previousAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try (
+                PreparedStatement updateArtist = conn.prepareStatement("""
+                        UPDATE Artists
+                           SET biography = ?, work_address = ?, work_latitude = ?, work_longitude = ?
+                         WHERE account_id = ?
+                        """)) {
+
+            updateArtist.setString(1, bio);
+            updateArtist.setString(2, address);
+            updateArtist.setDouble(3, lattitude);
+            updateArtist.setDouble(4, longitude);
+            updateArtist.setInt(5, accountId);
+            updateArtist.executeUpdate();
+
+            conn.commit();
+        } catch (SQLException ex) {
+            conn.rollback();
+            throw ex;
+        } finally {
+            conn.setAutoCommit(previousAutoCommit);
+        }
+    }
+
+    public static Review getReview(int reviewId) throws SQLException {
+        if (reviewId <= 0) {
+            throw new SQLException("Review id must be positive");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT review_id, reviewer_id, reviewee_id, picture_url, review_text, rating
+                FROM Reviews
+                WHERE review_id = ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, reviewId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return new Review(
+                        rs.getInt("review_id"),
+                        rs.getInt("reviewer_id"),
+                        rs.getInt("reviewee_id"),
+                        rs.getString("picture_url"),
+                        rs.getString("review_text"),
+                        rs.getInt("rating"));
+            }
+        }
+    }
+
+    public static Review submitReview(int reviewerId, int revieweeId, String pictureUrl, String reviewText, int rating)
+            throws SQLException {
+        if (reviewerId <= 0 || revieweeId <= 0) {
+            throw new SQLException("Reviewer and reviewee ids must be positive");
+        }
+        if (rating < 1 || rating > 5) {
+            throw new SQLException("Rating must be between 1 and 5");
+        }
+        if (reviewText == null || reviewText.isBlank()) {
+            throw new SQLException("Review text is required");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+
+        String sql = """
+                INSERT INTO Reviews (reviewer_id, reviewee_id, picture_url, review_text, rating)
+                VALUES (?, ?, ?, ?, ?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, reviewerId);
+            stmt.setInt(2, revieweeId);
+            stmt.setString(3, pictureUrl);
+            stmt.setString(4, reviewText);
+            stmt.setInt(5, rating);
+            stmt.executeUpdate();
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return new Review(keys.getInt(1), reviewerId, revieweeId, pictureUrl, reviewText, rating);
+                }
+            }
+        }
+        throw new SQLException("Failed to create review record");
+    }
 }
