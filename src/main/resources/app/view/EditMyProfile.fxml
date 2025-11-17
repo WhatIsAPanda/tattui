@@ -48,15 +48,17 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-
-<VBox stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.EditArtistProfileBoundary">
+<VBox prefHeight="634.0" prefWidth="1023.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.EditArtistProfileBoundary">
    <children>
-      <BorderPane prefHeight="50.0" style="-fx-border-color: white; -fx-border-width: 0 0 1 0;">
+      <BorderPane prefHeight="51.0" style="-fx-border-color: white; -fx-border-width: 0 0 1 0;">
          <center>
             <HBox alignment="CENTER" prefHeight="50.0" prefWidth="709.0" BorderPane.alignment="CENTER">
                <children>
                   <Label fx:id="Title" text="Edit My Profile" />
                </children>
+               <padding>
+                  <Insets right="45.0" />
+               </padding>
             </HBox>
          </center>
          <padding>
@@ -66,8 +68,8 @@
             <Label text="Back" BorderPane.alignment="CENTER" />
          </left>
       </BorderPane>
-      <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="583.0" prefWidth="757.0" stylesheets="@../css/main.css" vbarPolicy="ALWAYS">
-         <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="581.0" prefWidth="756.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+      <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" stylesheets="@../css/main.css" vbarPolicy="ALWAYS">
+         <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="579.0" prefWidth="761.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
             <children>
                <BorderPane prefHeight="579.0" prefWidth="757.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-17.0" AnchorPane.topAnchor="0.0">
                   <top>
@@ -130,7 +132,7 @@
                      </VBox>
                   </top>
                   <center>
-                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" />
+                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" maxWidth="1.7976931348623157E308" vbarPolicy="AS_NEEDED" />
                   </center>
                </BorderPane>
             </children>
