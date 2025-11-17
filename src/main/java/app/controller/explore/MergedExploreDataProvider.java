@@ -13,11 +13,12 @@ import java.util.List;
 
 /**
  * Live Explore provider that merges:
- *  - Artists from DatabaseConnector (read-only)
- *  - Posts from JdbcPostRepository (read-only)
+ * - Artists from DatabaseConnector (read-only)
+ * - Posts from JdbcPostRepository (read-only)
  *
  * NOTE: We intentionally do NOT modify DatabaseConnector.
- * We clean up data (e.g., de-dup styles, thumbnail fallback) here in the provider.
+ * We clean up data (e.g., de-dup styles, thumbnail fallback) here in the
+ * provider.
  */
 public final class MergedExploreDataProvider implements ExploreDataProvider {
 
@@ -37,10 +38,9 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                     List<String> tags = (p.getStylesList() == null)
                             ? List.of()
                             : new ArrayList<>(new LinkedHashSet<>(
-                            p.getStylesList().stream()
-                                    .filter(s -> s != null && !s.isBlank())
-                                    .toList()
-                    ));
+                                    p.getStylesList().stream()
+                                            .filter(s -> s != null && !s.isBlank())
+                                            .toList()));
 
                     // Friendly thumbnail fallback (do NOT write to DB)
                     String thumb = p.getProfilePictureURL();
@@ -51,10 +51,9 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                     out.add(new ExploreControl.SearchItem(
                             p.getUsername(),
                             ExploreControl.Kind.ARTISTS,
-                            thumb,                                      // http(s) or resource path; ExploreBoundary handles both
+                            thumb, // http(s) or resource path; ExploreBoundary handles both
                             tags,
-                            p.getBiography() == null ? "" : p.getBiography()
-                    ));
+                            p.biography == null ? "" : p.biography));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -64,8 +63,9 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
         // -------- COMPLETED TATTOOS (posts) --------
         if (filter == ExploreControl.Kind.COMPLETED_TATTOOS
                 || filter == ExploreControl.Kind.ALL
-            // Designs has no backing source yet; showing posts under Designs is optional. Keep it disabled:
-            // || filter == ExploreControl.Kind.DESIGNS
+        // Designs has no backing source yet; showing posts under Designs is optional.
+        // Keep it disabled:
+        // || filter == ExploreControl.Kind.DESIGNS
         ) {
             try {
                 List<PostWithAuthor> rows = needle.isEmpty()
@@ -76,17 +76,16 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                     var author = row.author();
                     String title = (author.getUsername() == null ? "unknown" : author.getUsername())
                             + " — " + (post.getCaption() == null || post.getCaption().isBlank()
-                            ? "(untitled)"
-                            : post.getCaption());
+                                    ? "(untitled)"
+                                    : post.getCaption());
 
                     out.add(new ExploreControl.SearchItem(
                             title,
-                            ExploreControl.Kind.COMPLETED_TATTOOS,       // posts appear under Completed Tattoos
-                            post.getPostURL(),                           // Cloudinary URL (http/https)
+                            ExploreControl.Kind.COMPLETED_TATTOOS, // posts appear under Completed Tattoos
+                            post.getPostURL(), // Cloudinary URL (http/https)
                             List.of("artist:" + (author.getUsername() == null ? "unknown" : author.getUsername()),
                                     "completed"),
-                            post.getCaption() == null ? "" : post.getCaption()
-                    ));
+                            post.getCaption() == null ? "" : post.getCaption()));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -104,13 +103,15 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                 List<PostWithAuthor> designish = rows.stream()
                         .filter(r -> {
                             String c = r.post().getCaption();
-                            if (c == null) return false;
+                            if (c == null)
+                                return false;
                             String lc = c.toLowerCase();
                             return lc.contains("design") || lc.contains("sketch");
                         })
                         .toList();
 
-                // If none matched, just take the first 4 as demo designs so the UI actions are available
+                // If none matched, just take the first 4 as demo designs so the UI actions are
+                // available
                 List<PostWithAuthor> source = designish.isEmpty()
                         ? rows.stream().limit(4).toList()
                         : designish;
@@ -125,15 +126,14 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                                     : post.getCaption(),
                             ExploreControl.Kind.DESIGNS,
                             post.getPostURL(), // URL; ExploreBoundary already supports Save/Send for DESIGNS
-                            List.of("design", "artist:" + (author.getUsername() == null ? "unknown" : author.getUsername())),
-                            post.getCaption() == null ? "" : post.getCaption()
-                    ));
+                            List.of("design",
+                                    "artist:" + (author.getUsername() == null ? "unknown" : author.getUsername())),
+                            post.getCaption() == null ? "" : post.getCaption()));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-
 
         return out;
     }

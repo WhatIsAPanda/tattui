@@ -37,17 +37,17 @@ public class ProfileCell extends ListCell<Profile> {
             Label tag = (Label) info.getChildren().get(3);
 
             title.setText(profile.getUsername());
-            desc.setText(profile.getBiography());
+            desc.setText(profile.biography);
             address.setText(profile.getAddress());
             List<String> styles_list = profile.getStylesList();
             StringBuilder styles = new StringBuilder();
-            for(String style : styles_list) {
+            for (String style : styles_list) {
                 styles.append(style);
             }
             tag.setText(styles.toString());
 
-            if (profile.getProfilePicture() != null) {
-                Image img = profile.getProfilePicture();
+            if (profile.profile_picture != null) {
+                Image img = profile.profile_picture;
                 image.setImage(img);
 
                 // Wait until image loads to set the viewport (image must have real dimensions)

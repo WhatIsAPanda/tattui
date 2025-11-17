@@ -22,12 +22,18 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     // ---- lightweight debug helper ----
     private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
-    private static void dbg(String msg) { if (DEBUG) System.out.println(msg); }
 
+    private static void dbg(String msg) {
+        if (DEBUG)
+            System.out.println(msg);
+    }
 
-    @FXML private TextField searchField;
-    @FXML private ComboBox<String> filterBox;
-    @FXML private TilePane resultsPane;
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> filterBox;
+    @FXML
+    private TilePane resultsPane;
 
     private Supplier<WorkspaceController> workspaceProvider;
     private Consumer<String> pageRequest;
@@ -35,12 +41,9 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
 
-    private final app.controller.explore.ExploreDataProvider provider =
-            (System.getenv("EXPLORE_LIVE") != null)
-                    ? new app.controller.explore.MergedExploreDataProvider()
-                    : new app.controller.explore.MockExploreDataProvider();
-
-
+    private final app.controller.explore.ExploreDataProvider provider = (System.getenv("EXPLORE_LIVE") != null)
+            ? new app.controller.explore.MergedExploreDataProvider()
+            : new app.controller.explore.MockExploreDataProvider();
 
     @Override
     public void setWorkspaceProvider(Supplier<WorkspaceController> provider) {
@@ -57,7 +60,6 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     private void initialize() {
         dbg("[ExploreBoundary] init: searchField=" + searchField
                 + ", filterBox=" + filterBox + ", resultsPane=" + resultsPane);
-
 
         // Filters
         filterBox.getItems().setAll("All", "Artists", "Designs", "Completed Tattoos");
@@ -89,8 +91,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         resultsPane.getChildren().setAll(
                 items.isEmpty()
                         ? List.of(new Label("No results. Try a different search or filter."))
-                        : items.stream().map(this::card).toList()
-        );
+                        : items.stream().map(this::card).toList());
 
         dbg("[ExploreBoundary] results=" + items.size()
                 + " filter=" + filterBox.getSelectionModel().getSelectedItem()
@@ -102,26 +103,26 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         String thumb = item.thumbnail();
 
         if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://"))) {
-            iv.setImage(new Image(thumb, 220, 0, true, true));  // Cloudinary URL
+            iv.setImage(new Image(thumb, 220, 0, true, true)); // Cloudinary URL
         } else {
             var res = getClass().getResourceAsStream(thumb);
-            if (res != null) iv.setImage(new Image(res, 220, 0, true, true));
+            if (res != null)
+                iv.setImage(new Image(res, 220, 0, true, true));
         }
         iv.setFitWidth(220);
         iv.setPreserveRatio(true);
 
-
         Label overlay = new Label(item.hoverText());
         overlay.setWrapText(true);
         overlay.setStyle("""
-            -fx-background-color: rgba(0,0,0,0.7);
-            -fx-text-fill: white;
-            -fx-padding: 8;
-            -fx-font-size: 12px;
-            -fx-background-radius: 6;
-            -fx-opacity: 0;
-            -fx-alignment: center;
-            """);
+                -fx-background-color: rgba(0,0,0,0.7);
+                -fx-text-fill: white;
+                -fx-padding: 8;
+                -fx-font-size: 12px;
+                -fx-background-radius: 6;
+                -fx-opacity: 0;
+                -fx-alignment: center;
+                """);
         overlay.setMaxWidth(220);
 
         StackPane imageStack = new StackPane(iv, overlay);
@@ -161,8 +162,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         box.setOnMouseClicked(e -> {
             switch (item.kind()) {
                 case DESIGNS -> {
-                    var SAVE   = new ButtonType("Save Locally");
-                    var SEND   = new ButtonType("Send to Workspace");
+                    var SAVE = new ButtonType("Save Locally");
+                    var SEND = new ButtonType("Send to Workspace");
                     var CANCEL = ButtonType.CANCEL;
 
                     var alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -209,7 +210,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         if (accepted) {
             new Alert(Alert.AlertType.INFORMATION,
                     "Sent \"" + title + "\" to the Workspace.").showAndWait();
-            if (pageRequest != null) pageRequest.accept("workspace");
+            if (pageRequest != null)
+                pageRequest.accept("workspace");
         } else {
             new Alert(Alert.AlertType.WARNING,
                     "Workspace didn’t accept the image.\nMake sure placement is initialized.").showAndWait();
@@ -218,7 +220,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     private void saveImageToLocal(Image img, String name) {
         try {
-            if (img == null) return;
+            if (img == null)
+                return;
             File file = new File(System.getProperty("user.home")
                     + "/Downloads/" + name.replaceAll("\\s+", "_") + ".png");
             javax.imageio.ImageIO.write(
@@ -232,7 +235,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private void enlargeImage(Image img, String title) {
-        if (img == null) return;
+        if (img == null)
+            return;
         ImageView iv = new ImageView(img);
         iv.setPreserveRatio(true);
         iv.setFitWidth(600);
@@ -251,8 +255,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             String photo = (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank())
                     ? p.getProfilePictureURL()
                     : "/icons/artist_raven.jpg";
-            String bio = (p != null && p.getBiography() != null && !p.getBiography().isBlank())
-                    ? p.getBiography()
+            String bio = (p != null && p.biography != null && !p.biography.isBlank())
+                    ? p.biography
                     : "No biography yet.";
 
             // 2) Try FXML first (if William’s profile page exists)
@@ -296,10 +300,14 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                     avatar.setImage(new javafx.scene.image.Image(photo, 160, 160, true, true));
                 } else {
                     var in = getClass().getResourceAsStream(photo);
-                    if (in != null) avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
+                    if (in != null)
+                        avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
                 }
-            } catch (Exception ignored) { /* leave empty */ }
-            avatar.setFitWidth(160); avatar.setFitHeight(160); avatar.setPreserveRatio(true);
+            } catch (Exception ignored) {
+                /* leave empty */ }
+            avatar.setFitWidth(160);
+            avatar.setFitHeight(160);
+            avatar.setPreserveRatio(true);
 
             var nameLbl = new javafx.scene.control.Label(artistName);
             nameLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -324,10 +332,13 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         }
     }
 
-
-    /** Enlarged view for completed tattoos with caption (bottom) + square avatar (top-right). */
+    /**
+     * Enlarged view for completed tattoos with caption (bottom) + square avatar
+     * (top-right).
+     */
     private void showCompletedTattooModal(ExploreControl.SearchItem item, Image baseImage) {
-        if (baseImage == null) return;
+        if (baseImage == null)
+            return;
 
         // Big image
         ImageView big = new ImageView(baseImage);
@@ -343,16 +354,17 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
         StackPane captionBar = new StackPane(caption);
         captionBar.setStyle("""
-        -fx-background-color: rgba(0,0,0,0.72);
-        -fx-padding: 12;
-        -fx-background-radius: 0 0 12 12;
-    """);
-        // IMPORTANT: keep it only as tall as its content (prevents the gray wash across the whole image)
+                    -fx-background-color: rgba(0,0,0,0.72);
+                    -fx-padding: 12;
+                    -fx-background-radius: 0 0 12 12;
+                """);
+        // IMPORTANT: keep it only as tall as its content (prevents the gray wash across
+        // the whole image)
         captionBar.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
 
         // position + width constraint
-        caption.setMaxWidth(1000 - 2*20); // scene width minus margins
-        captionBar.setMaxWidth(1000 - 2*20);
+        caption.setMaxWidth(1000 - 2 * 20); // scene width minus margins
+        captionBar.setMaxWidth(1000 - 2 * 20);
         StackPane.setAlignment(captionBar, javafx.geometry.Pos.BOTTOM_CENTER);
         StackPane.setMargin(captionBar, new javafx.geometry.Insets(0, 20, 20, 20));
 
@@ -365,20 +377,23 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                 avatar.setImage(new Image(p.getProfilePictureURL(), 56, 56, true, true));
             } else {
                 var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
-                if (ares != null) avatar.setImage(new Image(ares, 56, 56, true, true));
+                if (ares != null)
+                    avatar.setImage(new Image(ares, 56, 56, true, true));
             }
         } catch (Exception ignored) {
             var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
-            if (ares != null) avatar.setImage(new Image(ares, 56, 56, true, true));
+            if (ares != null)
+                avatar.setImage(new Image(ares, 56, 56, true, true));
         }
         avatar.setFitWidth(56);
         avatar.setFitHeight(56);
         avatar.setPreserveRatio(true);
         StackPane.setAlignment(avatar, javafx.geometry.Pos.TOP_RIGHT);
         StackPane.setMargin(avatar, new javafx.geometry.Insets(20, 20, 0, 0));
-        avatar.setOnMouseClicked(e -> { e.consume(); openArtistPage(artistName); });
-
-
+        avatar.setOnMouseClicked(e -> {
+            e.consume();
+            openArtistPage(artistName);
+        });
 
         // Root: image + overlays
         StackPane root = new StackPane(big, captionBar, avatar);
@@ -392,7 +407,6 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         stage.show();
     }
 
-
     private java.util.Optional<String> parseArtistTag(java.util.List<String> tags) {
         return tags.stream()
                 .filter(t -> t.toLowerCase(java.util.Locale.ROOT).startsWith("artist:"))
@@ -401,9 +415,9 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private String avatarForArtist(String artistName) {
-        if ("Raven".equalsIgnoreCase(artistName)) return "/icons/artist_raven.jpg";
+        if ("Raven".equalsIgnoreCase(artistName))
+            return "/icons/artist_raven.jpg";
         return "/icons/artist_raven.jpg"; // fallback
     }
-
 
 }

@@ -256,9 +256,9 @@ public class DatabaseConnector {
 
     public static void modifyUser(Profile p) throws SQLException {
         String username = p.getUsername();
-        String bio = p.getBiography();
-        double longitude = p.getLongitude();
-        double lattitude = p.getLatitude();
+        String bio = p.biography;
+        double longitude = p.work_longitude;
+        double lattitude = p.work_latitude;
         String profile_picture_url = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {

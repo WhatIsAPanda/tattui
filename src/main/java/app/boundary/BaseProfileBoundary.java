@@ -28,11 +28,11 @@ public abstract class BaseProfileBoundary {
         else if (artistNameField instanceof javafx.scene.control.TextField tf)
             tf.setText(profile.getUsername());
 
-        Image image = profile.getProfilePicture();
+        Image image = profile.profile_picture;
         if (image != null && profilePicture != null)
             profilePicture.setFill(new ImagePattern(image));
 
-        String bio = profile.getBiography();
+        String bio = profile.biography;
         if (biographyField instanceof Text t)
             t.setText(bio);
         else if (biographyField instanceof TextArea ta)
