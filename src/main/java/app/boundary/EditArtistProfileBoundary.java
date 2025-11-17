@@ -8,7 +8,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.input.MouseEvent;
+
 import java.sql.SQLException;
+
+import javax.xml.crypto.Data;
 
 public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
@@ -35,7 +38,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     @FXML
     private void handleProfileClick(javafx.scene.input.MouseEvent event) {
-        System.out.println("Profile clicked");
+        DatabaseConnector.modifyUser(profile);
     // TODO: your desired behavior (open profile edit, etc.)
     @FXML 
     private void handleSaveChanges(javafx.event.ActionEvent event) {
