@@ -47,7 +47,8 @@ public abstract class BaseProfileBoundary {
         postsPanel.getRowConstraints().clear();
 
         int cols = Math.max(postsPanel.getColumnCount(), 3); // Default to 3
-        int row = 0, processed = 0;
+        int row = 0;
+        int processed = 0;
 
         while (processed < posts.size()) {
             RowConstraints rowC = new RowConstraints(250);
@@ -59,7 +60,6 @@ public abstract class BaseProfileBoundary {
                     ImageView imgView = new ImageView(img);
                     imgView.setFitWidth(179);
                     imgView.setFitHeight(250);
-                    System.out.println("ASKDJ");
                     imgView.setPreserveRatio(false);
                     postsPanel.add(imgView, col, row);
                 }
