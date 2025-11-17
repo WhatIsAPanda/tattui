@@ -11,8 +11,7 @@ import java.sql.SQLException;
 
 public class ViewProfileBoundary extends BaseProfileBoundary {
 
-    @FXML private Label artistNameField1;
-    @FXML private Label artistNameField2;
+    @FXML private Label artistNameField;
     @FXML private Circle profilePicture;
     @FXML private Text biographyField;
     @FXML private GridPane postsPanel;
@@ -30,8 +29,7 @@ public class ViewProfileBoundary extends BaseProfileBoundary {
     }
 
     private void loadProfile() {
-        populateProfileCommon(profile, profilePicture, biographyField, artistNameField1);
-        artistNameField2.setText("@" + profile.getUsername());
+        populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
         populatePosts(postsPanel, profile.getArtistPosts());
     }
 }
