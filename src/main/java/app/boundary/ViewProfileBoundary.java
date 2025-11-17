@@ -15,6 +15,10 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class ViewProfileBoundary{
+
+    @FXML private javafx.scene.control.Label artistNameField1;
+    @FXML private javafx.scene.control.Label artistNameField2;
+
     @FXML
     private Circle profilePicture;
     @FXML

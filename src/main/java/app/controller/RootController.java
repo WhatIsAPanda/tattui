@@ -1,6 +1,6 @@
 package app.controller;
 
-import app.boundary.ViewMyProfileBoundary;
+import app.boundary.ViewProfileBoundary;
 import app.entity.DatabaseConnector;
 import app.entity.Profile;
 import javafx.application.Platform;

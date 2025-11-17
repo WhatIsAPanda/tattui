@@ -17,6 +17,14 @@ public class Post {
 
     public static void setHeadless(boolean v) { HEADLESS = v; }
 
+    public Post(int id, String caption, String postURL) {
+        this.id = id;
+        this.caption = caption;
+        this.postURL = postURL;
+        // leave author-related fields at default/null if your 5-arg version added them
+    }
+
+
     public Post(int id, String caption, String postURL, int postOwnerId, String keyWords) {
         this.id = id;
         this.caption = caption;

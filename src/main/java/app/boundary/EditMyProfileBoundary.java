@@ -38,7 +38,7 @@ public class EditMyProfileBoundary {
     @FXML
     public void loadProfile() {
         artistNameField.setText("@" + profile.getUsername());
-        Image profile_picture = profile.getProfile_picture_image();
+        Image profile_picture = profile.getProfilePicture();
         ImagePattern pfpImagePattern = new ImagePattern(profile_picture);
         profilePicture.setFill(pfpImagePattern);
         biographyField.setText(profile.getBiography());
