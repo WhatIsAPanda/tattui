@@ -2,6 +2,7 @@ package app.boundary;
 
 import app.entity.DatabaseConnector;
 import app.entity.Profile;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Label;
@@ -16,12 +17,18 @@ import javax.xml.crypto.Data;
 
 public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
-    @FXML private Circle profilePicture;
-    @FXML private TextArea biographyField;
-    @FXML private Label artistNameField;
-    @FXML private GridPane postsPanel;
-    @FXML private TextField longitudeField;
-    @FXML private TextField latitudeField;
+    @FXML
+    private Circle profilePicture;
+    @FXML
+    private TextArea biographyField;
+    @FXML
+    private Label artistNameField;
+    @FXML
+    private GridPane postsPanel;
+    @FXML
+    private TextField longitudeField;
+    @FXML
+    private TextField latitudeField;
 
     private Profile profile;
 
@@ -34,6 +41,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             e.printStackTrace();
         }
     }
+
     @FXML
     private void handleBack() {
         System.out.println("Back clicked");
@@ -44,7 +52,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         System.out.println("Profile picture clicked");
         loadProfile();
     }
-    @FXML 
+
+    @FXML
     private void handleSaveChanges() {
         try {
             profile.biography = biographyField.getText();
@@ -56,6 +65,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         }
 
     }
+
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
         populatePosts(postsPanel, profile.getArtistPosts());

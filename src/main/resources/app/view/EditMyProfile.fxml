@@ -114,7 +114,7 @@
                                              <Font size="16.0" />
                                           </font>
                                        </Label>
-                                       <Button mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Save Profile" />
+                                       <Button onAction="#handleSaveChanges" mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Save Profile"/>
                                     </children>
                                     <opaqueInsets>
                                        <Insets />
