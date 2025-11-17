@@ -282,25 +282,26 @@ public class DatabaseConnector {
 
         boolean previousAutoCommit = conn.getAutoCommit();
         conn.setAutoCommit(false);
-        try (
-                PreparedStatement updateArtist = conn.prepareStatement("""
-                        UPDATE Artists
-                           SET biography = ?, work_latitude = ?, work_longitude = ?
-                         WHERE account_id = ?
-                        """);
+        try (PreparedStatement updateArtist = conn.prepareStatement("""
+                    UPDATE Artists
+                       SET biography = ?, work_latitude = ?, work_longitude = ?
+                     WHERE account_id = ?
+                """);
                 PreparedStatement updateAccount = conn.prepareStatement("""
-                        UPDATE Accounts
-                           SET profile_picture_url = ? WHERE account_id = ?
-                        """)) {
-
-            updateArtist.setString(1, profile_picture_url);
-            updateArtist.setInt(2, accountId);
+                    UPDATE Accounts
+                       SET profile_picture_url = ?
+                     WHERE account_id = ?
+                """)) {
 
             updateArtist.setString(1, bio);
-            updateArtist.setDouble(3, lattitude);
-            updateArtist.setDouble(4, longitude);
-            updateArtist.setInt(5, accountId);
+            updateArtist.setDouble(2, lattitude);
+            updateArtist.setDouble(3, longitude);
+            updateArtist.setInt(4, accountId);
             updateArtist.executeUpdate();
+
+            updateAccount.setString(1, profile_picture_url);
+            updateAccount.setInt(2, accountId);
+            updateAccount.executeUpdate();
 
             conn.commit();
         } catch (SQLException ex) {
