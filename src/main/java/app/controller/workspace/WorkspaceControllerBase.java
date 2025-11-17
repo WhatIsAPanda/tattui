@@ -2146,49 +2146,90 @@ public class WorkspaceControllerBase implements WorkspaceController {
         boolean aspectLocked = isAspectRatioLocked();
         boolean widthHeightEnabled = slidersEnabled && !aspectLocked;
         boolean sizeEnabled = slidersEnabled && aspectLocked;
+
         applyTattooDimensionVisibility(aspectLocked);
+
+        // Complexity reduced by extracting state updates for controls.
+
+        updatePresetDependentControls(); // Extracted method
+        updateHistoryDependentControls(hasHistory); // Extracted method
+        updateSelectionDependentControls(hasSelection); // Extracted method
+
+        updateLoadUnloadButtons(); // Extracted method
+        updateSliderAndToggleStates(slidersEnabled, widthHeightEnabled, sizeEnabled); // Extracted method
+
+        updateUndoButtonState();
+        refreshEstimateDisplay();
+    }
+
+    // Extracted methods to reduce complexity of the main method
+    // These extracted methods count only 1 for their call in the main method,
+    // significantly lowering the complexity count.
+
+    private void updateLoadUnloadButtons() {
         TattooPreset selectedPreset = selectedHistoryPreset();
+
         if (loadTattooButton != null) {
             loadTattooButton.setDisable(!modelHasUVs);
         }
         if (unloadTattooButton != null) {
             unloadTattooButton.setDisable(selectedPreset == null);
         }
+    }
+
+    private void updateSliderAndToggleStates(boolean slidersEnabled, boolean widthHeightEnabled, boolean sizeEnabled) {
         if (tattooWidthSlider != null) {
             tattooWidthSlider.setDisable(!widthHeightEnabled);
         }
+
         if (tattooHeightSlider != null) {
             tattooHeightSlider.setDisable(!widthHeightEnabled);
         }
+
         if (tattooSizeSlider != null) {
             tattooSizeSlider.setDisable(!sizeEnabled);
         }
+
         if (tattooOpacitySlider != null) {
             tattooOpacitySlider.setDisable(!slidersEnabled);
         }
+
         if (tattooRotationSlider != null) {
             tattooRotationSlider.setDisable(!slidersEnabled);
         }
+
         if (lockAspectRatioToggle != null) {
             lockAspectRatioToggle.setDisable(!slidersEnabled);
         }
+    }
+
+    private void updateHistoryDependentControls(boolean hasHistory) {
         if (tattooHistoryScroll != null) {
             tattooHistoryScroll.setDisable(!hasHistory);
         }
+    }
+
+    private void updateSelectionDependentControls(boolean hasSelection) {
         if (deleteTattooButton != null) {
             deleteTattooButton.setDisable(!hasSelection);
         }
+    }
+
+    private void updatePresetDependentControls() {
+        TattooPreset selectedPreset = selectedHistoryPreset();
+        boolean presetSelected = selectedPreset == null; // Disable if null
+
         if (removeBackgroundButton != null) {
-            removeBackgroundButton.setDisable(selectedPreset == null);
+            removeBackgroundButton.setDisable(presetSelected);
         }
+
         if (invertTattooButton != null) {
-            invertTattooButton.setDisable(selectedPreset == null);
+            invertTattooButton.setDisable(presetSelected);
         }
+
         if (reflectTattooButton != null) {
-            reflectTattooButton.setDisable(selectedPreset == null);
+            reflectTattooButton.setDisable(presetSelected);
         }
-        updateUndoButtonState();
-        refreshEstimateDisplay();
     }
 
     private double calculateEstimate(double userHeightInches, List<Tattoo> tattoos) {
