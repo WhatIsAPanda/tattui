@@ -254,8 +254,13 @@ public class DatabaseConnector {
         }
     }
 
-    public static void modifyUser(String username, String bio, double longitude, double lattitude,
-            String profile_picture_url) throws SQLException {
+    public static void modifyUser(Profile p) throws SQLException {
+        String username = p.getUsername();
+        String bio = p.getBiography();
+        double longitude = p.getLongitude();
+        double lattitude = p.getLatitude();
+        String profile_picture_url = p.getProfilePictureURL();
+
         if (username == null || username.isBlank()) {
             throw new SQLException("Username is required to modify user data");
         }
@@ -282,7 +287,14 @@ public class DatabaseConnector {
                         UPDATE Artists
                            SET biography = ?, work_latitude = ?, work_longitude = ?
                          WHERE account_id = ?
+                        """);
+                PreparedStatement updateAccount = conn.prepareStatement("""
+                        UPDATE Accounts
+                           SET profile_picture_url = ? WHERE account_id = ?
                         """)) {
+
+            updateArtist.setString(1, profile_picture_url);
+            updateArtist.setInt(2, accountId);
 
             updateArtist.setString(1, bio);
             updateArtist.setDouble(3, lattitude);
