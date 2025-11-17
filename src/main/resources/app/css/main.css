@@ -154,7 +154,7 @@
 .hbox,
 .titled-pane,
 .titled-pane > .content {
-  -fx-background-color: #0d0d0d;
+  -fx-background-color: black;
 }
 
 .neutral-card,

@@ -84,7 +84,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -132,12 +131,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final boolean POSIX_FILE_ATTRIBUTE_VIEW_AVAILABLE = FileSystems.getDefault()
             .supportedFileAttributeViews().contains("posix");
     private static final FileAttribute<?>[] SECURE_TEMP_DIR_ATTRIBUTES = buildSecureTempDirAttributes();
-    private static final int MAX_ARCHIVE_ENTRIES = 2048;
-    private static final long MAX_UNCOMPRESSED_ARCHIVE_BYTES = 200L * 1024 * 1024;
     private static final int MAX_ENTRIES = 10_000;
     private static final long MAX_SINGLE_ENTRY_BYTES = 50L * 1024 * 1024; // 50 MB per entry
     private static final long MAX_TOTAL_BYTES = 200L * 1024 * 1024; // 200 MB total
-    private static final double MAX_ARCHIVE_COMPRESSION_RATIO = 3.0;
     public static final String TORSO = "Torso";
     public static final String WP_SLIDER = "workspace-slider";
     public static final String VERSION = "version";
@@ -174,8 +170,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private static final String DEFAULT_MODEL_RESOURCE = "/models/" + DEFAULT_MODEL_FILENAME;
     private static final Path DEFAULT_MODEL_DEV_PATH = Paths.get("src", "main", "resources", "models",
             DEFAULT_MODEL_FILENAME);
-    private static final double TATTOO_ICON_BUTTON_WIDTH = 28.0;
+    private static final double SIDEBAR_MIN_WIDTH = 340.0;
     private static final double SIDEBAR_PREF_WIDTH = 460.0;
+    private static final double SIDEBAR_MAX_WIDTH = 680.0;
 
     private final Map<String, Group> partGroups = new LinkedHashMap<>();
 
@@ -427,9 +424,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
             controlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             controlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             controlScroll.setPadding(Insets.EMPTY);
-            controlScroll.setMinWidth(SIDEBAR_PREF_WIDTH);
+            controlScroll.setMinWidth(SIDEBAR_MIN_WIDTH);
             controlScroll.setPrefWidth(SIDEBAR_PREF_WIDTH);
-            controlScroll.setMaxWidth(SIDEBAR_PREF_WIDTH);
+            controlScroll.setMaxWidth(SIDEBAR_MAX_WIDTH);
         }
         refreshTattooHistoryGallery();
         updateTattooControlsState();
@@ -581,7 +578,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         }
         if (estimateBreakdownTable != null) {
             estimateBreakdownTable.setItems(estimateRows);
-            estimateBreakdownTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            estimateBreakdownTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
             estimateBreakdownTable.setFixedCellSize(32);
             Label placeholder = new Label("Enter height and add tattoos to see details.");
             placeholder.setTextFill(Color.WHITE);
@@ -1619,7 +1616,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
         if (controlScroll != null) {
             SplitPane.setResizableWithParent(controlScroll, true);
         }
-        Platform.runLater(() -> contentSplit.setDividerPositions(0.68));
+        Platform.runLater(() -> contentSplit.setDividerPositions(0.63));
     }
 
     private void refreshLightingRig() {
@@ -2153,6 +2150,9 @@ public class WorkspaceControllerBase implements WorkspaceController {
         TattooPreset selectedPreset = selectedHistoryPreset();
         if (loadTattooButton != null) {
             loadTattooButton.setDisable(!modelHasUVs);
+        }
+        if (unloadTattooButton != null) {
+            unloadTattooButton.setDisable(selectedPreset == null);
         }
         if (tattooWidthSlider != null) {
             tattooWidthSlider.setDisable(!widthHeightEnabled);
