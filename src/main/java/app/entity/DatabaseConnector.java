@@ -14,7 +14,9 @@ public class DatabaseConnector {
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
     private static final String ACCOUNT_ID_STRING = "account_id";
-    private DatabaseConnector() {}
+
+    private DatabaseConnector() {
+    }
 
     static {
         conn = openConnection();
@@ -43,8 +45,7 @@ public class DatabaseConnector {
     private static Connection openConnection() {
         try {
             return createConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
             return null;
         }
     }
@@ -85,12 +86,12 @@ public class DatabaseConnector {
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
         PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
-                "SELECT * \n" +
-                    "FROM Artists AS A\n" +
-                    "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
-                    "LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id\n" +
-                        "WHERE ACC.username = ?;"
-        );
+                """
+                        SELECT * FROM Artists AS A
+                        LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
+                        LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                        WHERE ACC.username = ?;
+                        """);
         preparedStatement.setString(1, profileSkeleton.getUsername());
         ResultSet resultSet = preparedStatement.executeQuery();
         List<Post> artistPosts = getArtistPosts(resultSet);
@@ -100,19 +101,18 @@ public class DatabaseConnector {
     }
 
     public static List<Post> getArtistPosts(ResultSet rs) throws SQLException {
-        if(!rs.next()) {
-            return null;
+        if (!rs.next()) {
+            return new ArrayList<Post>();
         }
         List<Post> posts = new ArrayList<>();
         do {
             int postId = rs.getInt("post_id");
             String caption = rs.getString("caption");
-            int postOwner = rs.getInt("account_id");
+            int postOwner = rs.getInt(ACCOUNT_ID_STRING);
             String postPictureURL = rs.getString("post_picture_url");
             String keyWords = rs.getString("keywords");
-            posts.add(new Post(postId,caption,postPictureURL,postOwner,keyWords));
-        }
-        while(rs.next());
+            posts.add(new Post(postId, caption, postPictureURL, postOwner, keyWords));
+        } while (rs.next());
 
         return posts;
     }
@@ -128,8 +128,9 @@ public class DatabaseConnector {
         ResultSet rs = stmt.executeQuery();
         return convertToAccount(rs);
     }
+
     private static Account convertToAccount(ResultSet rs) throws SQLException {
-        if(!rs.next()){
+        if (!rs.next()) {
             return null;
         }
         List<String> stylesList = new ArrayList<>();
@@ -143,7 +144,7 @@ public class DatabaseConnector {
         do {
             stylesList.add(style);
         } while (rs.next());
-        return new Account(id,username,password,profilePictureUrl,homeLatitude,homeLongitude,stylesList);
+        return new Account(id, username, password, profilePictureUrl, homeLatitude, homeLongitude, stylesList);
     }
 
     public static Profile getProfileByUsername(String queryUsername) throws SQLException {
@@ -160,12 +161,13 @@ public class DatabaseConnector {
         List<Profile> artistProfilesList = convertToArtistProfiles(rs);
         return artistProfilesList.isEmpty() ? null : artistProfilesList.getFirst();
     }
+
     private static List<Profile> convertToArtistProfiles(ResultSet rs) throws SQLException {
-        if(!rs.next()){
+        if (!rs.next()) {
             return Collections.emptyList();
         }
         List<Profile> artistProfiles = new ArrayList<>();
-        while(!rs.isAfterLast()) {
+        while (!rs.isAfterLast()) {
             int accountId = rs.getInt(ACCOUNT_ID_STRING);
             String username = rs.getString("username");
             String profilePictureUrl = rs.getString("profile_picture_url");
@@ -176,16 +178,17 @@ public class DatabaseConnector {
 
             List<String> styles = new ArrayList<>();
             String style = rs.getString("style_name");
-            if(style != null) {
+            if (style != null) {
                 styles.add(style);
             }
-            while(rs.next()) {
-                if(rs.getInt(ACCOUNT_ID_STRING) != accountId) {
+            while (rs.next()) {
+                if (rs.getInt(ACCOUNT_ID_STRING) != accountId) {
                     break;
                 }
                 styles.add(style);
             }
-            artistProfiles.add(new Profile(accountId, username, profilePictureUrl,biography, workAddress, workLongitude, workLatitude, styles));
+            artistProfiles.add(new Profile(accountId, username, profilePictureUrl, biography, workAddress,
+                    workLongitude, workLatitude, styles));
         }
         return artistProfiles;
 
@@ -205,7 +208,8 @@ public class DatabaseConnector {
         return convertToArtistProfiles(rs);
     }
 
-    public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom, double longitudeTo) throws SQLException {
+    public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom,
+            double longitudeTo) throws SQLException {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
                 FROM Artists AS A
@@ -220,10 +224,9 @@ public class DatabaseConnector {
         profileQueryStatement.setDouble(4, longitudeTo);
         ResultSet rs = profileQueryStatement.executeQuery();
         List<Profile> profileList = convertToArtistProfiles(rs);
-        if(profileList.isEmpty()){
+        if (profileList.isEmpty()) {
             return Collections.emptyList();
-        }
-        else {
+        } else {
             return profileList;
         }
     }
@@ -232,17 +235,15 @@ public class DatabaseConnector {
         PreparedStatement insertAccountsStmt = DatabaseConnector.conn.prepareStatement("""
                 INSERT INTO Accounts(username, password)
                 VALUES (?, ?);
-                """, Statement.RETURN_GENERATED_KEYS
-        );
+                """, Statement.RETURN_GENERATED_KEYS);
         insertAccountsStmt.setString(1, username);
         insertAccountsStmt.setString(2, password);
         insertAccountsStmt.executeUpdate();
 
-
         ResultSet rs = insertAccountsStmt.getGeneratedKeys();
-        if(rs.next()) {
+        if (rs.next()) {
             int userId = rs.getInt(1);
-            if(isArtist) {
+            if (isArtist) {
                 PreparedStatement insertArtistsStmt = DatabaseConnector.conn.prepareStatement("""
                         INSERT INTO Artists(account_id)
                         VALUES (?);
