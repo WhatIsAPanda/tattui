@@ -62,10 +62,10 @@ public class Profile {
         return profile_picture;
     }
 
-    // TEMP shim to satisfy legacy probe tests. Safe to remove once tests are updated.
-    public java.util.List<app.entity.Post> getPosts() {
-        return null; // tests already guard for null
-    }
+    // TEMP shim to satisfy legacy probe tests (DbProfilesProbeTest etc.).
+// TODO(Adnan): remove once probe tests are updated to new data model.
+    public java.util.List<app.entity.Post> getPosts() { return null; }
+
 
 
 }
