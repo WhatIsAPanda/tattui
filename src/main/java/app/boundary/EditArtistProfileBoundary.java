@@ -9,7 +9,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 import java.sql.SQLException;
 
-public class EditMyProfileBoundary extends BaseProfileBoundary {
+public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     @FXML private Circle profilePicture;
     @FXML private TextArea biographyField;

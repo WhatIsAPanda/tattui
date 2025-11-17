@@ -1,7 +1,7 @@
 package app.controller;
 
-import app.boundary.ViewProfileBoundary;
-import app.boundary.EditMyProfileBoundary;
+import app.boundary.ViewArtistProfileBoundary;
+import app.boundary.EditArtistProfileBoundary;
 import app.entity.DatabaseConnector;
 import app.entity.Profile;
 import javafx.application.Platform;
@@ -37,8 +37,8 @@ public class RootController {
         "map", "/app/view/Map.fxml",
         "gallery", "/app/view/Gallery.fxml",
         LOGIN_PAGE, "/app/view/Login.fxml",
-        "viewProfile", "/app/view/viewProfile.fxml",
-        "EditMyProfile", "/app/view/EditMyProfile.fxml",
+        "viewArtistProfile", "/app/view/viewProfile.fxml",
+        "EditArtistProfile", "/app/view/EditMyProfile.fxml",
         "explore", "/app/view/Explore.fxml",
         "register","/app/view/Register.fxml"
     );
@@ -138,13 +138,13 @@ public class RootController {
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
             if (cntrl instanceof ProfileAware aware) {
-                aware.setProfileProvider((a) -> this.showPage("EditMyProfile",Optional.of(a))); //not elegant but works need to add view profile later
+                aware.setProfileProvider((a) -> this.showPage("EditArtistProfile",Optional.of(a))); //not elegant but works need to add view profile later
             }
-            if(cntrl instanceof ViewProfileBoundary viewBoundary) {
+            if(cntrl instanceof ViewArtistProfileBoundary viewBoundary) {
                 profile.ifPresent(viewBoundary::setProfile);
             }
-            if(cntrl instanceof EditMyProfileBoundary EditMyProfileBoundary) {
-                profile.ifPresent(EditMyProfileBoundary::setProfile);
+            if(cntrl instanceof EditArtistProfileBoundary editProfileBoundary) {
+                profile.ifPresent(editProfileBoundary::setProfile);
             }
 
             if ("/app/view/Workspace.fxml".equals(path))

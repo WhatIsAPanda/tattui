@@ -9,7 +9,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import java.sql.SQLException;
 
-public class ViewProfileBoundary extends BaseProfileBoundary {
+public class ViewArtistProfileBoundary extends BaseProfileBoundary {
 
     @FXML private Label artistNameField;
     @FXML private Circle profilePicture;
