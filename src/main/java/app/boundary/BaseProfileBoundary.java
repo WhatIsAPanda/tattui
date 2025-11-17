@@ -16,15 +16,17 @@ import java.util.List;
 
 public abstract class BaseProfileBoundary {
 
-    protected void populateProfileCommon(Profile profile, Circle profilePicture, Object biographyField, Object artistNameField) {
-        if (profile == null) return;
+    protected void populateProfileCommon(Profile profile, Circle profilePicture, Object biographyField,
+            Object artistNameField) {
+        if (profile == null)
+            return;
 
         if (artistNameField instanceof Text t)
-            t.setText("@" + profile.getUsername());
+            t.setText(profile.getUsername());
         else if (artistNameField instanceof Label l)
-            l.setText("@" + profile.getUsername());
+            l.setText(profile.getUsername());
         else if (artistNameField instanceof javafx.scene.control.TextField tf)
-            tf.setText("@" + profile.getUsername());
+            tf.setText(profile.getUsername());
 
         Image image = profile.getProfilePicture();
         if (image != null && profilePicture != null)
@@ -38,7 +40,8 @@ public abstract class BaseProfileBoundary {
     }
 
     protected void populatePosts(GridPane postsPanel, List<Post> posts) {
-        if (postsPanel == null || posts == null || posts.isEmpty()) return;
+        if (postsPanel == null || posts == null || posts.isEmpty())
+            return;
 
         postsPanel.getChildren().clear();
         postsPanel.getRowConstraints().clear();
