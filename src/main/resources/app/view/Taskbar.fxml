@@ -9,10 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 
-<VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60"
-      style="-fx-background-color: black;"
-      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="app.controller.TaskbarController">
+<VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
 
     <opaqueInsets>
         <Insets right="1.0" />
@@ -23,11 +20,7 @@
         <!-- Top logo -->
         <StackPane prefHeight="50.0" prefWidth="60.0">
             <children>
-                <Button fx:id="logoButton" id="logoButton" alignment="CENTER"
-                        contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false"
-                        onAction="#handleClick" prefHeight="50.0" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent;"
-                        StackPane.alignment="CENTER">
+                <Button id="logoButton" fx:id="logoButton" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#handleClick" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" StackPane.alignment="CENTER">
                     <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
                             <image><Image url="@/icons/tattui.png" /></image>
@@ -44,10 +37,7 @@
         <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
             <children>
 
-                <Button fx:id="workspaceButton" id="workspaceButton"
-                        mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;"
-                        VBox.vgrow="ALWAYS">
+                <Button id="workspaceButton" fx:id="workspaceButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
                             <image><Image url="@/icons/workspace.png" /></image>
@@ -57,10 +47,7 @@
                     <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
                 </Button>
 
-                <Button fx:id="exploreButton" id="exploreButton"
-                        mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;"
-                        VBox.vgrow="ALWAYS">
+                <Button id="exploreButton" fx:id="exploreButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
                             <image><Image url="@/icons/explore.png" /></image>
@@ -71,9 +58,7 @@
                 </Button>
 
 
-                <Button fx:id="mapButton" id="mapButton"
-                        mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                <Button id="mapButton" fx:id="mapButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
                             <image><Image url="@/icons/map.png" /></image>
@@ -97,9 +82,7 @@
             <padding><Insets top="10.0" /></padding>
             <children>
 
-                <Button fx:id="loginButton" id="loginButton"
-                        mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                <Button id="loginButton" fx:id="loginButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
                             <image><Image url="@/icons/login.png" /></image>
@@ -109,16 +92,14 @@
                     <padding><Insets bottom="12.0" top="12.0" /></padding>
                 </Button>
 
-                <Button fx:id="settingsButton" id="settingsButton"
-                        mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0"
-                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                <Button id="settingsButton" fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
                             <image><Image url="@/icons/settings.png" /></image>
                         </ImageView>
                     </graphic>
                     <tooltip><Tooltip text="Settings" /></tooltip>
-                    <padding><Insets bottom="12.0" /></padding>
+                    <padding><Insets bottom="15.0" /></padding>
                 </Button>
 
             </children>

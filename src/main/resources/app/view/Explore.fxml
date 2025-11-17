@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml"
-            fx:controller="app.boundary.ExploreBoundary">
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.ExploreBoundary">
     <top>
-        <HBox spacing="8" style="-fx-padding: 12; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;">
-            <TextField fx:id="searchField" promptText="Search for artist, design, or tattoo..." HBox.hgrow="ALWAYS"/>
-            <ComboBox fx:id="filterBox" prefWidth="200"/>
+        <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="51.0" spacing="8" style="-fx-padding: 8; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;" stylesheets="@../css/main.css" BorderPane.alignment="CENTER_LEFT">
+            <TextField fx:id="searchField" promptText="Search for artist, design, or tattoo..." HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="filterBox" prefWidth="200" />
         </HBox>
     </top>
 
     <center>
-        <ScrollPane fitToWidth="true" fitToHeight="true" pannable="true">
+        <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true">
             <content>
-                <TilePane fx:id="resultsPane" hgap="12" vgap="12" prefColumns="3" style="-fx-padding: 12;"/>
+                <TilePane fx:id="resultsPane" hgap="12" prefColumns="3" style="-fx-padding: 12;" vgap="12" />
             </content>
         </ScrollPane>
     </center>

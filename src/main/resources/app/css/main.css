@@ -151,9 +151,10 @@
 
 .root,
 .vbox,
+.hbox,
 .titled-pane,
 .titled-pane > .content {
-  -fx-background-color: #1a1a1a;
+  -fx-background-color: #0d0d0d;
 }
 
 .neutral-card,
