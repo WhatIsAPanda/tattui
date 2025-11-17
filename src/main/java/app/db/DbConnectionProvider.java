@@ -8,10 +8,11 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public final class DbConnectionProvider {
-    private DbConnectionProvider() {}
+    private DbConnectionProvider() {
+    }
 
     public static Connection open() throws SQLException {
-        String url  = System.getenv("DATABASE_URL");
+        String url = System.getenv("DATABASE_URL");
         String user = System.getenv("DATABASE_USER");
         String pass = System.getenv("DATABASE_PASSWORD");
 
@@ -22,7 +23,7 @@ public final class DbConnectionProvider {
             } catch (IOException e) {
                 throw new SQLException("DB credentials not configured (env vars or keys.txt).", e);
             }
-            url  = props.getProperty("url");
+            url = props.getProperty("url");
             user = props.getProperty("user");
             pass = props.getProperty("password");
         }
