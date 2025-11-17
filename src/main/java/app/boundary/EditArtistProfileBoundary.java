@@ -38,11 +38,13 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     @FXML
     private void handleProfileClick(javafx.scene.input.MouseEvent event) {
-        DatabaseConnector.modifyUser(profile);
-    // TODO: your desired behavior (open profile edit, etc.)
+        System.out.println("Profile picture clicked");
+        loadProfile();
+    }
     @FXML 
     private void handleSaveChanges(javafx.event.ActionEvent event) {
-        System.out.println("Save Changes clicked");
+        DatabaseConnector.modifyUser(profile);
+
     }
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
