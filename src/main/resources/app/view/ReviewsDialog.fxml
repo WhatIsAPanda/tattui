@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="12.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.ReviewsDialogBoundary"
+      prefWidth="480.0" prefHeight="560.0">
+    <padding>
+        <Insets top="16.0" right="16.0" bottom="16.0" left="16.0"/>
+    </padding>
+    <children>
+        <Label fx:id="artistNameLabel" style="-fx-font-size: 20px; -fx-font-weight: bold;" text="Reviews"/>
+        <Label fx:id="averageRatingLabel" text="Average: --" style="-fx-text-fill: #e2e8f0;"/>
+        <ListView fx:id="reviewListView" VBox.vgrow="ALWAYS"/>
+    </children>
+</VBox>

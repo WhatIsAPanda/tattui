@@ -288,10 +288,10 @@ public class DatabaseConnector {
                      WHERE account_id = ?
                 """);
                 PreparedStatement updateAccount = conn.prepareStatement("""
-                    UPDATE Accounts
-                       SET profile_picture_url = ?
-                     WHERE account_id = ?
-                """)) {
+                            UPDATE Accounts
+                               SET profile_picture_url = ?
+                             WHERE account_id = ?
+                        """)) {
 
             updateArtist.setString(1, bio);
             updateArtist.setDouble(2, lattitude);
@@ -312,35 +312,6 @@ public class DatabaseConnector {
         }
     }
 
-    public static Review getReview(int reviewId) throws SQLException {
-        if (reviewId <= 0) {
-            throw new SQLException("Review id must be positive");
-        }
-        if (!ensureConnection()) {
-            throw new SQLException("Unable to obtain database connection");
-        }
-        String sql = """
-                SELECT review_id, reviewer_id, reviewee_id, picture_url, review_text, rating
-                FROM Reviews
-                WHERE review_id = ?
-                """;
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, reviewId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                return new Review(
-                        rs.getInt("review_id"),
-                        rs.getInt("reviewer_id"),
-                        rs.getInt("reviewee_id"),
-                        rs.getString("picture_url"),
-                        rs.getString("review_text"),
-                        rs.getInt("rating"));
-            }
-        }
-    }
-
     public static Review submitReview(int reviewerId, int revieweeId, String pictureUrl, String reviewText, int rating)
             throws SQLException {
         if (reviewerId <= 0 || revieweeId <= 0) {
@@ -357,15 +328,14 @@ public class DatabaseConnector {
         }
 
         String sql = """
-                INSERT INTO Reviews (reviewer_id, reviewee_id, picture_url, review_text, rating)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO Reviews (reviewer_id, reviewee_id, review_text, rating)
+                VALUES (?, ?, ?, ?)
                 """;
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, reviewerId);
             stmt.setInt(2, revieweeId);
-            stmt.setString(3, pictureUrl);
-            stmt.setString(4, reviewText);
-            stmt.setInt(5, rating);
+            stmt.setString(3, reviewText);
+            stmt.setInt(4, rating);
             stmt.executeUpdate();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -374,5 +344,41 @@ public class DatabaseConnector {
             }
         }
         throw new SQLException("Failed to create review record");
+    }
+
+    public static List<Review> loadReviews(int accountId) throws SQLException {
+        if (accountId <= 0) {
+            throw new SQLException("Account id must be positive");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT r.review_id,
+                       r.reviewer_id,
+                       r.reviewee_id,
+                       r.review_text,
+                       r.rating
+                  FROM Reviews r
+                  JOIN Artists a ON a.artist_id = r.reviewee_id
+                 WHERE a.account_id = ?
+                 ORDER BY r.review_id DESC
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Review> reviews = new ArrayList<>();
+                while (rs.next()) {
+                    reviews.add(new Review(
+                            rs.getInt("review_id"),
+                            rs.getInt("reviewer_id"),
+                            rs.getInt("reviewee_id"),
+                            null,
+                            rs.getString("review_text"),
+                            rs.getInt("rating")));
+                }
+                return reviews;
+            }
+        }
     }
 }

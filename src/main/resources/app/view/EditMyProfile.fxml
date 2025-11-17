@@ -108,8 +108,8 @@
                               <children>
                                  <HBox alignment="CENTER" spacing="20.0">
                                     <children>
-                                       <Button mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Read Reviews" />
-                                       <Label alignment="CENTER" prefHeight="44.0" prefWidth="79.0" text="5 / 5">
+                                       <Button onAction="#openReviewPage" mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Read Reviews" />
+                                       <Label fx:id="averageRatingLabel" alignment="CENTER" prefHeight="44.0" prefWidth="79.0" text="5 / 5">
                                           <font>
                                              <Font size="16.0" />
                                           </font>
