@@ -1,5 +1,6 @@
 package app.db;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import java.sql.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,8 +9,7 @@ public class DbSmokeTest {
 
     private static String env(String key) {
         String v = System.getenv(key);
-        if (v == null || v.isBlank()) throw new IllegalStateException("Missing env: " + key);
-        return v;
+        return (v == null || v.isBlank()) ? null : v;
     }
 
     /** Probe 1: print database, tables, and peek a few rows from common tables. */
@@ -18,6 +18,10 @@ public class DbSmokeTest {
         String url  = env("DATABASE_URL");
         String user = env("DATABASE_USER");
         String pass = env("DATABASE_PASSWORD");
+
+        // Skip when DB creds are not configured
+        Assumptions.assumeTrue(url != null && user != null && pass != null,
+                "Skipping DbSmokeTest: no DATABASE_* env vars set (or keys.txt not available).");
 
         System.out.println("Connecting: " + url + " as " + user);
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {

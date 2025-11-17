@@ -63,4 +63,15 @@ public class Profile {
     // TODO(Adnan): remove once probe tests are updated to new data model.
     // public java.util.List<app.entity.Post> getPosts() { return null; }
 
+    // ---- Legacy compatibility shims (safe to keep; remove later if not needed) ----
+    public String getBiography() {
+        return biography;
+    }
+
+    public java.util.List<app.entity.Post> getPosts() {
+        // Older probes used getPosts(); our model uses getArtistPosts()
+        return getArtistPosts();
+    }
+
+
 }
