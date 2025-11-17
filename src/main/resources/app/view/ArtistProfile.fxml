@@ -7,12 +7,12 @@
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="app.controller.ArtistProfileController"
-            prefWidth="400" prefHeight="300"
+            prefWidth="420" prefHeight="360"
             style="-fx-background-color: #1e1e1e; -fx-padding: 20;">
 
     <top>
         <ImageView fx:id="artistImage"
-                   fitWidth="120" preserveRatio="true"
+                   fitWidth="160" preserveRatio="true"
                    BorderPane.alignment="CENTER"/>
     </top>
 

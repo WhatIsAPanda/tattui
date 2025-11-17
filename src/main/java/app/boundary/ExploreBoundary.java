@@ -20,6 +20,11 @@ import java.util.function.Supplier;
 
 public final class ExploreBoundary implements RootController.WorkspaceAware, RootController.PageAware {
 
+    // ---- lightweight debug helper ----
+    private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
+    private static void dbg(String msg) { if (DEBUG) System.out.println(msg); }
+
+
     @FXML private TextField searchField;
     @FXML private ComboBox<String> filterBox;
     @FXML private TilePane resultsPane;
@@ -30,10 +35,17 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
 
+    private final app.controller.explore.ExploreDataProvider provider =
+            (System.getenv("EXPLORE_LIVE") != null)
+                    ? new app.controller.explore.MergedExploreDataProvider()
+                    : new app.controller.explore.MockExploreDataProvider();
+
+
+
     @Override
     public void setWorkspaceProvider(Supplier<WorkspaceController> provider) {
         this.workspaceProvider = provider;
-        System.out.println("[ExploreBoundary] workspaceProvider injected? " + (provider != null));
+        dbg("[ExploreBoundary] workspaceProvider injected? " + (provider != null));
     }
 
     @Override
@@ -43,8 +55,9 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     @FXML
     private void initialize() {
-        System.out.println("[ExploreBoundary] init: searchField=" + searchField
+        dbg("[ExploreBoundary] init: searchField=" + searchField
                 + ", filterBox=" + filterBox + ", resultsPane=" + resultsPane);
+
 
         // Filters
         filterBox.getItems().setAll("All", "Artists", "Designs", "Completed Tattoos");
@@ -71,7 +84,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             default -> ExploreControl.Kind.ALL;
         };
 
-        List<ExploreControl.SearchItem> items = control.filter(q, kind);
+        List<ExploreControl.SearchItem> items = provider.fetch(q, kind);
 
         resultsPane.getChildren().setAll(
                 items.isEmpty()
@@ -79,19 +92,24 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                         : items.stream().map(this::card).toList()
         );
 
-        System.out.println("[ExploreBoundary] results=" + items.size()
+        dbg("[ExploreBoundary] results=" + items.size()
                 + " filter=" + filterBox.getSelectionModel().getSelectedItem()
                 + " q=\"" + q + "\"");
     }
 
     private Node card(ExploreControl.SearchItem item) {
         ImageView iv = new ImageView();
-        var res = getClass().getResourceAsStream(item.thumbnail());
-        if (res != null) {
-            iv.setImage(new Image(res, 220, 0, true, true));
-            iv.setFitWidth(220);
-            iv.setPreserveRatio(true);
+        String thumb = item.thumbnail();
+
+        if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://"))) {
+            iv.setImage(new Image(thumb, 220, 0, true, true));  // Cloudinary URL
+        } else {
+            var res = getClass().getResourceAsStream(thumb);
+            if (res != null) iv.setImage(new Image(res, 220, 0, true, true));
         }
+        iv.setFitWidth(220);
+        iv.setPreserveRatio(true);
+
 
         Label overlay = new Label(item.hoverText());
         overlay.setWrapText(true);
@@ -161,7 +179,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                 }
                 case COMPLETED_TATTOOS -> showCompletedTattooModal(item, iv.getImage());
                 case ARTISTS -> openArtistPage(item.title());
-                default -> System.out.println("[ExploreBoundary] clicked " + item.title());
+                default -> dbg("[ExploreBoundary] clicked " + item.title());
             }
         });
 
@@ -227,29 +245,85 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     private void openArtistPage(String artistName) {
         try {
-            var loader = new javafx.fxml.FXMLLoader(getClass().getResource("/app/view/ArtistProfile.fxml"));
-            javafx.scene.Parent root = loader.load();   // declare type explicitly
-            var controller = loader.getController();
+            // 1) Pull data from DB
+            app.entity.Profile p = app.entity.DatabaseConnector.getProfileByUsername(artistName);
 
+            String photo = (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank())
+                    ? p.getProfilePictureURL()
+                    : "/icons/artist_raven.jpg";
+            String bio = (p != null && p.getBiography() != null && !p.getBiography().isBlank())
+                    ? p.getBiography()
+                    : "No biography yet.";
 
-            String photo = "/icons/artist_raven.jpg";
-            String bio = """
-                    Raven (she/her) is a punk-studio tattoo artist specializing in bold blackwork,
-                    geometric abstractions, and negative-space composition. She loves sleeves and
-                    large-scale projects that flow with the body.
-                    """;
+            // 2) Try FXML first (if William’s profile page exists)
+            try {
+                var fxml = getClass().getResource("/app/view/ArtistProfile.fxml");
+                if (fxml != null) {
+                    var loader = new javafx.fxml.FXMLLoader(fxml);
+                    javafx.scene.Parent root = loader.load();
+                    Object controller = loader.getController();
 
-            controller.getClass().getMethod("setData", String.class, String.class, String.class)
-                    .invoke(controller, artistName, bio, photo);
+                    try {
+                        // prefer common signature: (name, bio, photoUrl)
+                        controller.getClass().getMethod("setData", String.class, String.class, String.class)
+                                .invoke(controller, artistName, bio, photo);
+                    } catch (NoSuchMethodException noSig) {
+                        // try alternate ordering if the controller uses it
+                        try {
+                            controller.getClass().getMethod("setData", String.class, String.class, String.class)
+                                    .invoke(controller, artistName, photo, bio);
+                        } catch (NoSuchMethodException nope) {
+                            // if no setter at all, we’ll just show fallback window below
+                            throw nope;
+                        }
+                    }
 
+                    var stage = new javafx.stage.Stage();
+                    stage.setTitle("Artist Profile: " + artistName);
+                    stage.setScene(new javafx.scene.Scene(root));
+                    stage.show();
+                    return; // done
+                }
+            } catch (Exception fx) {
+                // fall through to programmatic fallback
+                fx.printStackTrace();
+            }
+
+            // 3) Fallback: build a simple profile window programmatically (always works)
+            javafx.scene.image.ImageView avatar = new javafx.scene.image.ImageView();
+            try {
+                if (photo.startsWith("http://") || photo.startsWith("https://")) {
+                    avatar.setImage(new javafx.scene.image.Image(photo, 160, 160, true, true));
+                } else {
+                    var in = getClass().getResourceAsStream(photo);
+                    if (in != null) avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
+                }
+            } catch (Exception ignored) { /* leave empty */ }
+            avatar.setFitWidth(160); avatar.setFitHeight(160); avatar.setPreserveRatio(true);
+
+            var nameLbl = new javafx.scene.control.Label(artistName);
+            nameLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+            var bioLbl = new javafx.scene.control.Label(bio);
+            bioLbl.setWrapText(true);
+
+            var box = new javafx.scene.layout.VBox(12, avatar, nameLbl, bioLbl);
+            box.setStyle("-fx-padding: 16; -fx-background-color: #222; -fx-text-fill: white;");
+            nameLbl.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
+            bioLbl.setStyle("-fx-text-fill: #ddd;");
+
+            var scene = new javafx.scene.Scene(box, 420, 360);
             var stage = new javafx.stage.Stage();
-            stage.setTitle("Artist Profile: " + artistName);
-            stage.setScene(new javafx.scene.Scene(root));
+            stage.setTitle(artistName);
+            stage.setScene(scene);
             stage.show();
+
         } catch (Exception e) {
             e.printStackTrace();
+            new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR,
+                    "Could not open profile for " + artistName).showAndWait();
         }
     }
+
 
     /** Enlarged view for completed tattoos with caption (bottom) + square avatar (top-right). */
     private void showCompletedTattooModal(ExploreControl.SearchItem item, Image baseImage) {
@@ -284,20 +358,27 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
         // ----- avatar (top-right, SQUARE) -----
         String artistName = parseArtistTag(item.tags()).orElse("Unknown");
-        String avatarPath = avatarForArtist(artistName);
-
         ImageView avatar = new ImageView();
-        var ares = getClass().getResourceAsStream(avatarPath);
-        if (ares != null) {
-            avatar.setImage(new Image(ares, 56, 56, true, true));
-            avatar.setFitWidth(56);
-            avatar.setFitHeight(56);
-            avatar.setPreserveRatio(true);
+        try {
+            app.entity.Profile p = app.entity.DatabaseConnector.getProfileByUsername(artistName);
+            if (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank()) {
+                avatar.setImage(new Image(p.getProfilePictureURL(), 56, 56, true, true));
+            } else {
+                var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
+                if (ares != null) avatar.setImage(new Image(ares, 56, 56, true, true));
+            }
+        } catch (Exception ignored) {
+            var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
+            if (ares != null) avatar.setImage(new Image(ares, 56, 56, true, true));
         }
-        // NO circular clip — keep it square
+        avatar.setFitWidth(56);
+        avatar.setFitHeight(56);
+        avatar.setPreserveRatio(true);
         StackPane.setAlignment(avatar, javafx.geometry.Pos.TOP_RIGHT);
         StackPane.setMargin(avatar, new javafx.geometry.Insets(20, 20, 0, 0));
         avatar.setOnMouseClicked(e -> { e.consume(); openArtistPage(artistName); });
+
+
 
         // Root: image + overlays
         StackPane root = new StackPane(big, captionBar, avatar);
