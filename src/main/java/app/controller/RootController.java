@@ -1,6 +1,7 @@
 package app.controller;
 
 import app.boundary.ViewProfileBoundary;
+import app.boundary.EditMyProfileBoundary;
 import app.entity.DatabaseConnector;
 import app.entity.Profile;
 import javafx.application.Platform;
@@ -36,9 +37,10 @@ public class RootController {
         "map", "/app/view/Map.fxml",
         "gallery", "/app/view/Gallery.fxml",
         LOGIN_PAGE, "/app/view/Login.fxml",
-        "viewProfile", "/app/view/viewMyProfile.fxml",
+        "viewProfile", "/app/view/viewProfile.fxml",
+        "EditMyProfile", "/app/view/EditMyProfile.fxml",
         "explore", "/app/view/Explore.fxml",
-            "register","/app/view/Register.fxml"
+        "register","/app/view/Register.fxml"
     );
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
 
@@ -140,6 +142,9 @@ public class RootController {
             }
             if(cntrl instanceof ViewProfileBoundary viewBoundary) {
                 profile.ifPresent(viewBoundary::setProfile);
+            }
+            if(cntrl instanceof EditMyProfileBoundary EditMyProfileBoundary) {
+                profile.ifPresent(EditMyProfileBoundary::setProfile);
             }
 
             if ("/app/view/Workspace.fxml".equals(path))

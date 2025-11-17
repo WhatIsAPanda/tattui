@@ -2,6 +2,7 @@ package app.entity;
 
 import javafx.scene.image.Image;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Profile {
@@ -63,15 +64,16 @@ public class Profile {
         return profile_picture;
     }
     public void setArtistPosts(List<Post> artistPosts) {
+
         this.artistPosts = artistPosts;
     }
     public List<Post> getArtistPosts() {
-        return artistPosts;
+        return artistPosts != null ? artistPosts : Collections.emptyList();
     }
 
     // TEMP shim to satisfy legacy probe tests (DbProfilesProbeTest etc.).
 // TODO(Adnan): remove once probe tests are updated to new data model.
-    public java.util.List<app.entity.Post> getPosts() { return null; }
+    // public java.util.List<app.entity.Post> getPosts() { return null; }
 
 
 
