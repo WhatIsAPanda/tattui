@@ -56,7 +56,8 @@ public abstract class BaseProfileBoundary {
                     ImageView imgView = new ImageView(img);
                     imgView.setFitWidth(179);
                     imgView.setFitHeight(250);
-                    imgView.setPreserveRatio(true);
+                    System.out.println("ASKDJ");
+                    imgView.setPreserveRatio(false);
                     postsPanel.add(imgView, col, row);
                 }
                 processed++;
