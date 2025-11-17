@@ -304,7 +304,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
     private SubScene subScene;
     private boolean adjustingSliders;
     private static final double BASE_TATTOO_RATE = 100.0;
-    private static final double RATE_PER_INCH = 150.0;
+    private static final double RATE_PER_INCH = 50.0;
     private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("$#,##0.00");
     private static final DecimalFormat INCH_FORMAT = new DecimalFormat("0.0");
     private final Deque<TattooWorkspace.RemovedTattoo> deletedTattooHistory = new ArrayDeque<>();
@@ -2242,7 +2242,7 @@ public class WorkspaceControllerBase implements WorkspaceController {
             double scaledHeight = imageHeight * tattoo.heightScale();
             double dominantPixels = Math.max(scaledWidth, scaledHeight);
             double dominantInches = Math.max(0.5, dominantPixels * Math.sqrt(heightScale * PIXEL_TO_SQUARE_INCH));
-            total += 100.0 + (150.0 * dominantInches);
+            total += 100.0 + (50.0 * dominantInches);
         }
         return Math.max(0.0, total);
     }

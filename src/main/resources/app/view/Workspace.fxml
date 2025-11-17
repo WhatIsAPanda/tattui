@@ -201,7 +201,7 @@
                                                         </HBox>
                                                     </children>
                                                 </GridPane>
-                                                <Label text="Cost = $100 base + $150 × largest dimension" wrapText="true" style="-fx-text-fill: #9ca3af; -fx-font-size: 11px;" />
+                                                <Label text="Cost = $100 base + $50 × largest dimension" wrapText="true" style="-fx-text-fill: #9ca3af; -fx-font-size: 11px;" />
                                                 <StackPane>
                                                     <children>
                                                         <TableView fx:id="estimateBreakdownTable" prefHeight="240.0">
