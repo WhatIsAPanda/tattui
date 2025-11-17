@@ -84,8 +84,8 @@
                                        <TextArea fx:id="biographyField" prefHeight="200.0" prefWidth="200.0" promptText="Write Something About yourself" text="This is a bio message left by the artist, more words are used to show that this can take up extra space." wrapText="true" />
                                        <HBox alignment="CENTER" spacing="5.0">
                                           <children>
-                                             <TextField fx:id="addressField1" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="insert longitude  " text="0" HBox.hgrow="ALWAYS" />
-                                             <TextField fx:id="addressField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Latitude" text="0" HBox.hgrow="ALWAYS" />
+                                             <TextField fx:id="longitudeField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="insert longitude  " text="0" HBox.hgrow="ALWAYS" />
+                                             <TextField fx:id="latitudeField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Latitude" text="0" HBox.hgrow="ALWAYS" />
                                           </children>
                                        </HBox>
                                     </children>

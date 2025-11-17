@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.control.TextField;
 
 import java.sql.SQLException;
 
@@ -19,6 +20,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML private TextArea biographyField;
     @FXML private Label artistNameField;
     @FXML private GridPane postsPanel;
+    @FXML private TextField longitudeField;
+    @FXML private TextField latitudeField;
 
     private Profile profile;
 
@@ -44,7 +47,9 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML 
     private void handleSaveChanges() {
         try {
-            profile.setBiography(biographyField.getText());
+            profile.biography = biographyField.getText();
+            profile.work_latitude = Double.parseDouble(longitudeField.getText());
+            profile.work_longitude = Double.parseDouble(latitudeField.getText());
             DatabaseConnector.modifyUser(profile);
         } catch (SQLException e) {
             e.printStackTrace();
