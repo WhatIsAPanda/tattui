@@ -1,1 +1,0 @@
-package app.util; import javafx.application.Platform; public final class FxUtils { private FxUtils(){} public static void onFx(Runnable r){ if(Platform.isFxApplicationThread()) r.run(); else Platform.runLater(r);} }
