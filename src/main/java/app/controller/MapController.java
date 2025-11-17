@@ -133,7 +133,7 @@ public class MapController implements PageAware {
                 int count = allResults.size();
                 for (int i = 0; i < count; i++) {
                     Profile target = allResults.get(i);
-                    points.add(new MapPoint(target.getLatitude(), target.getLongitude()));
+                    points.add(new MapPoint(target.work_latitude, target.work_longitude));
                 }
                 return new DotLayer(points);
             }
@@ -150,8 +150,8 @@ public class MapController implements PageAware {
                 double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
 
                 for (Profile p : allResults) {
-                    double lat = p.getLatitude();
-                    double lon = p.getLongitude();
+                    double lat = p.work_latitude;
+                    double lon = p.work_longitude;
                     minLat = Math.min(minLat, lat);
                     maxLat = Math.max(maxLat, lat);
                     minLon = Math.min(minLon, lon);
