@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public final class ExploreBoundary implements RootController.WorkspaceAware, RootController.PageAware {
+public final class ExploreBoundary implements RootController.WorkspaceAware, RootController.PageAware, RootController.ProfileAware {
 
     // ---- lightweight debug helper ----
     private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
@@ -37,6 +37,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     private Supplier<WorkspaceController> workspaceProvider;
     private Consumer<String> pageRequest;
+    private Consumer<app.entity.Profile> profileRequest;
 
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
@@ -93,6 +94,11 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     @Override
     public void setOnPageRequest(Consumer<String> handler) {
         this.pageRequest = handler;
+    }
+
+    @Override
+    public void setProfileProvider(Consumer<app.entity.Profile> provider) {
+        this.profileRequest = provider;
     }
 
     @FXML
@@ -287,6 +293,17 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private void openArtistPage(String artistName) {
+        if (profileRequest != null) {
+            try {
+                app.entity.Profile profile = app.entity.DatabaseConnector.getProfileByUsername(artistName);
+                if (profile != null) {
+                    profileRequest.accept(profile);
+                    return;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
         try {
             // 1) Pull data from DB
             app.entity.Profile p = app.entity.DatabaseConnector.getProfileByUsername(artistName);

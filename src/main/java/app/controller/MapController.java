@@ -13,6 +13,7 @@ import com.gluonhq.maps.MapView;
 
 import app.controller.MapController.DotLayer;
 import app.controller.RootController.PageAware;
+import app.controller.RootController.ProfileAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -46,7 +47,7 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class MapController implements PageAware {
+public class MapController implements PageAware, ProfileAware {
 
     @FXML
     private TextField searchField;
@@ -64,9 +65,15 @@ public class MapController implements PageAware {
     private final List<MapLayer> layers = new LinkedList<>();
 
     private Consumer<String> onPageRequest;
+    private Consumer<Profile> profileRequest;
 
     public void setOnPageRequest(Consumer<String> handler) {
         this.onPageRequest = handler;
+    }
+
+    @Override
+    public void setProfileProvider(Consumer<Profile> provider) {
+        this.profileRequest = provider;
     }
 
     @FXML
@@ -78,7 +85,7 @@ public class MapController implements PageAware {
         // map.addLayer(new DotLayer(center));
         mapContainer.getChildren().add(map);
 
-        resultsList.setCellFactory(listView -> new ProfileCell());
+        resultsList.setCellFactory(listView -> new ProfileCell(this::handleProfileSelection));
     }
 
     // Inner layer class
@@ -315,5 +322,14 @@ public class MapController implements PageAware {
                 allResults.stream()
                         .filter(item -> item.getStylesList().contains(tag))
                         .collect(Collectors.toList()));
+    }
+
+    private void handleProfileSelection(Profile profile) {
+        if (profile == null) {
+            return;
+        }
+        if (profileRequest != null) {
+            profileRequest.accept(profile);
+        }
     }
 }

@@ -40,6 +40,7 @@ public class RootController {
         "viewArtistProfile", "/app/view/viewProfile.fxml",
         "EditArtistProfile", "/app/view/EditMyProfile.fxml",
         "explore", "/app/view/Explore.fxml",
+        "postReview", "/app/view/PostReview.fxml",
         "register","/app/view/Register.fxml"
     );
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
@@ -103,14 +104,10 @@ public class RootController {
             pageCache.clear();
         }
 
-        Parent view = pageCache.computeIfAbsent(key, k ->{
-            if (profile.isPresent()) {
-                return loadView(path, profile);
-            }
-                else {
-                    return loadView(path, Optional.empty());
-                }
-            });
+        boolean cacheable = profile.isEmpty() && !key.equals("viewArtistProfile");
+        Parent view = cacheable
+                ? pageCache.computeIfAbsent(key, k -> loadView(path, Optional.empty()))
+                : loadView(path, profile);
 
         //Hide taskbar for pages on login
         boolean showTaskbar = !key.equals(LOGIN_PAGE) && !key.equals("register");
@@ -138,7 +135,7 @@ public class RootController {
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
             if (cntrl instanceof ProfileAware aware) {
-                aware.setProfileProvider((a) -> this.showPage("EditArtistProfile",Optional.of(a))); //not elegant but works need to add view profile later
+                aware.setProfileProvider(profileObj -> this.showPage("viewArtistProfile", Optional.ofNullable(profileObj)));
             }
             if(cntrl instanceof ViewArtistProfileBoundary viewBoundary) {
                 profile.ifPresent(viewBoundary::setProfile);

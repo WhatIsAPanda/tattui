@@ -89,7 +89,7 @@
                      </Label>
                      <HBox alignment="CENTER" prefHeight="33.0" prefWidth="537.0" spacing="20.0">
                         <children>
-                           <Button mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Leave Review" />
+                           <Button mnemonicParsing="false" onAction="#handleLeaveReview" prefHeight="31.0" prefWidth="143.0" text="Leave Review" />
                            <Button mnemonicParsing="false" prefHeight="31.0" prefWidth="143.0" text="Read Reviews" />
                         </children>
                         <opaqueInsets>
