@@ -1,6 +1,7 @@
 package app.boundary;
 
 import app.entity.DatabaseConnector;
+import app.controller.LoginController;
 import app.controller.RootController;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -47,8 +48,12 @@ public class RegisterBoundary implements RootController.PageAware {
             DatabaseConnector.createUser(username, password, isArtist);
             errorLabel.setText("Account created successfully");
             Thread.sleep(1000); // Pause for a moment to show success message
-            onPageRequest.accept("workspace");
-
+            boolean success = LoginController.verifyUser(username, password);
+            if (success) {
+                onPageRequest.accept("workspace");
+            } else {
+                System.out.println("fail!");
+            }
         }
         catch (SQLException | InterruptedException e) {
             e.printStackTrace();
