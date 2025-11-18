@@ -139,7 +139,32 @@ public class MapController implements PageAware, ProfileAware {
 
         depopulateMap(); // clear old markers first
 
-        Task<DotLayer> task = new Task<>() {
+        Task<DotLayer> task = buildDotLayerTask();
+
+        task.setOnSucceeded(e -> {
+            depopulateMap();
+            DotLayer layer = task.getValue();
+            map.addLayer(layer);
+            layers.add(layer);
+            if (!allResults.isEmpty()) {
+                adjustViewport();
+            }
+
+            map.requestLayout(); // ensure refresh
+            double z = map.getZoom();
+            map.setZoom(z + 0.0001);
+            map.setZoom(z);
+        });
+
+        task.setOnFailed(e -> logTaskError(task));
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private Task<DotLayer> buildDotLayerTask() {
+        return new Task<>() {
             @Override
             protected DotLayer call() {
                 List<MapPoint> points = new ArrayList<>();
@@ -151,66 +176,45 @@ public class MapController implements PageAware, ProfileAware {
                 return new DotLayer(points);
             }
         };
+    }
 
-        task.setOnSucceeded(e -> {
-            depopulateMap();
-            DotLayer layer = task.getValue();
-            // layer.markDirty();
-            map.addLayer(layer);
-            layers.add(layer);
-            if (!allResults.isEmpty()) {
-                double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
-                double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
+    private void adjustViewport() {
+        double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
+        double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
 
-                for (Profile p : allResults) {
-                    double lat = p.work_latitude;
-                    double lon = p.work_longitude;
-                    minLat = Math.min(minLat, lat);
-                    maxLat = Math.max(maxLat, lat);
-                    minLon = Math.min(minLon, lon);
-                    maxLon = Math.max(maxLon, lon);
-                }
+        for (Profile p : allResults) {
+            double lat = p.work_latitude;
+            double lon = p.work_longitude;
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+            minLon = Math.min(minLon, lon);
+            maxLon = Math.max(maxLon, lon);
+        }
 
-                // center point
-                double centerLat = (minLat + maxLat) / 2.0;
-                double centerLon = (minLon + maxLon) / 2.0;
+        double centerLat = (minLat + maxLat) / 2.0;
+        double centerLon = (minLon + maxLon) / 2.0;
+        double spread = Math.max(maxLat - minLat, maxLon - minLon);
 
-                // approximate zoom level based on spread
-                double latDiff = maxLat - minLat;
-                double lonDiff = maxLon - minLon;
-                double spread = Math.max(latDiff, lonDiff);
+        map.setCenter(new MapPoint(centerLat, centerLon));
+        map.setZoom(calculateZoom(spread));
+    }
 
-                int zoom;
-                if (spread < 0.01)
-                    zoom = 14;
-                else if (spread < 0.05)
-                    zoom = 12;
-                else if (spread < 0.2)
-                    zoom = 10;
-                else if (spread < 1.0)
-                    zoom = 8;
-                else
-                    zoom = 6;
+    private int calculateZoom(double spread) {
+        if (spread < 0.01)
+            return 14;
+        if (spread < 0.05)
+            return 12;
+        if (spread < 0.2)
+            return 10;
+        if (spread < 1.0)
+            return 8;
+        return 6;
+    }
 
-                map.setCenter(new MapPoint(centerLat, centerLon));
-                map.setZoom(zoom);
-            }
-
-            map.requestLayout(); // ensure refresh
-            double z = map.getZoom();
-            map.setZoom(z + 0.0001);
-            map.setZoom(z);
-        });
-
-        task.setOnFailed(e -> {
-            Throwable ex = task.getException();
-            if (ex != null)
-                ex.printStackTrace();
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+    private void logTaskError(Task<DotLayer> task) {
+        Throwable ex = task.getException();
+        if (ex != null)
+            ex.printStackTrace();
     }
 
     private void depopulateMap() {
