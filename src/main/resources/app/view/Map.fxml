@@ -6,24 +6,25 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.MapController">
+<BorderPane prefHeight="677.0" prefWidth="589.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.MapController">
 
     <top>
         <HBox alignment="CENTER_LEFT" prefHeight="51.0" spacing="8" style="-fx-padding: 8; -fx-border-color: transparent transparent white transparent; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
-            <TextField fx:id="searchField"   onAction="#handleSearch" promptText="Search shops, artists(@username), cities" style="-fx-background-radius: 3; -fx-border-radius: 3;" HBox.hgrow="ALWAYS">
+            <TextField fx:id="searchField" onAction="#handleSearch" promptText="Search shops, artists(@username), cities" style="-fx-background-radius: 3; -fx-border-radius: 3;" HBox.hgrow="ALWAYS">
             <HBox.margin>
                <Insets />
             </HBox.margin>
             <opaqueInsets>
                <Insets />
             </opaqueInsets></TextField>
-         <HBox alignment="CENTER_LEFT" maxWidth="244.0" minWidth="244.0" prefHeight="50.0" prefWidth="244.0" spacing="8.0">
+         <HBox alignment="CENTER_LEFT" maxWidth="-Infinity" prefHeight="50.0" prefWidth="300.0" spacing="8.0">
             <children>
                <Button onAction="#handleSearch" text="Search" />
                <Button onAction="#handleClear" text="Clear" />
@@ -39,13 +40,17 @@
     </center>
 
     <right>
-        <VBox maxWidth="260.0" minWidth="260.0" prefWidth="260.0" spacing="6" style="-fx-padding:8; -fx-min-width:260;">
-            <Label text="Results" />
-            <ListView fx:id="resultsList" cacheShape="false" centerShape="false" editable="true" fixedCellSize="88.0" scaleShape="false" VBox.vgrow="ALWAYS" style="-fx-padding: 0; -fx-background-insets: 0; -fx-border-width: 0;" />
+      <AnchorPane>
          <BorderPane.margin>
-            <Insets top="-1.0" />
+            <Insets />
          </BorderPane.margin>
-        </VBox>
+         <children>
+              <VBox maxHeight="1.7976931348623157E308" maxWidth="-Infinity" minWidth="-Infinity" spacing="6" style="-fx-padding:8; -fx-min-width:260;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <Label text="Results" />
+                  <ListView fx:id="resultsList" cacheShape="false" centerShape="false" editable="true" fixedCellSize="88.0" maxHeight="1.7976931348623157E308" maxWidth="-Infinity" prefWidth="300.0" scaleShape="false" style="-fx-padding: 0; -fx-background-insets: 0; -fx-border-width: 0;" VBox.vgrow="ALWAYS" />
+              </VBox>
+         </children>
+      </AnchorPane>
     </right>
 
     <bottom>
