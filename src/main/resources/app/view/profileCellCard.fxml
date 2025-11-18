@@ -14,7 +14,7 @@
             <Insets right="10.0" />
          </HBox.margin>
       </ImageView>
-      <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="68.0" prefWidth="209.0" HBox.hgrow="ALWAYS">
+      <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="68.0" prefWidth="150.0" HBox.hgrow="ALWAYS">
          <children>
             <Label fx:id="Title" text="Title" VBox.vgrow="ALWAYS">
                <font>
