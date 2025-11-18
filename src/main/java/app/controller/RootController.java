@@ -23,9 +23,12 @@ import java.util.function.Supplier;
 
 public class RootController {
 
-    @FXML private BorderPane rootPane;
-    @FXML private HBox taskbarContainer;
-    @FXML private AnchorPane workspaceContainer;
+    @FXML
+    private BorderPane rootPane;
+    @FXML
+    private HBox taskbarContainer;
+    @FXML
+    private AnchorPane workspaceContainer;
 
     private WorkspaceController workspaceController;
     private final Map<String, Parent> pageCache = new HashMap<>();
@@ -33,16 +36,15 @@ public class RootController {
     private static final String LOGIN_PAGE = "login";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
-        WORKSPACE_PAGE, "/app/view/Workspace.fxml",
-        "map", "/app/view/Map.fxml",
-        "gallery", "/app/view/Gallery.fxml",
-        LOGIN_PAGE, "/app/view/Login.fxml",
-        "viewArtistProfile", "/app/view/viewProfile.fxml",
-        "EditArtistProfile", "/app/view/EditMyProfile.fxml",
-        "explore", "/app/view/Explore.fxml",
-        "postReview", "/app/view/PostReview.fxml",
-        "register","/app/view/Register.fxml"
-    );
+            WORKSPACE_PAGE, "/app/view/Workspace.fxml",
+            "map", "/app/view/Map.fxml",
+            "gallery", "/app/view/Gallery.fxml",
+            LOGIN_PAGE, "/app/view/Login.fxml",
+            "viewArtistProfile", "/app/view/viewProfile.fxml",
+            "EditArtistProfile", "/app/view/EditMyProfile.fxml",
+            "explore", "/app/view/Explore.fxml",
+            "postReview", "/app/view/PostReview.fxml",
+            "register", "/app/view/Register.fxml");
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
 
     public RootController() {
@@ -56,10 +58,14 @@ public class RootController {
     public interface WorkspaceAware {
         void setWorkspaceProvider(Supplier<WorkspaceController> provider);
     }
+
     public interface ProfileAware {
         void setProfileProvider(Consumer<Profile> provider);
     }
 
+    public interface EditArtistProfileAware {
+        void setEditArtistProfileProvider(Consumer<Profile> provider);
+    }
 
     // --- Initialization ---
 
@@ -76,7 +82,8 @@ public class RootController {
 
         Platform.runLater(() -> {
             Stage stage = (Stage) rootPane.getScene().getWindow();
-            if (stage != null) notifyWorkspaceStage(stage);
+            if (stage != null)
+                notifyWorkspaceStage(stage);
         });
     }
 
@@ -100,7 +107,7 @@ public class RootController {
             showDatabaseAlert();
             return;
         }
-        if(key.equals(LOGIN_PAGE)) {
+        if (key.equals(LOGIN_PAGE)) {
             pageCache.clear();
         }
 
@@ -109,13 +116,13 @@ public class RootController {
                 ? pageCache.computeIfAbsent(key, k -> loadView(path, Optional.empty()))
                 : loadView(path, profile);
 
-        //Hide taskbar for pages on login
+        // Hide taskbar for pages on login
         boolean showTaskbar = !key.equals(LOGIN_PAGE) && !key.equals("register");
         taskbarContainer.setVisible(showTaskbar);
         taskbarContainer.setManaged(showTaskbar);
 
         attachContent(workspaceContainer, view);
-        //weird workspace specific issue to be fixed
+        // weird workspace specific issue to be fixed
         if (WORKSPACE_PAGE.equals(key) && workspaceController != null)
             Optional.ofNullable(currentStage())
                     .ifPresent(workspaceController::attachStage);
@@ -129,18 +136,22 @@ public class RootController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
-            
 
             Object cntrl = loader.getController();
             if (cntrl instanceof PageAware aware)
                 aware.setOnPageRequest(this::showPage);
             if (cntrl instanceof ProfileAware aware) {
-                aware.setProfileProvider(profileObj -> this.showPage("viewArtistProfile", Optional.ofNullable(profileObj)));
+                aware.setProfileProvider(
+                        profileObj -> this.showPage("viewArtistProfile", Optional.ofNullable(profileObj)));
             }
-            if(cntrl instanceof ViewArtistProfileBoundary viewBoundary) {
+            if (cntrl instanceof EditArtistProfileAware aware) {
+                aware.setEditArtistProfileProvider(
+                        profileObj -> this.showPage("EditArtistProfile", Optional.ofNullable(profileObj)));
+            }
+            if (cntrl instanceof ViewArtistProfileBoundary viewBoundary) {
                 profile.ifPresent(viewBoundary::setProfile);
             }
-            if(cntrl instanceof EditArtistProfileBoundary editProfileBoundary) {
+            if (cntrl instanceof EditArtistProfileBoundary editProfileBoundary) {
                 profile.ifPresent(editProfileBoundary::setProfile);
             }
 

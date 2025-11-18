@@ -42,6 +42,11 @@ public class Profile {
         return profile_picture_url;
     }
 
+    public void setProfilePicture(String profilePictureUrl, Image image) {
+        this.profile_picture_url = profilePictureUrl;
+        this.profile_picture = image;
+    }
+
     public String getAddress() {
         return work_address;
     }

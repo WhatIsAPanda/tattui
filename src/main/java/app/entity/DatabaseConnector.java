@@ -87,34 +87,21 @@ public class DatabaseConnector {
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
         PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
                 """
-                        SELECT * FROM Artists AS A
-                        LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                        LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                        WHERE ACC.username = ?;
+                        SELECT *
+                          FROM Artists AS A
+                          LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                         WHERE ACC.username = ?;
                         """);
         preparedStatement.setString(1, profileSkeleton.getUsername());
         ResultSet resultSet = preparedStatement.executeQuery();
-        List<Post> artistPosts = getArtistPosts(resultSet);
-        profileSkeleton.setArtistPosts(artistPosts);
+        // Temporarily skip loading posts from the database.
+        profileSkeleton.setArtistPosts(Collections.emptyList());
         return profileSkeleton;
 
     }
 
-    public static List<Post> getArtistPosts(ResultSet rs) throws SQLException {
-        if (!rs.next()) {
-            return new ArrayList<Post>();
-        }
-        List<Post> posts = new ArrayList<>();
-        do {
-            int postId = rs.getInt("post_id");
-            String caption = rs.getString("caption");
-            int postOwner = rs.getInt(ACCOUNT_ID_STRING);
-            String postPictureURL = rs.getString("post_picture_url");
-            String keyWords = rs.getString("keywords");
-            posts.add(new Post(postId, caption, postPictureURL, postOwner, keyWords));
-        } while (rs.next());
-
-        return posts;
+    public static Post addArtistPost(int accountId, String caption, String imageUrl, boolean isDesign) throws SQLException {
+        throw new SQLException("Post submission is temporarily unavailable.");
     }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
@@ -150,11 +137,10 @@ public class DatabaseConnector {
     public static Profile getProfileByUsername(String queryUsername) throws SQLException {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
-                FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
-                LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id
-                WHERE username = ? ;
+                  FROM Artists AS A
+                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                  LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id
+                 WHERE username = ? ;
                 """);
         profileQueryStatement.setString(1, queryUsername);
         ResultSet rs = profileQueryStatement.executeQuery();
@@ -197,11 +183,10 @@ public class DatabaseConnector {
     public static List<Profile> getProfilesLike(String pattern) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement("""
                 SELECT *
-                FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
-                LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                WHERE username LIKE ?
+                  FROM Artists AS A
+                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                  LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                 WHERE username LIKE ?
                 """);
         stmt.setString(1, "%" + pattern + "%");
         ResultSet rs = stmt.executeQuery();
@@ -212,11 +197,10 @@ public class DatabaseConnector {
             double longitudeTo) throws SQLException {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
-                FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
-                LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
+                  FROM Artists AS A
+                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                  LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                 WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
                 """);
         profileQueryStatement.setDouble(1, latitudeFrom);
         profileQueryStatement.setDouble(2, latitudeTo);
