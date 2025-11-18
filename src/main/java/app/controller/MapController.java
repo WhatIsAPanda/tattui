@@ -119,6 +119,10 @@ public class MapController implements PageAware, ProfileAware {
         if (query.charAt(0) == '#') {
             tagSearch(query);
         }
+        if (query.charAt(0) == '@') {
+            usernameSearch(query);
+        }
+        populateMapAsync();
         boolean foundCity = citySearch(query);
         if (!foundCity) {
             usernameSearch(query);
