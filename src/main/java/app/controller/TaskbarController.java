@@ -4,6 +4,7 @@ import app.entity.LoggedInProfile;
 import app.entity.Profile;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -48,15 +49,19 @@ public class TaskbarController implements RootController.PageAware, RootControll
             case "exploreButton" -> onPageRequest.accept("explore");
             case "mapButton" -> onPageRequest.accept("map");
             case "loginButton" -> onPageRequest.accept("login");
-            case "logoButton" -> {
+            case "settingsButton" -> {
                 if (onEditArtistProfileRequest == null) {
                     LOG.warning("Edit artist profile handler not set; ignoring logo click");
                     return;
                 }
                 Profile profile = LoggedInProfile.getInstance();
                 if (profile == null) {
-                    LOG.warning("No logged-in profile available; routing to login page");
-                    onPageRequest.accept("login");
+                    LOG.warning("No logged-in profile available; showing alert");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Artist Login Required");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Not logged in as artist.");
+                    alert.showAndWait();
                     return;
                 }
                 onEditArtistProfileRequest.accept(profile);
