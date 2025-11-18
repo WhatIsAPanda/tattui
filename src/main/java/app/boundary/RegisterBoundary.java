@@ -60,9 +60,15 @@ public class RegisterBoundary implements RootController.PageAware {
         }
     }
 
+    @FXML
+    private void handleBackToLogin() {
+        if (onPageRequest != null) {
+            onPageRequest.accept("login");
+        }
+    }
+
     @Override
     public void setOnPageRequest(Consumer<String> pageRequestHandler) {
         this.onPageRequest = pageRequestHandler;
     }
 }
-

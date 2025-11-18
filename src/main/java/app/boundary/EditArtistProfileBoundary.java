@@ -110,8 +110,12 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             profile.work_latitude = Double.parseDouble(latitudeField.getText());
             profile.work_longitude = Double.parseDouble(longitudeField.getText());
             DatabaseConnector.modifyUser(profile);
+            showAlert(Alert.AlertType.INFORMATION, "Profile Saved", "Your profile has been saved.");
         } catch (SQLException e) {
             e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Save failed", "Unable to save profile: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            showAlert(Alert.AlertType.ERROR, "Invalid Coordinates", "Please enter valid numbers for latitude and longitude.");
         }
 
     }

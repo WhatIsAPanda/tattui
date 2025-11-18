@@ -40,6 +40,12 @@ public class LoginBoundary implements RootController.PageAware {
         onPageRequest.accept("register");
     }
 
+    @FXML
+    private void handleBackToWorkspace() {
+        if (onPageRequest != null) {
+            onPageRequest.accept("workspace");
+        }
+    }
 
     @Override
     public void setOnPageRequest(Consumer<String> pageRequestHandler) {
