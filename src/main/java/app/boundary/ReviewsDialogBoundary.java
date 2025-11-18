@@ -14,6 +14,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 
 import java.util.List;
@@ -22,6 +24,8 @@ import java.util.List;
  * Simple dialog controller that renders an artist's reviews and average rating.
  */
 public class ReviewsDialogBoundary {
+
+    private static final String DEFAULT_AVATAR = "/icons/artist_raven.jpg";
 
     @FXML
     private Label artistNameLabel;
@@ -77,20 +81,17 @@ public class ReviewsDialogBoundary {
             root.setAlignment(Pos.TOP_LEFT);
             root.setPadding(new Insets(8, 0, 8, 0));
 
-            ImageView avatar = new ImageView();
-            avatar.setFitWidth(48);
-            avatar.setFitHeight(48);
-            avatar.setPreserveRatio(true);
-            Circle clip = new Circle(24);
-            clip.centerXProperty().bind(avatar.fitWidthProperty().divide(2));
-            clip.centerYProperty().bind(avatar.fitHeightProperty().divide(2));
-            avatar.setClip(clip);
+            Circle avatarCircle = new Circle(24);
+            avatarCircle.setStroke(Color.WHITE);
+            avatarCircle.setStrokeWidth(1.0);
             String picture = review.getReviewerPicture();
+            Image avatarImg;
             if (picture != null && !picture.isBlank()) {
-                avatar.setImage(new Image(picture, 48, 48, true, true));
+                avatarImg = new Image(picture, 96, 96, true, true);
             } else {
-                avatar.setImage(new Image("/icons/artist_raven.jpg", 48, 48, true, true));
+                avatarImg = new Image(DEFAULT_AVATAR, 96, 96, true, true);
             }
+            avatarCircle.setFill(new ImagePattern(avatarImg));
 
             VBox content = new VBox(4);
             Label nameLabel = new Label(
@@ -114,7 +115,7 @@ public class ReviewsDialogBoundary {
             }
             HBox.setHgrow(content, Priority.ALWAYS);
 
-            root.getChildren().addAll(avatar, content);
+            root.getChildren().addAll(avatarCircle, content);
             setGraphic(root);
             setText(null);
         }

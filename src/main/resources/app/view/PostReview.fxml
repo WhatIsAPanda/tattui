@@ -14,13 +14,13 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-            prefHeight="400.0" prefWidth="600.0"
+            prefHeight="520.0" prefWidth="780.0"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="app.boundary.PostReviewBoundary"
             stylesheets="@../css/main.css"
             styleClass="dialog-root">
    <children>
-      <VBox prefHeight="400.0" prefWidth="600.0">
+      <VBox prefHeight="520.0" prefWidth="750.0">
          <children>
             <VBox>
                <children>
