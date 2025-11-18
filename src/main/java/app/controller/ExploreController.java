@@ -74,8 +74,8 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         boolean accepted = false;
         try {
             accepted = workspaceProvider.get().openTattooFromGallery(img, title);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception _) {
+            // workspace consumer rejected image; fall back to UI alerts below
         }
 
         if (accepted) {
@@ -307,8 +307,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             alert.showAndWait();
 
             System.out.println("[Explore] Saved to " + file.getAbsolutePath());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception _) {
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
                     javafx.scene.control.Alert.AlertType.ERROR);
             alert.setHeaderText("Save Failed");
@@ -352,8 +351,8 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             stage.setTitle("Artist Profile: " + artistName);
             stage.setScene(new javafx.scene.Scene(root));
             stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception _) {
+            // failed to open artist page; nothing else we can do here
         }
     }
 

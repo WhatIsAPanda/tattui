@@ -41,7 +41,7 @@ public class Post {
             try {
                 // backgroundLoading=true; okay when JavaFX runtime is present
                 image = new Image(postURL, true);
-            } catch (Exception ignored) {
+            } catch (Exception _) {
                 // leave image null
             }
         }

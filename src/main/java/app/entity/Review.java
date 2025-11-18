@@ -5,24 +5,19 @@ package app.entity;
  */
 public class Review {
     private final int reviewId;
-    private final int reviewerId;
     private final int revieweeId;
     private final String pictureUrl;
     private final String reviewText;
     private final int rating;
-    private final String reviewerName;
-    private final String reviewerPicture;
+    private final Reviewer reviewer;
 
-    public Review(int reviewId, int reviewerId, int revieweeId, String pictureUrl, String reviewText, int rating,
-            String reviewerName, String reviewerPicture) {
+    public Review(int reviewId, int revieweeId, String pictureUrl, String reviewText, int rating, Reviewer reviewer) {
         this.reviewId = reviewId;
-        this.reviewerId = reviewerId;
         this.revieweeId = revieweeId;
         this.pictureUrl = pictureUrl;
         this.reviewText = reviewText;
         this.rating = rating;
-        this.reviewerName = reviewerName;
-        this.reviewerPicture = reviewerPicture;
+        this.reviewer = reviewer;
     }
 
     public int getReviewId() {
@@ -30,7 +25,7 @@ public class Review {
     }
 
     public int getReviewerId() {
-        return reviewerId;
+        return reviewer != null ? reviewer.id : -1;
     }
 
     public int getRevieweeId() {
@@ -50,10 +45,22 @@ public class Review {
     }
 
     public String getReviewerName() {
-        return reviewerName;
+        return reviewer != null ? reviewer.name : null;
     }
 
     public String getReviewerPicture() {
-        return reviewerPicture;
+        return reviewer != null ? reviewer.pictureUrl : null;
+    }
+
+    public static final class Reviewer {
+        private final int id;
+        private final String name;
+        private final String pictureUrl;
+
+        public Reviewer(int id, String name, String pictureUrl) {
+            this.id = id;
+            this.name = name;
+            this.pictureUrl = pictureUrl;
+        }
     }
 }

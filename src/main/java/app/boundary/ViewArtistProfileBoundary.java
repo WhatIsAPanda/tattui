@@ -51,8 +51,8 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
         try {
             this.profile = DatabaseConnector.getFullProfile(profile);
             loadProfile();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
+            // Leave boundary empty if profile lookup fails.
         }
     }
 
@@ -68,8 +68,7 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
         }
         try {
             reviews = DatabaseConnector.loadReviews(profile.getAccountId());
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
             reviews = List.of();
         }
         updateAverageRating();
@@ -104,8 +103,8 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
             stage.setScene(new Scene(root));
             controller.setDialogStage(stage);
             stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException _) {
+            // Ignore; dialog simply won't open if FXML fails.
         }
     }
 
@@ -126,8 +125,8 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException _) {
+            // Ignore; reviews dialog stays closed if loading fails.
         }
-    }
+}
 }

@@ -34,5 +34,6 @@
            <Button fx:id="logInButton" onMouseClicked="#loginButtonClicked" prefWidth="100" text="Sign in" />
          <Button fx:id="registerButton" onAction="#registerButtonClicked" onMouseClicked="#registerButtonClicked" prefWidth="100" text="Register" />
         </HBox>
+        <Label fx:id="errorLabel" textFill="#ff6b6b" />
     </VBox>
 </StackPane>

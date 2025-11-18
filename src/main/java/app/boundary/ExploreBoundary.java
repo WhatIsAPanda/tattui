@@ -70,8 +70,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                 dbg("[ExploreBoundary] Mode=MOCK (fallback; DB not reachable)");
                 return new app.controller.explore.MockExploreDataProvider();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception _) {
             dbg("[ExploreBoundary] Mode=MOCK (fallback due to exception)");
             return new app.controller.explore.MockExploreDataProvider();
         }
@@ -82,7 +81,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     private boolean canConnectToDb() {
         try (java.sql.Connection c = app.db.DbConnectionProvider.open()) {
             return c != null && !c.isClosed();
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             return false;
         }
     }
@@ -251,8 +250,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         boolean accepted = false;
         try {
             accepted = workspaceProvider.get().openTattooFromGallery(img, title);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception _) {
+            // workspace consumer rejected image; fall back to UI alerts below
         }
 
         if (accepted) {
@@ -276,8 +275,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                     javafx.embed.swing.SwingFXUtils.fromFXImage(img, null), "png", file);
             new Alert(Alert.AlertType.INFORMATION,
                     "Saved to:\n" + file.getAbsolutePath()).showAndWait();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception _) {
             new Alert(Alert.AlertType.ERROR, "Save failed for \"" + name + "\".").showAndWait();
         }
     }
@@ -315,8 +313,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     private app.entity.Profile fetchProfile(String artistName) {
         try {
             return app.entity.DatabaseConnector.getProfileByUsername(artistName);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception _) {
             return null;
         }
     }
@@ -329,8 +326,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private String resolveBio(app.entity.Profile profile) {
-        if (profile != null && profile.biography != null && !profile.biography.isBlank()) {
-            return profile.biography;
+        if (profile != null && profile.getBiography() != null && !profile.getBiography().isBlank()) {
+            return profile.getBiography();
         }
         return DEFAULT_BIO;
     }
@@ -359,8 +356,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             stage.setScene(new javafx.scene.Scene(root));
             stage.show();
             return true;
-        } catch (Exception fx) {
-            fx.printStackTrace();
+        } catch (Exception _) {
             return false;
         }
     }
@@ -370,7 +366,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             controller.getClass().getMethod("setData", String.class, String.class, String.class)
                     .invoke(controller, first, second, third);
             return true;
-        } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException _) {
             return false;
         }
     }
@@ -394,8 +390,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             stage.setTitle(artistName);
             stage.setScene(scene);
             stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception _) {
             new Alert(Alert.AlertType.ERROR,
                     "Could not open profile for " + artistName).showAndWait();
         }
@@ -411,7 +406,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                     avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             // leave as-is
         }
         avatar.setFitWidth(160);
@@ -467,7 +462,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
                 if (ares != null)
                     avatar.setImage(new Image(ares, 56, 56, true, true));
             }
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             var ares = getClass().getResourceAsStream(DEFAULT_ARTIST_PHOTO);
             if (ares != null)
                 avatar.setImage(new Image(ares, 56, 56, true, true));

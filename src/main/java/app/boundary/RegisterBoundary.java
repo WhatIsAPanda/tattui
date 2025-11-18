@@ -32,7 +32,8 @@ public class RegisterBoundary implements RootController.PageAware {
         errorLabel.setText("");
     }
 
-    public void createAccountClicked() throws SQLException {
+    public void createAccountClicked() {
+        errorLabel.setText("");
         if(usernameField.getText().isEmpty() || passwordField.getText().isEmpty() || confirmPasswordField.getText().isEmpty()) {
             errorLabel.setText("Please fill all the fields");
             return;
@@ -50,13 +51,21 @@ public class RegisterBoundary implements RootController.PageAware {
             Thread.sleep(1000); // Pause for a moment to show success message
             boolean success = LoginController.verifyUser(username, password);
             if (success) {
-                onPageRequest.accept("workspace");
-            } else {
-                System.out.println("fail!");
+                if (onPageRequest != null) {
+                    onPageRequest.accept("workspace");
+                }
+            } else if (errorLabel != null) {
+                errorLabel.setText("Unable to sign in after registration");
             }
         }
-        catch (SQLException | InterruptedException e) {
-            e.printStackTrace();
+        catch (SQLIntegrityConstraintViolationException _) {
+            errorLabel.setText("Username already taken");
+        }
+        catch (SQLException _) {
+            errorLabel.setText("Unable to create account. Please try again.");
+        }
+        catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
         }
     }
 

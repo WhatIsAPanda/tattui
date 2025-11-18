@@ -67,10 +67,10 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                         ExploreControl.Kind.ARTISTS,
                         resolveThumbnail(p),
                         dedupeTags(p.getStylesList()),
-                        p.biography == null ? "" : p.biography));
+                        p.getBiography() == null ? "" : p.getBiography()));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
+            // Leave list empty when DB lookups fail.
         }
         return items;
     }
@@ -112,8 +112,7 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
             return needle.isEmpty()
                     ? posts.findLatest(FETCH_LIMIT, 0)
                     : posts.search(needle, FETCH_LIMIT, 0);
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
             return List.of();
         }
     }

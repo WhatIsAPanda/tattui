@@ -53,8 +53,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         try {
             this.profile = DatabaseConnector.getFullProfile(profile);
             loadProfile();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
+            // Leave view empty if the backend profile lookup fails.
         }
     }
 
@@ -89,10 +89,9 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 if (profilePicture != null) {
                     profilePicture.setFill(new ImagePattern(image));
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
                 showAlert(Alert.AlertType.ERROR, "Invalid Image", "Unable to load image from that URL.");
             } catch (SQLException e) {
-                e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Update failed", "Unable to save profile picture: " + e.getMessage());
             }
         });
@@ -101,15 +100,14 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private void handleSaveChanges() {
         try {
-            profile.biography = biographyField.getText();
-            profile.work_latitude = Double.parseDouble(latitudeField.getText());
-            profile.work_longitude = Double.parseDouble(longitudeField.getText());
+            profile.setBiography(biographyField.getText());
+            profile.setWorkLatitude(Double.parseDouble(latitudeField.getText()));
+            profile.setWorkLongitude(Double.parseDouble(longitudeField.getText()));
             DatabaseConnector.modifyUser(profile);
             showAlert(Alert.AlertType.INFORMATION, "Profile Saved", "Your profile has been saved.");
         } catch (SQLException e) {
-            e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Save failed", "Unable to save profile: " + e.getMessage());
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             showAlert(Alert.AlertType.ERROR, "Invalid Coordinates",
                     "Please enter valid numbers for latitude and longitude.");
         }
@@ -181,7 +179,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 profile.setArtistPosts(updatedPosts);
                 populatePosts(postsPanel, updatedPosts);
             } catch (SQLException e) {
-                e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Unable to add post", e.getMessage());
             }
         });

@@ -14,6 +14,8 @@ public class DatabaseConnector {
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
     private static final String ACCOUNT_ID_STRING = "account_id";
+    private static final String USERNAME_STRING = "username";
+    private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
 
     private DatabaseConnector() {
     }
@@ -142,9 +144,9 @@ public class DatabaseConnector {
         }
         List<String> stylesList = new ArrayList<>();
         int id = rs.getInt(ACCOUNT_ID_STRING);
-        String username = rs.getString("username");
+        String username = rs.getString(USERNAME_STRING);
         String password = rs.getString("password");
-        String profilePictureUrl = rs.getString("profile_picture_url");
+        String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
         double homeLatitude = rs.getDouble("home_latitude");
         double homeLongitude = rs.getDouble("home_longitude");
         String style = rs.getString("style_name");
@@ -179,8 +181,8 @@ public class DatabaseConnector {
         List<Profile> artistProfiles = new ArrayList<>();
         while (!rs.isAfterLast()) {
             int accountId = rs.getInt(ACCOUNT_ID_STRING);
-            String username = rs.getString("username");
-            String profilePictureUrl = rs.getString("profile_picture_url");
+            String username = rs.getString(USERNAME_STRING);
+            String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
             String biography = rs.getString("biography");
             String workAddress = rs.getString("work_address");
             double workLongitude = rs.getDouble("work_longitude");
@@ -197,8 +199,8 @@ public class DatabaseConnector {
                 }
                 styles.add(style);
             }
-            artistProfiles.add(new Profile(accountId, username, profilePictureUrl, biography, workAddress,
-                    workLongitude, workLatitude, styles));
+            Profile.WorkLocation location = new Profile.WorkLocation(workAddress, workLongitude, workLatitude);
+            artistProfiles.add(new Profile(accountId, username, profilePictureUrl, biography, styles, location));
         }
         return artistProfiles;
 
@@ -232,8 +234,7 @@ public class DatabaseConnector {
         profileQueryStatement.setDouble(3, longitudeFrom);
         profileQueryStatement.setDouble(4, longitudeTo);
         ResultSet rs = profileQueryStatement.executeQuery();
-        List<Profile> profileList = convertToArtistProfiles(rs);
-        return profileList;
+        return convertToArtistProfiles(rs);
     }
 
     public static void createUser(String username, String password, boolean isArtist) throws SQLException {
@@ -281,7 +282,7 @@ public class DatabaseConnector {
                             rs.getInt("post_id"),
                             rs.getString("caption"),
                             rs.getString("post_picture_url"),
-                            rs.getInt("account_id"),
+                            rs.getInt(ACCOUNT_ID_STRING),
                             rs.getString("keywords")));
                 }
                 return posts;
@@ -291,10 +292,10 @@ public class DatabaseConnector {
 
     public static void modifyUser(Profile p) throws SQLException {
         String username = p.getUsername();
-        String bio = p.biography;
-        double longitude = p.work_longitude;
-        double lattitude = p.work_latitude;
-        String profile_picture_url = p.getProfilePictureURL();
+        String bio = p.getBiography();
+        double longitude = p.getWorkLongitude();
+        double lattitude = p.getWorkLatitude();
+        String profilePictureUrl = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {
             throw new SQLException("Username is required to modify user data");
@@ -334,7 +335,7 @@ public class DatabaseConnector {
             updateArtist.setInt(4, accountId);
             updateArtist.executeUpdate();
 
-            updateAccount.setString(1, profile_picture_url);
+            updateAccount.setString(1, profilePictureUrl);
             updateAccount.setInt(2, accountId);
             updateAccount.executeUpdate();
 
@@ -375,8 +376,8 @@ public class DatabaseConnector {
             stmt.executeUpdate();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return new Review(keys.getInt(1), reviewerId, revieweeId, pictureUrl, reviewText, rating, null,
-                            null);
+                    Review.Reviewer reviewer = new Review.Reviewer(reviewerId, null, null);
+                    return new Review(keys.getInt(1), revieweeId, pictureUrl, reviewText, rating, reviewer);
                 }
             }
         }
@@ -410,15 +411,17 @@ public class DatabaseConnector {
             try (ResultSet rs = stmt.executeQuery()) {
                 List<Review> reviews = new ArrayList<>();
                 while (rs.next()) {
+                    Review.Reviewer reviewer = new Review.Reviewer(
+                            rs.getInt("reviewer_id"),
+                            rs.getString(USERNAME_STRING),
+                            rs.getString(PROFILE_PICTURE_URL_STRING));
                     reviews.add(new Review(
                             rs.getInt("review_id"),
-                            rs.getInt("reviewer_id"),
                             rs.getInt("reviewee_id"),
                             rs.getString("review_picture_url"),
                             rs.getString("review_text"),
                             rs.getInt("rating"),
-                            rs.getString("username"),
-                            rs.getString("profile_picture_url")));
+                            reviewer));
                 }
                 return reviews;
             }

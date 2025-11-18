@@ -62,9 +62,10 @@ public final class PostReviewBoundary {
             artistNameLabel.setText("@" + profile.getUsername());
         }
         if (artistBioLabel != null) {
-            String bio = (profile.biography == null || profile.biography.isBlank())
+            String rawBio = profile.getBiography();
+            String bio = (rawBio == null || rawBio.isBlank())
                     ? "No biography yet."
-                    : profile.biography;
+                    : rawBio;
             artistBioLabel.setText(bio);
         }
         if (artistAvatar != null) {
@@ -121,18 +122,18 @@ public final class PostReviewBoundary {
             return;
         }
         String text = reviewTextArea != null ? reviewTextArea.getText() : "";
-        if (text == null || text.trim().length() < 1 || text.trim().length() > 200) {
+        if (text == null || text.trim().isEmpty() || text.trim().length() > 200) {
             alert(Alert.AlertType.WARNING, "Invalid length", "Reviews must be between 1 and 200 characters.");
             return;
         }
         int rating = ratingSlider != null ? (int) Math.round(ratingSlider.getValue()) : 0;
-        rating = Math.max(0, Math.min(5, rating));
+        rating = Math.clamp(rating, 0, 5);
 
         String photoPath = (selectedImageUrl != null && !selectedImageUrl.isBlank()) ? selectedImageUrl : null;
 
         try {
             DatabaseConnector.submitReview(
-                    LoggedInAccount.getInstance().getAccount_id(),
+                    LoggedInAccount.getInstance().getAccountId(),
                     profile.getAccountId(),
                     photoPath,
                     text.trim(),
@@ -145,7 +146,6 @@ public final class PostReviewBoundary {
                 dialogStage.close();
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
             alert(Alert.AlertType.ERROR, "Failed to post review", ex.getMessage());
         }
     }

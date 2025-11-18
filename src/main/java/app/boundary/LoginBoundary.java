@@ -5,6 +5,7 @@ import app.controller.RootController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -20,18 +21,47 @@ public class LoginBoundary implements RootController.PageAware {
     private Button loginButton;
     @FXML
     private Button registerButton;
+    @FXML
+    private Label errorLabel;
 
     private Consumer<String> onPageRequest;
 
     @FXML
-    public void loginButtonClicked() throws SQLException {
+    public void initialize() {
+        if (errorLabel != null) {
+            errorLabel.setText("");
+        }
+    }
+
+    @FXML
+    public void loginButtonClicked() {
+        if (errorLabel != null) {
+            errorLabel.setText("");
+        }
+
         String username = usernameField.getText();
         String password = passwordField.getText();
-        boolean success = LoginController.verifyUser(username, password);
-        if (success) {
-            onPageRequest.accept("workspace");
-        } else {
-            System.out.println("fail!");
+
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            if (errorLabel != null) {
+                errorLabel.setText("Please enter your username and password");
+            }
+            return;
+        }
+
+        try {
+            boolean success = LoginController.verifyUser(username, password);
+            if (success) {
+                if (onPageRequest != null) {
+                    onPageRequest.accept("workspace");
+                }
+            } else if (errorLabel != null) {
+                errorLabel.setText("Incorrect username or password");
+            }
+        } catch (SQLException _) {
+            if (errorLabel != null) {
+                errorLabel.setText("Unable to log in right now. Please try again.");
+            }
         }
     }
     //TODO:: implement page navigation for login/sign in

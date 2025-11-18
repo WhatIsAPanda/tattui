@@ -95,10 +95,11 @@ public final class JdbcPostRepository implements PostRepository {
                     rs.getString("username"),
                     rs.getString("profile_picture_url"),
                     rs.getString("biography"),
-                    rs.getString("work_address"),
-                    safeDouble(rs, "work_longitude"),
-                    safeDouble(rs, "work_latitude"),
-                    java.util.List.of());
+                    java.util.List.of(),
+                    new Profile.WorkLocation(
+                            rs.getString("work_address"),
+                            safeDouble(rs, "work_longitude"),
+                            safeDouble(rs, "work_latitude")));
 
             out.add(new PostWithAuthor(post, author));
         }
@@ -111,7 +112,7 @@ public final class JdbcPostRepository implements PostRepository {
             if (rs.wasNull())
                 return 0.0;
             return v;
-        } catch (SQLException e) {
+        } catch (SQLException _) {
             return 0.0;
         }
     }

@@ -28,11 +28,11 @@ public abstract class BaseProfileBoundary {
         else if (artistNameField instanceof javafx.scene.control.TextField tf)
             tf.setText(profile.getUsername());
 
-        Image image = profile.profile_picture;
+        Image image = profile.getProfilePicture();
         if (image != null && profilePicture != null)
             profilePicture.setFill(new ImagePattern(image));
 
-        String bio = profile.biography;
+        String bio = profile.getBiography();
         if (biographyField instanceof Text t)
             t.setText(bio);
         else if (biographyField instanceof TextArea ta)
@@ -40,8 +40,8 @@ public abstract class BaseProfileBoundary {
         else if (biographyField instanceof Label l)
             l.setText(bio);
 
-        double longitude = profile.work_longitude;
-        double latitude = profile.work_latitude;
+        double longitude = profile.getWorkLongitude();
+        double latitude = profile.getWorkLatitude();
         if (longitudeField instanceof javafx.scene.control.TextField lonField)
             lonField.setText(Double.toString(longitude));
         else if (longitudeField instanceof Label lonLabel)

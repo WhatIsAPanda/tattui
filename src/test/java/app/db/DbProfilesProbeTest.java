@@ -36,7 +36,7 @@ public class DbProfilesProbeTest {
             }
         } catch (Throwable t) {
             System.out.println("[Probe] ERROR in profilesLikeAnything:");
-            t.printStackTrace(System.out);
+            System.out.println("[Probe] cause: " + t.getMessage());
         }
     }
 
@@ -60,7 +60,7 @@ public class DbProfilesProbeTest {
             }
         } catch (Throwable t) {
             System.out.println("[Probe] ERROR in profileByUsername:");
-            t.printStackTrace(System.out);
+            System.out.println("[Probe] cause: " + t.getMessage());
         }
     }
 }
