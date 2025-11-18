@@ -85,23 +85,43 @@ public class DatabaseConnector {
     }
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
-        PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
-                """
-                        SELECT *
-                          FROM Artists AS A
-                          LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                         WHERE ACC.username = ?;
-                        """);
-        preparedStatement.setString(1, profileSkeleton.getUsername());
-        ResultSet resultSet = preparedStatement.executeQuery();
-        // Temporarily skip loading posts from the database.
-        profileSkeleton.setArtistPosts(Collections.emptyList());
-        return profileSkeleton;
-
+        Profile fullProfile = getProfileByUsername(profileSkeleton.getUsername());
+        if (fullProfile == null) {
+            return profileSkeleton;
+        }
+        fullProfile.setArtistPosts(loadPostsForAccount(fullProfile.getAccountId()));
+        return fullProfile;
     }
 
-    public static Post addArtistPost(int accountId, String caption, String imageUrl, boolean isDesign) throws SQLException {
-        throw new SQLException("Post submission is temporarily unavailable.");
+    public static Post addArtistPost(int accountId, String caption, String imageUrl, String keywords)
+            throws SQLException {
+        if (accountId <= 0) {
+            throw new SQLException("Account id must be positive");
+        }
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new SQLException("Image URL is required");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                INSERT INTO Posts2 (account_id, caption, post_picture_url, keywords)
+                VALUES (?, ?, ?, ?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, accountId);
+            stmt.setString(2, caption);
+            stmt.setString(3, imageUrl);
+            stmt.setString(4, keywords);
+            stmt.executeUpdate();
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int postId = keys.getInt(1);
+                    return new Post(postId, caption, imageUrl, accountId, keywords);
+                }
+            }
+        }
+        throw new SQLException("Failed to create post record");
     }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
@@ -145,7 +165,11 @@ public class DatabaseConnector {
         profileQueryStatement.setString(1, queryUsername);
         ResultSet rs = profileQueryStatement.executeQuery();
         List<Profile> artistProfilesList = convertToArtistProfiles(rs);
-        return artistProfilesList.isEmpty() ? null : artistProfilesList.getFirst();
+        Profile profile = artistProfilesList.isEmpty() ? null : artistProfilesList.getFirst();
+        if (profile != null) {
+            profile.setArtistPosts(loadPostsForAccount(profile.getAccountId()));
+        }
+        return profile;
     }
 
     private static List<Profile> convertToArtistProfiles(ResultSet rs) throws SQLException {
@@ -195,24 +219,21 @@ public class DatabaseConnector {
 
     public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom,
             double longitudeTo) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
-                SELECT *
-                  FROM Artists AS A
-                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
-                  LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                 WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
-                """);
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+                """
+                        SELECT *
+                          FROM Artists AS A
+                          LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                          LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                         WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
+                        """);
         profileQueryStatement.setDouble(1, latitudeFrom);
         profileQueryStatement.setDouble(2, latitudeTo);
         profileQueryStatement.setDouble(3, longitudeFrom);
         profileQueryStatement.setDouble(4, longitudeTo);
         ResultSet rs = profileQueryStatement.executeQuery();
         List<Profile> profileList = convertToArtistProfiles(rs);
-        if (profileList.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            return profileList;
-        }
+        return profileList;
     }
 
     public static void createUser(String username, String password, boolean isArtist) throws SQLException {
@@ -234,6 +255,36 @@ public class DatabaseConnector {
                         """);
                 insertArtistsStmt.setInt(1, userId);
                 insertArtistsStmt.executeUpdate();
+            }
+        }
+    }
+
+    private static List<Post> loadPostsForAccount(int accountId) throws SQLException {
+        if (accountId <= 0) {
+            return Collections.emptyList();
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT post_id, account_id, caption, post_picture_url, keywords
+                  FROM Posts2
+                 WHERE account_id = ?
+                 ORDER BY post_id DESC
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Post> posts = new ArrayList<>();
+                while (rs.next()) {
+                    posts.add(new Post(
+                            rs.getInt("post_id"),
+                            rs.getString("caption"),
+                            rs.getString("post_picture_url"),
+                            rs.getInt("account_id"),
+                            rs.getString("keywords")));
+                }
+                return posts;
             }
         }
     }

@@ -12,7 +12,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -142,13 +141,15 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         urlField.setPromptText("Image URL");
         TextField captionField = new TextField();
         captionField.setPromptText("Caption (optional)");
-        CheckBox designCheckBox = new CheckBox("Is design?");
+        TextField keywordsField = new TextField();
+        keywordsField.setPromptText("Keywords (optional)");
 
         grid.add(new Label("Image URL"), 0, 0);
         grid.add(urlField, 1, 0);
         grid.add(new Label("Caption"), 0, 1);
         grid.add(captionField, 1, 1);
-        grid.add(designCheckBox, 1, 2);
+        grid.add(new Label("Keywords"), 0, 2);
+        grid.add(keywordsField, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -163,7 +164,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 return new PostFormData(
                         trimToNull(urlField.getText()),
                         trimToNull(captionField.getText()),
-                        designCheckBox.isSelected());
+                        trimToNull(keywordsField.getText()));
             }
             return null;
         });
@@ -174,7 +175,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                         profile.getAccountId(),
                         form.caption(),
                         form.imageUrl(),
-                        form.isDesign());
+                        form.keywords());
                 List<Post> updatedPosts = new ArrayList<>(profile.getArtistPosts());
                 updatedPosts.add(0, newPost);
                 profile.setArtistPosts(updatedPosts);
@@ -218,6 +219,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private record PostFormData(String imageUrl, String caption, boolean isDesign) {
+    private record PostFormData(String imageUrl, String caption, String keywords) {
     }
 }

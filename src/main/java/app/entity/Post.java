@@ -7,7 +7,7 @@ public class Post {
     private String caption;
     private String postURL;
     private int postOwnerId;
-    private boolean design;
+    private String keywords;
 
     // Lazy image; don't create during tests/headless contexts
     private volatile Image image;
@@ -21,17 +21,17 @@ public class Post {
         this.id = id;
         this.caption = caption;
         this.postURL = postURL;
-        this.design = false;
+        this.keywords = null;
         // leave author-related fields at default/null if your 5-arg version added them
     }
 
 
-    public Post(int id, String caption, String postURL, int postOwnerId, boolean isDesign) {
+    public Post(int id, String caption, String postURL, int postOwnerId, String keywords) {
         this.id = id;
         this.caption = caption;
         this.postURL = postURL;
         this.postOwnerId = postOwnerId;
-        this.design = isDesign;
+        this.keywords = keywords;
         // IMPORTANT: do NOT create Image here; we’re in plain Java/JUnit often.
         // The UI can call getImage() when a JavaFX toolkit exists.
     }
@@ -52,5 +52,5 @@ public class Post {
     public String getPostURL() { return postURL; }
     public int getId() { return id; }
     public int getPostOwnerId() { return postOwnerId; }
-    public boolean isDesign() { return design; }
+    public String getKeywords() { return keywords; }
 }
