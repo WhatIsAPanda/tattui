@@ -120,14 +120,16 @@ public class MapController implements PageAware, ProfileAware {
             tagSearch(query);
         }
         if (query.charAt(0) == '@') {
-            usernameSearch(query);
+            usernameSearch(query.substring(1).trim());
         }
         populateMapAsync();
         boolean foundCity = citySearch(query);
         if (!foundCity) {
             usernameSearch(query);
-        }
-        populateMapAsync();
+            populateMapAsync();
+        } else {populateMapAsync();}
+        if (allResults == null || allResults.isEmpty())
+            return;
         resultsList.getItems().setAll(allResults);
     }
 
@@ -288,10 +290,11 @@ public class MapController implements PageAware, ProfileAware {
     private void usernameSearch(String query) {
         try {
             // Fetch all profiles whose usernames partially match the query
-            List<Profile> profiles = DatabaseConnector.getProfilesLike(query.trim());
+            Profile profile = DatabaseConnector.getProfileByUsername(query.trim());
 
-            if (profiles != null && !profiles.isEmpty()) {
-                allResults = new LinkedList<>(profiles);
+            if (profile != null) {
+                allResults = new LinkedList<>();
+                allResults.add(profile);
             } else {
                 System.out.println("No matching profiles found.");
             }
