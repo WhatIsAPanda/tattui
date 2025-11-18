@@ -46,7 +46,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="851.0" prefWidth="1142.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.EditArtistProfileBoundary">
+<VBox prefHeight="864.0" prefWidth="887.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.boundary.EditArtistProfileBoundary">
    <children>
       <BorderPane prefHeight="51.0" style="-fx-border-color: white; -fx-border-width: 0 0 1 0;">
          <center>
@@ -67,9 +67,9 @@
          </left>
       </BorderPane>
       <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" stylesheets="@../css/main.css" VBox.vgrow="ALWAYS">
-         <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="579.0" prefWidth="761.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+         <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
             <children>
-               <BorderPane prefHeight="579.0" prefWidth="757.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-17.0" AnchorPane.topAnchor="0.0">
+               <BorderPane prefHeight="579.0" prefWidth="757.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <top>
                      <VBox alignment="CENTER" BorderPane.alignment="CENTER">
                         <children>
@@ -96,7 +96,7 @@
                                  <Insets bottom="25.0" top="25.0" />
                               </VBox.margin>
                            </HBox>
-                           <HBox prefHeight="38.0" prefWidth="226.0">
+                           <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="38.0" prefWidth="226.0">
                               <children>
                                  <ImageView fitHeight="41.0" fitWidth="38.0" pickOnBounds="true" preserveRatio="true" />
                                  <ImageView fitHeight="40.0" fitWidth="38.0" pickOnBounds="true" preserveRatio="true" />
@@ -105,9 +105,9 @@
                                  <ImageView fitHeight="29.0" fitWidth="67.0" pickOnBounds="true" preserveRatio="true" />
                               </children>
                            </HBox>
-                           <HBox alignment="CENTER">
+                           <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                               <children>
-                                 <HBox alignment="CENTER" spacing="20.0">
+                                 <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="20.0">
                                     <children>
                                        <Button mnemonicParsing="false" onAction="#openReviewPage" prefHeight="31.0" prefWidth="143.0" text="Read Reviews" />
                                        <Label fx:id="averageRatingLabel" alignment="CENTER" prefHeight="44.0" prefWidth="79.0" text="5 / 5">
@@ -133,7 +133,7 @@
                      </VBox>
                   </top>
                   <center>
-                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" maxWidth="1.7976931348623157E308" prefHeight="509.0" prefWidth="1127.0" vbarPolicy="AS_NEEDED">
+                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" maxWidth="1.7976931348623157E308" style="-fx-border-color: white; -fx-border-width: 1 0 0 0;" styleClass="title" vbarPolicy="AS_NEEDED">
                         <content>
                             <GridPane fx:id="postsPanel" alignment="CENTER" gridLinesVisible="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity">
                                     <columnConstraints>
@@ -146,9 +146,6 @@
                   </center>
                </BorderPane>
             </children>
-            <padding>
-               <Insets right="15.0" />
-            </padding>
          </AnchorPane>
       </ScrollPane>
    </children>
