@@ -73,9 +73,9 @@
                   <top>
                      <VBox alignment="CENTER" BorderPane.alignment="CENTER">
                         <children>
-                           <HBox alignment="CENTER" prefHeight="118.0" prefWidth="528.0" spacing="25.0">
+                           <HBox alignment="CENTER" prefHeight="118.0" prefWidth="528.0" spacing="25.0" stylesheets="@../css/main.css">
                               <children>
-                                 <Circle fx:id="profilePicture" fill="DODGERBLUE" onMouseClicked="#handleProfileClick" radius="50.0" stroke="BLACK" strokeType="INSIDE" />
+                                 <Circle fx:id="profilePicture" fill="DODGERBLUE" radius="50.0" stroke="BLACK" strokeType="INSIDE" />
                                  <VBox alignment="CENTER_LEFT" prefHeight="111.0" prefWidth="390.0" spacing="5.0">
                                     <children>
                                        <Label fx:id="artistNameField" styleClass="title" text="Artist Name" />
@@ -115,7 +115,7 @@
                                              <Font size="16.0" />
                                           </font>
                                        </Label>
-                                       <Button mnemonicParsing="false" onAction="#handleSaveChanges" prefHeight="31.0" prefWidth="143.0" text="Leave a Review" />
+                                       <Button mnemonicParsing="false" onAction="#handleLeaveReview" prefHeight="31.0" prefWidth="143.0" text="Leave a Review" />
                                     </children>
                                     <opaqueInsets>
                                        <Insets />
