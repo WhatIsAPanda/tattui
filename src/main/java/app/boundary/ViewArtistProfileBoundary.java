@@ -60,6 +60,7 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
         populatePosts(postsPanel, profile.getArtistPosts());
+        refreshReviews();
     }
 
     private void refreshReviews() {
@@ -89,8 +90,23 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
 
     @FXML
     private void handleLeaveReview() {
-        if (pageRequest != null) {
-            pageRequest.accept("postReview");
+        if (profile == null) {
+            return;
+        }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/PostReview.fxml"));
+            Parent root = loader.load();
+            PostReviewBoundary controller = loader.getController();
+            controller.setProfile(profile);
+            controller.setOnReviewPosted(this::refreshReviews);
+            Stage stage = new Stage();
+            stage.setTitle("Leave Review - @" + profile.getUsername());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            controller.setDialogStage(stage);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

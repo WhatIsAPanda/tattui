@@ -317,8 +317,8 @@ public class DatabaseConnector {
         if (reviewerId <= 0 || revieweeId <= 0) {
             throw new SQLException("Reviewer and reviewee ids must be positive");
         }
-        if (rating < 1 || rating > 5) {
-            throw new SQLException("Rating must be between 1 and 5");
+        if (rating < 0 || rating > 5) {
+            throw new SQLException("Rating must be between 0 and 5");
         }
         if (reviewText == null || reviewText.isBlank()) {
             throw new SQLException("Review text is required");
