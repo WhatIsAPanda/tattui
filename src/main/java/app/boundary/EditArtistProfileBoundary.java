@@ -29,8 +29,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private Label artistNameField;
     @FXML
-    private Label averageRatingLabel;
-    @FXML
     private GridPane postsPanel;
     @FXML
     private TextField longitudeField;
@@ -38,7 +36,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     private TextField latitudeField;
 
     private Profile profile;
-    private List<Review> reviews = List.of();
 
     @FXML
     public void setProfile(Profile profile) {
@@ -77,53 +74,5 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
         populatePosts(postsPanel, profile.getArtistPosts());
-        refreshReviews();
-    }
-
-    private void refreshReviews() {
-        if (profile == null) {
-            return;
-        }
-        try {
-            reviews = DatabaseConnector.loadReviews(profile.getAccountId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            reviews = List.of();
-        }
-        updateAverageRating();
-    }
-
-    private void updateAverageRating() {
-        if (averageRatingLabel == null) {
-            return;
-        }
-        if (reviews.isEmpty()) {
-            averageRatingLabel.setText("No reviews");
-            return;
-        }
-        double average = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
-        averageRatingLabel.setText(String.format("%.1f / 5", average));
-    }
-
-    @FXML
-    private void openReviewPage() {
-        if (profile == null) {
-            return;
-        }
-        refreshReviews();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/ReviewsDialog.fxml"));
-            Parent root = loader.load();
-            ReviewsDialogBoundary dialogController = loader.getController();
-            dialogController.setData(profile, reviews);
-
-            Stage stage = new Stage();
-            stage.setTitle("Reviews - @" + profile.getUsername());
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
