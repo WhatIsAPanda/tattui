@@ -11,8 +11,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ProfileCell extends ListCell<Profile> {
+
+    private final Consumer<Profile> onClick;
+
+    public ProfileCell() {
+        this(null);
+    }
+
+    public ProfileCell(Consumer<Profile> onClick) {
+        this.onClick = onClick;
+    }
 
     @Override
     protected void updateItem(Profile profile, boolean empty) {
@@ -21,6 +32,7 @@ public class ProfileCell extends ListCell<Profile> {
         if (empty || profile == null) {
             setGraphic(null);
             setText(null);
+            setOnMouseClicked(null);
             return;
         }
 
@@ -50,7 +62,6 @@ public class ProfileCell extends ListCell<Profile> {
                 Image img = profile.profile_picture;
                 image.setImage(img);
 
-                // Wait until image loads to set the viewport (image must have real dimensions)
                 img.progressProperty().addListener((obs, oldVal, newVal) -> {
                     if (img.getProgress() == 1.0 && img.getWidth() > 0 && img.getHeight() > 0) {
                         double width = img.getWidth();
@@ -71,6 +82,11 @@ public class ProfileCell extends ListCell<Profile> {
 
             setGraphic(root);
             setPadding(Insets.EMPTY);
+            if (onClick != null) {
+                setOnMouseClicked(evt -> onClick.accept(profile));
+            } else {
+                setOnMouseClicked(null);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
