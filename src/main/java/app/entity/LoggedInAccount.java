@@ -1,17 +1,24 @@
 package app.entity;
 
-public class LoggedInAccount {
-    private static Account loggedInAccount = null;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
-    private LoggedInAccount(Account account) {
-        LoggedInAccount.loggedInAccount = account;
+public class LoggedInAccount {
+    private static final ObjectProperty<Account> ACCOUNT = new SimpleObjectProperty<>();
+
+    private LoggedInAccount() {
     }
 
     public static Account getInstance() {
-        return loggedInAccount;
+        return ACCOUNT.get();
     }
 
     public static void setInstance(Account account) {
-        LoggedInAccount.loggedInAccount = account;
+        ACCOUNT.set(account);
+    }
+
+    public static ReadOnlyObjectProperty<Account> accountProperty() {
+        return ACCOUNT;
     }
 }

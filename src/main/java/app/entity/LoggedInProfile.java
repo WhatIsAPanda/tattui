@@ -1,17 +1,24 @@
 package app.entity;
 
-public class LoggedInProfile {
-    private static Profile loggedInProfile = null;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
-    private LoggedInProfile(Profile profile) {
-        LoggedInProfile.loggedInProfile = profile;
+public class LoggedInProfile {
+    private static final ObjectProperty<Profile> PROFILE = new SimpleObjectProperty<>();
+
+    private LoggedInProfile() {
     }
 
     public static Profile getInstance() {
-        return loggedInProfile;
+        return PROFILE.get();
     }
 
     public static void setInstance(Profile profile) {
-        LoggedInProfile.loggedInProfile = profile;
+        PROFILE.set(profile);
+    }
+
+    public static ReadOnlyObjectProperty<Profile> profileProperty() {
+        return PROFILE;
     }
 }

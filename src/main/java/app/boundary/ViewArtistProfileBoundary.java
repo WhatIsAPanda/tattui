@@ -43,11 +43,6 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
     }
 
     @FXML
-    private void handleBack() {
-        System.out.println("Back clicked");
-    }
-
-    @FXML
     public void setProfile(Profile profile) {
         try {
             this.profile = DatabaseConnector.getFullProfile(profile);

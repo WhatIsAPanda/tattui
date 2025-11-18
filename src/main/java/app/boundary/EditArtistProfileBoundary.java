@@ -60,11 +60,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     }
 
     @FXML
-    private void handleBack() {
-        System.out.println("Back clicked");
-    }
-
-    @FXML
     private void handleProfileClick() {
         if (profile == null) {
             showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before editing.");
@@ -116,7 +111,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Save failed", "Unable to save profile: " + e.getMessage());
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Invalid Coordinates", "Please enter valid numbers for latitude and longitude.");
+            showAlert(Alert.AlertType.ERROR, "Invalid Coordinates",
+                    "Please enter valid numbers for latitude and longitude.");
         }
 
     }
@@ -221,6 +217,12 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
+        double longitude = profile.work_longitude;
+        double latitude = profile.work_latitude;
+        if (longitudeField instanceof javafx.scene.control.TextField lonField)
+            lonField.setText(Double.toString(longitude));
+        if (latitudeField instanceof javafx.scene.control.TextField latField)
+            latField.setText(Double.toString(latitude));
         populatePosts(postsPanel, profile.getArtistPosts());
     }
 
@@ -229,7 +231,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        if (postsPanel != null && postsPanel.getScene() != null && postsPanel.getScene().getWindow() instanceof Stage stage) {
+        if (postsPanel != null && postsPanel.getScene() != null
+                && postsPanel.getScene().getWindow() instanceof Stage stage) {
             alert.initOwner(stage);
         }
         alert.showAndWait();
