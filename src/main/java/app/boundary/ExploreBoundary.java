@@ -14,6 +14,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -41,6 +42,7 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     // Pure logic lives here
     private final ExploreControl control = new ExploreControl();
+    private final java.util.Map<String, List<ExploreControl.SearchItem>> searchCache = new java.util.HashMap<>();
 
     // ---- Explore provider selection ----
 // Priority:
@@ -131,7 +133,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             default -> ExploreControl.Kind.ALL;
         };
 
-        List<ExploreControl.SearchItem> items = provider.fetch(q, kind);
+        String cacheKey = kind.name() + "::" + q;
+        List<ExploreControl.SearchItem> items = searchCache.computeIfAbsent(cacheKey, key -> provider.fetch(q, kind));
 
         resultsPane.getChildren().setAll(
                 items.isEmpty()
