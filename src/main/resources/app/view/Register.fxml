@@ -18,11 +18,14 @@
             <Image url="@/icons/dragon.png" />
          </image>
       </ImageView>
-      <Button mnemonicParsing="false" onAction="#handleBackToLogin" style="-fx-padding: 8 12;" text="Back" StackPane.alignment="TOP_LEFT">
+      <Label alignment="TOP_LEFT" onMouseClicked="#handleBackToLogin" text="Back" textFill="WHITE" StackPane.alignment="TOP_LEFT">
          <StackPane.margin>
-            <Insets left="10.0" top="10.0" />
+            <Insets />
          </StackPane.margin>
-      </Button>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </Label>
       <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="600.0" spacing="15.0" style="-fx-background-color: rgba(0,0,0,0.8); -fx-padding: 25; -fx-border-color: white; -fx-border-width: 1;">
          <children>
             <Label style="-fx-font-weight: bold; -fx-font-size: 20;" styleClass="title" text="Register Form" textFill="WHITE" />
