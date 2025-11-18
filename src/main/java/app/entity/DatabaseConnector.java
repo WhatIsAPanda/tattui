@@ -363,18 +363,20 @@ public class DatabaseConnector {
         }
 
         String sql = """
-                INSERT INTO Reviews (reviewer_id, reviewee_id, review_text, rating)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO Reviews (reviewer_id, reviewee_id, review_text, rating, review_picture_url)
+                VALUES (?, ?, ?, ?, ?)
                 """;
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, reviewerId);
             stmt.setInt(2, revieweeId);
             stmt.setString(3, reviewText);
             stmt.setInt(4, rating);
+            stmt.setString(5, pictureUrl);
             stmt.executeUpdate();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return new Review(keys.getInt(1), reviewerId, revieweeId, pictureUrl, reviewText, rating);
+                    return new Review(keys.getInt(1), reviewerId, revieweeId, pictureUrl, reviewText, rating, null,
+                            null);
                 }
             }
         }
@@ -393,9 +395,13 @@ public class DatabaseConnector {
                        r.reviewer_id,
                        r.reviewee_id,
                        r.review_text,
-                       r.rating
+                       r.rating,
+                       r.review_picture_url,
+                       acc.username,
+                       acc.profile_picture_url
                   FROM Reviews r
                   JOIN Artists a ON a.artist_id = r.reviewee_id
+                  JOIN Accounts acc ON acc.account_id = r.reviewer_id
                  WHERE a.account_id = ?
                  ORDER BY r.review_id DESC
                 """;
@@ -408,9 +414,11 @@ public class DatabaseConnector {
                             rs.getInt("review_id"),
                             rs.getInt("reviewer_id"),
                             rs.getInt("reviewee_id"),
-                            null,
+                            rs.getString("review_picture_url"),
                             rs.getString("review_text"),
-                            rs.getInt("rating")));
+                            rs.getInt("rating"),
+                            rs.getString("username"),
+                            rs.getString("profile_picture_url")));
                 }
                 return reviews;
             }

@@ -10,14 +10,19 @@ public class Review {
     private final String pictureUrl;
     private final String reviewText;
     private final int rating;
+    private final String reviewerName;
+    private final String reviewerPicture;
 
-    public Review(int reviewId, int reviewerId, int revieweeId, String pictureUrl, String reviewText, int rating) {
+    public Review(int reviewId, int reviewerId, int revieweeId, String pictureUrl, String reviewText, int rating,
+            String reviewerName, String reviewerPicture) {
         this.reviewId = reviewId;
         this.reviewerId = reviewerId;
         this.revieweeId = revieweeId;
         this.pictureUrl = pictureUrl;
         this.reviewText = reviewText;
         this.rating = rating;
+        this.reviewerName = reviewerName;
+        this.reviewerPicture = reviewerPicture;
     }
 
     public int getReviewId() {
@@ -42,5 +47,13 @@ public class Review {
 
     public int getRating() {
         return rating;
+    }
+
+    public String getReviewerName() {
+        return reviewerName;
+    }
+
+    public String getReviewerPicture() {
+        return reviewerPicture;
     }
 }

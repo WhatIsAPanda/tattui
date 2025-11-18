@@ -189,13 +189,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     }
 
     private void loadProfile() {
-        populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
-        double longitude = profile.work_longitude;
-        double latitude = profile.work_latitude;
-        if (longitudeField instanceof javafx.scene.control.TextField lonField)
-            lonField.setText(Double.toString(longitude));
-        if (latitudeField instanceof javafx.scene.control.TextField latField)
-            latField.setText(Double.toString(latitude));
+        populateProfileCommon(profile, profilePicture, biographyField, artistNameField, longitudeField, latitudeField);
         populatePosts(postsPanel, profile.getArtistPosts());
     }
 

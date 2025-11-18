@@ -10,7 +10,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -20,19 +19,22 @@ import javafx.scene.layout.StackPane;
 import javafx.animation.FadeTransition;
 import javafx.util.Duration;
 
-
 // public class ExploreController {
 public class ExploreController implements RootController.WorkspaceAware, RootController.PageAware {
 
     private java.util.function.Supplier<WorkspaceController> workspaceProvider;
     private java.util.function.Consumer<String> pageRequest;
 
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> filterBox;
+    @FXML
+    private TilePane resultsPane;
 
-    @FXML private TextField searchField;
-    @FXML private ComboBox<String> filterBox;
-    @FXML private TilePane resultsPane;
-
-    private enum Kind { ALL, ARTISTS, DESIGNS, COMPLETED_TATTOOS }
+    private enum Kind {
+        ALL, ARTISTS, DESIGNS, COMPLETED_TATTOOS
+    }
 
     private static class SearchItem {
         final String title;
@@ -64,8 +66,8 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         }
         if (workspaceProvider == null || workspaceProvider.get() == null) {
             new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION,
-                    "Workspace is not available yet.\nOpen the app via Root and/or visit the Workspace page, then try again."
-            ).showAndWait();
+                    "Workspace is not available yet.\nOpen the app via Root and/or visit the Workspace page, then try again.")
+                    .showAndWait();
             return;
         }
 
@@ -79,30 +81,25 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         if (accepted) {
             new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION,
                     "Sent \"" + title + "\" to the Workspace.").showAndWait();
-            if (pageRequest != null) pageRequest.accept("workspace");  // 👈 jump
-        }
-        else {
+            if (pageRequest != null)
+                pageRequest.accept("workspace"); // 👈 jump
+        } else {
             new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING,
                     "Workspace didn’t accept the image.\nMake sure placement is initialized.").showAndWait();
         }
     }
 
-
     /// ////////
-
-
 
     private List<SearchItem> allItems;
 
-// ?
-
+    // ?
 
     @Override
     public void setOnPageRequest(java.util.function.Consumer<String> handler) {
         this.pageRequest = handler;
     }
     // ?
-
 
     @FXML
     private void initialize() {
@@ -145,8 +142,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         resultsPane.getChildren().setAll(
                 filtered.isEmpty()
                         ? List.of(new Label("No results. Try a different search or filter."))
-                        : filtered.stream().map(this::card).collect(Collectors.toList())
-        );
+                        : filtered.stream().map(this::card).collect(Collectors.toList()));
 
         System.out.println("[Explore] results=" + filtered.size()
                 + " filter=" + filterBox.getSelectionModel().getSelectedItem()
@@ -166,14 +162,14 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         Label overlay = new Label(item.hoverText);
         overlay.setWrapText(true);
         overlay.setStyle("""
-            -fx-background-color: rgba(0,0,0,0.7);
-            -fx-text-fill: white;
-            -fx-padding: 8;
-            -fx-font-size: 12px;
-            -fx-background-radius: 6;
-            -fx-opacity: 0;
-            -fx-alignment: center;
-            """);
+                -fx-background-color: rgba(0,0,0,0.7);
+                -fx-text-fill: white;
+                -fx-padding: 8;
+                -fx-font-size: 12px;
+                -fx-background-radius: 6;
+                -fx-opacity: 0;
+                -fx-alignment: center;
+                """);
         overlay.setMaxWidth(220);
 
         // stack image + overlay so overlay sits on top
@@ -214,13 +210,12 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             fadeOut.playFromStart();
         });
 
-
         // Click behaviors
         box.setOnMouseClicked(e -> {
             switch (item.kind) {
                 case DESIGNS -> {
-                    var SAVE  = new javafx.scene.control.ButtonType("Save Locally");
-                    var SEND  = new javafx.scene.control.ButtonType("Send to Workspace");
+                    var SAVE = new javafx.scene.control.ButtonType("Save Locally");
+                    var SEND = new javafx.scene.control.ButtonType("Send to Workspace");
                     var CANCEL = javafx.scene.control.ButtonType.CANCEL;
 
                     var alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
@@ -242,7 +237,6 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             }
         });
 
-
         return box;
     }
 
@@ -255,8 +249,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
                 Kind.ARTISTS,
                 "/icons/artist_raven.jpg",
                 List.of("blackwork", "abstract", "linework"),
-                "Raven is a punk-studio artist known for bold blackwork and geometric abstractions."
-        ));
+                "Raven is a punk-studio artist known for bold blackwork and geometric abstractions."));
 
         // Completed tattoos
         list.add(new SearchItem(
@@ -264,41 +257,37 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
                 Kind.COMPLETED_TATTOOS,
                 "/icons/completed_dragon_forearm.jpg",
                 List.of("forearm", "dragon", "completed"),
-                "Healed forearm piece with a stylized dragon—placed in the 3D workspace."
-        ));
+                "Healed forearm piece with a stylized dragon—placed in the 3D workspace."));
         list.add(new SearchItem(
                 "Koi sleeve segment (completed)",
                 Kind.COMPLETED_TATTOOS,
                 "/icons/completed_koi_leg.jpg",
                 List.of("leg", "koi", "color", "completed"),
-                "Color koi segment wrapped on a darker skin tone for realistic preview."
-        ));
-
+                "Color koi segment wrapped on a darker skin tone for realistic preview."));
 
         // Design library (pick any / all you like)
-        list.add(new SearchItem("Koi design",            Kind.DESIGNS, "/icons/design_koi.png",
+        list.add(new SearchItem("Koi design", Kind.DESIGNS, "/icons/design_koi.png",
                 List.of("koi", "color", "japanese"), "Vibrant koi with rainbow scales."));
-        list.add(new SearchItem("Mandala",               Kind.DESIGNS, "/icons/design_mandala.png",
+        list.add(new SearchItem("Mandala", Kind.DESIGNS, "/icons/design_mandala.png",
                 List.of("mandala", "ornamental"), "Symmetrical mandala—great for sternum or back."));
-        list.add(new SearchItem("Floral cluster",        Kind.DESIGNS, "/icons/design_flowers.png",
+        list.add(new SearchItem("Floral cluster", Kind.DESIGNS, "/icons/design_flowers.png",
                 List.of("flowers", "botanical"), "Bold, high-contrast floral cluster."));
-        list.add(new SearchItem("Simple dragon",         Kind.DESIGNS, "/icons/design_simple_dragon.png",
+        list.add(new SearchItem("Simple dragon", Kind.DESIGNS, "/icons/design_simple_dragon.png",
                 List.of("dragon", "blackwork"), "Minimal blackwork dragon motif."));
-        list.add(new SearchItem("Phoenix sketch",        Kind.DESIGNS, "/icons/design_phoenix.png",
+        list.add(new SearchItem("Phoenix sketch", Kind.DESIGNS, "/icons/design_phoenix.png",
                 List.of("phoenix", "mythical"), "Rising phoenix sketch—dynamic flow."));
-        list.add(new SearchItem("Sugar skull + rose",    Kind.DESIGNS, "/icons/design_skull_rose.png",
+        list.add(new SearchItem("Sugar skull + rose", Kind.DESIGNS, "/icons/design_skull_rose.png",
                 List.of("skull", "neo traditional"), "Sugar-skull with floral accents."));
-        list.add(new SearchItem("Playful snake",         Kind.DESIGNS, "/icons/design_snake.png",
+        list.add(new SearchItem("Playful snake", Kind.DESIGNS, "/icons/design_snake.png",
                 List.of("snake", "fun"), "Cartoon snake—good for forearm or calf."));
 
         return list;
     }
 
-
-
     private void saveImageToLocal(Image img, String name) {
         try {
-            if (img == null) return;
+            if (img == null)
+                return;
 
             // Create the file in user's Downloads folder
             java.io.File file = new java.io.File(System.getProperty("user.home")
@@ -308,12 +297,11 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             javax.imageio.ImageIO.write(
                     javafx.embed.swing.SwingFXUtils.fromFXImage(img, null),
                     "png",
-                    file
-            );
+                    file);
 
             // Show confirmation popup
-            javafx.scene.control.Alert alert =
-                    new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.INFORMATION);
             alert.setHeaderText("Saved Successfully!");
             alert.setContentText("The design \"" + name + "\" has been saved to:\n" + file.getAbsolutePath());
             alert.showAndWait();
@@ -321,17 +309,17 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             System.out.println("[Explore] Saved to " + file.getAbsolutePath());
         } catch (Exception ex) {
             ex.printStackTrace();
-            javafx.scene.control.Alert alert =
-                    new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.ERROR);
             alert.setHeaderText("Save Failed");
             alert.setContentText("Something went wrong while saving \"" + name + "\".");
             alert.showAndWait();
         }
     }
 
-
     private void enlargeImage(Image img, String title) {
-        if (img == null) return;
+        if (img == null)
+            return;
         javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(img);
         iv.setPreserveRatio(true);
         iv.setFitWidth(600);
@@ -346,16 +334,16 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
     private void openArtistPage(String artistName) {
         try {
             var loader = new javafx.fxml.FXMLLoader(getClass().getResource("/app/view/ArtistProfile.fxml"));
-            javafx.scene.Parent root = loader.load();  // ✅ Parent
+            javafx.scene.Parent root = loader.load(); // ✅ Parent
 
             ArtistProfileController controller = loader.getController();
 
             String photo = "/icons/artist_raven.jpg";
             String bio = """
-            Raven (she/her) is a punk-studio tattoo artist specializing in bold blackwork, 
-            geometric abstractions, and negative-space composition. She loves sleeves and 
-            large-scale projects that flow with the body.
-            """;
+                    Raven (she/her) is a punk-studio tattoo artist specializing in bold blackwork,
+                    geometric abstractions, and negative-space composition. She loves sleeves and
+                    large-scale projects that flow with the body.
+                    """;
 
             // If you add more artists later, switch on name here.
             controller.setData(artistName, bio, photo);
@@ -368,8 +356,5 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             e.printStackTrace();
         }
     }
-
-
-
 
 }

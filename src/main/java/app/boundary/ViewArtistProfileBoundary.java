@@ -33,6 +33,10 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
     private GridPane postsPanel;
     @FXML
     private Label averageRatingLabel;
+    @FXML
+    private Label longitudeField;
+    @FXML
+    private Label latitudeField;
 
     private Profile profile;
     private java.util.function.Consumer<String> pageRequest;
@@ -53,7 +57,7 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
     }
 
     private void loadProfile() {
-        populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
+        populateProfileCommon(profile, profilePicture, biographyField, artistNameField, longitudeField, latitudeField);
         populatePosts(postsPanel, profile.getArtistPosts());
         refreshReviews();
     }
