@@ -78,7 +78,7 @@ public class ProfileCell extends ListCell<Profile> {
                             image.setPreserveRatio(false);
                         }
                     });
-                } catch (IllegalArgumentException ex) {
+                } catch (IllegalArgumentException _) {
                     image.setImage(null);
                 }
             } else {

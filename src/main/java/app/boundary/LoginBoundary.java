@@ -64,7 +64,7 @@ public class LoginBoundary implements RootController.PageAware {
             }
         }
     }
-    //TODO:: implement page navigation for login/sign in
+
     @FXML
     public void registerButtonClicked(ActionEvent event) {
         onPageRequest.accept("register");

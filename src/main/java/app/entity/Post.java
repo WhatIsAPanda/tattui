@@ -13,9 +13,11 @@ public class Post {
     private volatile Image image;
 
     // Optional headless switch for tests (default false)
-    private static volatile boolean HEADLESS = Boolean.getBoolean("HEADLESS_TESTS");
+    private static volatile boolean headless = Boolean.getBoolean("headless_TESTS");
 
-    public static void setHeadless(boolean v) { HEADLESS = v; }
+    public static void setHeadless(boolean v) {
+        headless = v;
+    }
 
     public Post(int id, String caption, String postURL) {
         this.id = id;
@@ -24,7 +26,6 @@ public class Post {
         this.keywords = null;
         // leave author-related fields at default/null if your 5-arg version added them
     }
-
 
     public Post(int id, String caption, String postURL, int postOwnerId, String keywords) {
         this.id = id;
@@ -37,7 +38,7 @@ public class Post {
     }
 
     public Image getImage() {
-        if (image == null && !HEADLESS && postURL != null && !postURL.isBlank()) {
+        if (image == null && !headless && postURL != null && !postURL.isBlank()) {
             try {
                 // backgroundLoading=true; okay when JavaFX runtime is present
                 image = new Image(postURL, true);
@@ -48,9 +49,23 @@ public class Post {
         return image;
     }
 
-    public String getCaption() { return caption; }
-    public String getPostURL() { return postURL; }
-    public int getId() { return id; }
-    public int getPostOwnerId() { return postOwnerId; }
-    public String getKeywords() { return keywords; }
+    public String getCaption() {
+        return caption;
+    }
+
+    public String getPostURL() {
+        return postURL;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getPostOwnerId() {
+        return postOwnerId;
+    }
+
+    public String getKeywords() {
+        return keywords;
+    }
 }
