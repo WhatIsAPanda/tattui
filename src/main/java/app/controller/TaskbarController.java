@@ -73,7 +73,7 @@ public class TaskbarController implements RootController.PageAware, RootControll
             case "workspaceButton" -> onPageRequest.accept("workspace");
             case "exploreButton" -> onPageRequest.accept("explore");
             case "mapButton" -> onPageRequest.accept("map");
-            case "loginButton" -> onPageRequest.accept("login");
+            case "loginButton" -> handleLoginButton();
             case "settingsButton" -> handleSettingsClick();
 
             default -> LOG.log(Level.WARNING, "Unhandled button: {0}", b.getId());
@@ -121,5 +121,16 @@ public class TaskbarController implements RootController.PageAware, RootControll
             return;
         boolean loggedIn = LoggedInAccount.getInstance() != null;
         loginTooltip.setText(loggedIn ? "Logout" : "Login");
+    }
+
+    private void handleLoginButton() {
+        boolean loggedIn = LoggedInAccount.getInstance() != null;
+        if (loggedIn) {
+            LoginController.logout();
+            if (loginTooltip != null) {
+                loginTooltip.setText("Login");
+            }
+        }
+        onPageRequest.accept("login");
     }
 }

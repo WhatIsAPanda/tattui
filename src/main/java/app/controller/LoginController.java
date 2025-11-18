@@ -20,5 +20,10 @@ public class LoginController {
         return false;
     }
 
+    public static void logout() {
+        LoggedInAccount.setInstance(null);
+        LoggedInProfile.setInstance(null);
+    }
+
 
 }

@@ -187,34 +187,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     }
 
-    @FXML
-    private void openReviewPage() {
-        if (profile == null) {
-            showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before viewing reviews.");
-            return;
-        }
-        try {
-            List<Review> reviews = DatabaseConnector.loadReviews(profile.getAccountId());
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/ReviewsDialog.fxml"));
-            Parent root = loader.load();
-            ReviewsDialogBoundary dialogController = loader.getController();
-            dialogController.setData(profile, reviews);
-
-            Stage stage = new Stage();
-            stage.setTitle("Reviews - @" + profile.getUsername());
-            stage.initModality(Modality.APPLICATION_MODAL);
-            if (profilePicture != null && profilePicture.getScene() != null) {
-                stage.initOwner(profilePicture.getScene().getWindow());
-            }
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Unable to open reviews", e.getMessage());
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Unable to load reviews", e.getMessage());
-        }
-    }
-
     private void loadProfile() {
         populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
         double longitude = profile.work_longitude;
