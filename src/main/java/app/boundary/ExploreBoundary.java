@@ -22,6 +22,9 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     // ---- lightweight debug helper ----
     private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
+    private static final String DEFAULT_ARTIST_PHOTO = "/icons/artist_raven.jpg";
+    private static final String DEFAULT_BIO = "No biography yet.";
+    private static final String ARTIST_PROFILE_FXML = "/app/view/ArtistProfile.fxml";
 
     private static void dbg(String msg) {
         if (DEBUG)
@@ -293,99 +296,127 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     private void openArtistPage(String artistName) {
-        if (profileRequest != null) {
-            try {
-                app.entity.Profile profile = app.entity.DatabaseConnector.getProfileByUsername(artistName);
-                if (profile != null) {
-                    profileRequest.accept(profile);
-                    return;
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        app.entity.Profile profile = fetchProfile(artistName);
+        if (profileRequest != null && profile != null) {
+            profileRequest.accept(profile);
+            return;
         }
+
+        String photo = resolvePhoto(profile);
+        String bio = resolveBio(profile);
+
+        if (showFXMLProfile(artistName, bio, photo)) {
+            return;
+        }
+
+        showFallbackProfile(artistName, bio, photo);
+    }
+
+    private app.entity.Profile fetchProfile(String artistName) {
         try {
-            // 1) Pull data from DB
-            app.entity.Profile p = app.entity.DatabaseConnector.getProfileByUsername(artistName);
+            return app.entity.DatabaseConnector.getProfileByUsername(artistName);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
 
-            String photo = (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank())
-                    ? p.getProfilePictureURL()
-                    : "/icons/artist_raven.jpg";
-            String bio = (p != null && p.biography != null && !p.biography.isBlank())
-                    ? p.biography
-                    : "No biography yet.";
+    private String resolvePhoto(app.entity.Profile profile) {
+        if (profile != null && profile.getProfilePictureURL() != null && !profile.getProfilePictureURL().isBlank()) {
+            return profile.getProfilePictureURL();
+        }
+        return DEFAULT_ARTIST_PHOTO;
+    }
 
-            // 2) Try FXML first (if William’s profile page exists)
-            try {
-                var fxml = getClass().getResource("/app/view/ArtistProfile.fxml");
-                if (fxml != null) {
-                    var loader = new javafx.fxml.FXMLLoader(fxml);
-                    javafx.scene.Parent root = loader.load();
-                    Object controller = loader.getController();
+    private String resolveBio(app.entity.Profile profile) {
+        if (profile != null && profile.biography != null && !profile.biography.isBlank()) {
+            return profile.biography;
+        }
+        return DEFAULT_BIO;
+    }
 
-                    try {
-                        // prefer common signature: (name, bio, photoUrl)
-                        controller.getClass().getMethod("setData", String.class, String.class, String.class)
-                                .invoke(controller, artistName, bio, photo);
-                    } catch (NoSuchMethodException noSig) {
-                        // try alternate ordering if the controller uses it
-                        try {
-                            controller.getClass().getMethod("setData", String.class, String.class, String.class)
-                                    .invoke(controller, artistName, photo, bio);
-                        } catch (NoSuchMethodException nope) {
-                            // if no setter at all, we’ll just show fallback window below
-                            throw nope;
-                        }
-                    }
-
-                    var stage = new javafx.stage.Stage();
-                    stage.setTitle("Artist Profile: " + artistName);
-                    stage.setScene(new javafx.scene.Scene(root));
-                    stage.show();
-                    return; // done
-                }
-            } catch (Exception fx) {
-                // fall through to programmatic fallback
-                fx.printStackTrace();
+    private boolean showFXMLProfile(String artistName, String bio, String photo) {
+        try {
+            var fxml = getClass().getResource(ARTIST_PROFILE_FXML);
+            if (fxml == null) {
+                return false;
+            }
+            var loader = new javafx.fxml.FXMLLoader(fxml);
+            javafx.scene.Parent root = loader.load();
+            Object controller = loader.getController();
+            if (controller == null) {
+                return false;
             }
 
-            // 3) Fallback: build a simple profile window programmatically (always works)
+            boolean invoked = tryInvokeSetData(controller, artistName, bio, photo)
+                    || tryInvokeSetData(controller, artistName, photo, bio);
+            if (!invoked) {
+                return false;
+            }
+
+            var stage = new javafx.stage.Stage();
+            stage.setTitle("Artist Profile: " + artistName);
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.show();
+            return true;
+        } catch (Exception fx) {
+            fx.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean tryInvokeSetData(Object controller, String first, String second, String third) {
+        try {
+            controller.getClass().getMethod("setData", String.class, String.class, String.class)
+                    .invoke(controller, first, second, third);
+            return true;
+        } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+            return false;
+        }
+    }
+
+    private void showFallbackProfile(String artistName, String bio, String photo) {
+        try {
             javafx.scene.image.ImageView avatar = new javafx.scene.image.ImageView();
-            try {
-                if (photo.startsWith("http://") || photo.startsWith("https://")) {
-                    avatar.setImage(new javafx.scene.image.Image(photo, 160, 160, true, true));
-                } else {
-                    var in = getClass().getResourceAsStream(photo);
-                    if (in != null)
-                        avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
-                }
-            } catch (Exception ignored) {
-                /* leave empty */ }
-            avatar.setFitWidth(160);
-            avatar.setFitHeight(160);
-            avatar.setPreserveRatio(true);
+            applyAvatarImage(avatar, photo);
 
             var nameLbl = new javafx.scene.control.Label(artistName);
-            nameLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+            nameLbl.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
             var bioLbl = new javafx.scene.control.Label(bio);
             bioLbl.setWrapText(true);
+            bioLbl.setStyle("-fx-text-fill: #ddd;");
 
             var box = new javafx.scene.layout.VBox(12, avatar, nameLbl, bioLbl);
             box.setStyle("-fx-padding: 16; -fx-background-color: #222; -fx-text-fill: white;");
-            nameLbl.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
-            bioLbl.setStyle("-fx-text-fill: #ddd;");
 
             var scene = new javafx.scene.Scene(box, 420, 360);
             var stage = new javafx.stage.Stage();
             stage.setTitle(artistName);
             stage.setScene(scene);
             stage.show();
-
         } catch (Exception e) {
             e.printStackTrace();
-            new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR,
+            new Alert(Alert.AlertType.ERROR,
                     "Could not open profile for " + artistName).showAndWait();
         }
+    }
+
+    private void applyAvatarImage(javafx.scene.image.ImageView avatar, String photo) {
+        try {
+            if (photo.startsWith("http://") || photo.startsWith("https://")) {
+                avatar.setImage(new javafx.scene.image.Image(photo, 160, 160, true, true));
+            } else {
+                var in = getClass().getResourceAsStream(photo);
+                if (in != null) {
+                    avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
+                }
+            }
+        } catch (Exception ignored) {
+            // leave as-is
+        }
+        avatar.setFitWidth(160);
+        avatar.setFitHeight(160);
+        avatar.setPreserveRatio(true);
     }
 
     /**
@@ -432,12 +463,12 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             if (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank()) {
                 avatar.setImage(new Image(p.getProfilePictureURL(), 56, 56, true, true));
             } else {
-                var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
+                var ares = getClass().getResourceAsStream(DEFAULT_ARTIST_PHOTO);
                 if (ares != null)
                     avatar.setImage(new Image(ares, 56, 56, true, true));
             }
         } catch (Exception ignored) {
-            var ares = getClass().getResourceAsStream("/icons/artist_raven.jpg");
+            var ares = getClass().getResourceAsStream(DEFAULT_ARTIST_PHOTO);
             if (ares != null)
                 avatar.setImage(new Image(ares, 56, 56, true, true));
         }
@@ -472,8 +503,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
     private String avatarForArtist(String artistName) {
         if ("Raven".equalsIgnoreCase(artistName))
-            return "/icons/artist_raven.jpg";
-        return "/icons/artist_raven.jpg"; // fallback
+            return DEFAULT_ARTIST_PHOTO;
+        return DEFAULT_ARTIST_PHOTO; // fallback
     }
 
 }

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditArtistProfileBoundary extends BaseProfileBoundary {
+    private static final String NO_PROFILE_SELECTED_TITLE = "No profile selected";
 
     @FXML
     private Circle profilePicture;
@@ -66,7 +67,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private void handleProfileClick() {
         if (profile == null) {
-            showAlert(Alert.AlertType.WARNING, "No profile selected", "Load a profile before editing.");
+            showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before editing.");
             return;
         }
 
@@ -123,7 +124,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private void addPost() {
         if (profile == null) {
-            showAlert(Alert.AlertType.WARNING, "No profile selected", "Load a profile before adding posts.");
+            showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before adding posts.");
             return;
         }
 
@@ -193,7 +194,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private void openReviewPage() {
         if (profile == null) {
-            showAlert(Alert.AlertType.WARNING, "No profile selected", "Load a profile before viewing reviews.");
+            showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before viewing reviews.");
             return;
         }
         try {

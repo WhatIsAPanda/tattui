@@ -34,13 +34,14 @@ public class RootController {
     private final Map<String, Parent> pageCache = new HashMap<>();
     private static final String WORKSPACE_PAGE = "workspace";
     private static final String LOGIN_PAGE = "login";
+    private static final String VIEW_ARTIST_PROFILE_PAGE = "viewArtistProfile";
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
             WORKSPACE_PAGE, "/app/view/Workspace.fxml",
             "map", "/app/view/Map.fxml",
             "gallery", "/app/view/Gallery.fxml",
             LOGIN_PAGE, "/app/view/Login.fxml",
-            "viewArtistProfile", "/app/view/viewProfile.fxml",
+            VIEW_ARTIST_PROFILE_PAGE, "/app/view/viewProfile.fxml",
             "EditArtistProfile", "/app/view/EditMyProfile.fxml",
             "explore", "/app/view/Explore.fxml",
             "postReview", "/app/view/PostReview.fxml",
@@ -111,7 +112,7 @@ public class RootController {
             pageCache.clear();
         }
 
-        boolean cacheable = profile.isEmpty() && !key.equals("viewArtistProfile");
+        boolean cacheable = profile.isEmpty() && !key.equals(VIEW_ARTIST_PROFILE_PAGE);
         Parent view = cacheable
                 ? pageCache.computeIfAbsent(key, k -> loadView(path, Optional.empty()))
                 : loadView(path, profile);
@@ -142,7 +143,7 @@ public class RootController {
                 aware.setOnPageRequest(this::showPage);
             if (cntrl instanceof ProfileAware aware) {
                 aware.setProfileProvider(
-                        profileObj -> this.showPage("viewArtistProfile", Optional.ofNullable(profileObj)));
+                        profileObj -> this.showPage(VIEW_ARTIST_PROFILE_PAGE, Optional.ofNullable(profileObj)));
             }
             if (cntrl instanceof EditArtistProfileAware aware) {
                 aware.setEditArtistProfileProvider(
