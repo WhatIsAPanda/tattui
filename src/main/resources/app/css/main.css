@@ -173,3 +173,9 @@
   -fx-font-size: 14px;
   -fx-font-weight: bold;
 }
+
+.title {
+  -fx-font-family: "Times New Roman";
+  -fx-font-size: 14px;
+  -fx-font-weight: bold;
+}
