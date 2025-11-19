@@ -325,7 +325,7 @@ public class MapController implements PageAware, ProfileAware {
     private void applyFilter(String tag) {
         resultsList.getItems().setAll(
                 allResults.stream()
-                        .filter(item -> item.getStylesList().contains(tag))
+                        .filter(item -> item.getStylesList().contains(tag.substring(1)))
                         .toList());
     }
 
