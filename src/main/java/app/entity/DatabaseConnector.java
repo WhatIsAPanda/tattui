@@ -10,12 +10,8 @@ import java.util.Properties;
 
 public class DatabaseConnector {
     private static Connection conn;
-    private static final String URL = System.getenv("DATABASE_URL");
-    private static final String USER = System.getenv("DATABASE_USER");
-    private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
     private static final String SQLITE_DB_FILENAME = "tattui.db";
     private static final String SQLITE_DB_URL = "jdbc:sqlite:" + SQLITE_DB_FILENAME;
-    private static final String CREDENTIALS_FILE_PATH = "C:\\SchoolProjects\\keys.txt";
     private static final String ACCOUNT_ID_STRING = "account_id";
     private static final String USERNAME_STRING = "username";
     private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
@@ -69,58 +65,13 @@ public class DatabaseConnector {
     }
 
     private static Connection createConnection() throws SQLException {
-        String dbUrl = firstNonBlank(URL, null);
-        String dbUser = firstNonBlank(USER, null);
-        String dbPassword = PASSWORD;
+        String dbUrl = SQLITE_DB_URL;
 
-        if (isMissingJdbcDetails(dbUrl, dbUser, dbPassword)) {
-            Properties props = loadCredentialsFromFile();
-            if (props != null) {
-                dbUrl = firstNonBlank(dbUrl, props.getProperty("url"));
-                dbUser = firstNonBlank(dbUser, props.getProperty("user"));
-                dbPassword = dbPassword != null ? dbPassword : props.getProperty("password");
-            }
+        Connection sqliteConnection = DriverManager.getConnection(dbUrl);
+        try (Statement pragmaStmt = sqliteConnection.createStatement()) {
+            pragmaStmt.execute("PRAGMA foreign_keys = ON;");
         }
-
-        // USE LOCAL FOR TESTING
-        // if (dbUrl == null || dbUrl.isBlank()) {
-        dbUrl = SQLITE_DB_URL;
-        // }
-
-        if (dbUrl.startsWith("jdbc:sqlite:")) {
-            Connection sqliteConnection = DriverManager.getConnection(dbUrl);
-            try (Statement pragmaStmt = sqliteConnection.createStatement()) {
-                pragmaStmt.execute("PRAGMA foreign_keys = ON;");
-            }
-            return sqliteConnection;
-        }
-
-        if (dbUser == null || dbUser.isBlank() || dbPassword == null) {
-            throw new SQLException("Database credentials are not configured.");
-        }
-
-        return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-    }
-
-    private static boolean isMissingJdbcDetails(String url, String user, String password) {
-        return url == null || url.isBlank() || user == null || user.isBlank() || password == null;
-    }
-
-    private static String firstNonBlank(String primary, String fallback) {
-        if (primary != null && !primary.isBlank()) {
-            return primary;
-        }
-        return (fallback == null || fallback.isBlank()) ? null : fallback;
-    }
-
-    private static Properties loadCredentialsFromFile() {
-        Properties props = new Properties();
-        try (FileInputStream fis = new FileInputStream(CREDENTIALS_FILE_PATH)) {
-            props.load(fis);
-            return props;
-        } catch (IOException _) {
-            return null;
-        }
+        return sqliteConnection;
     }
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
@@ -412,15 +363,15 @@ public class DatabaseConnector {
                                SET profile_picture_url = ?
                              WHERE account_id = ?
                         """);
-                // PreparedStatement deleteStyles = conn.prepareStatement("""
-                //             DELETE FROM ArtistTaggedStyles
-                //              WHERE account_id = ?
-                //         """);
-                // PreparedStatement insertStyle = conn.prepareStatement("""
-                //             INSERT INTO ArtistTaggedStyles (account_id, style_name)
-                //             VALUES (?, ?)
-                        // """
-                ) {
+        // PreparedStatement deleteStyles = conn.prepareStatement("""
+        // DELETE FROM ArtistTaggedStyles
+        // WHERE account_id = ?
+        // """);
+        // PreparedStatement insertStyle = conn.prepareStatement("""
+        // INSERT INTO ArtistTaggedStyles (account_id, style_name)
+        // VALUES (?, ?)
+        // """
+        ) {
 
             updateArtist.setString(1, bio);
             updateArtist.setDouble(2, latitude);
@@ -436,15 +387,15 @@ public class DatabaseConnector {
             // deleteStyles.executeUpdate();
 
             // for (String style : styles) {
-            //     if (style == null || style.isBlank()) {
-            //         continue;
-            //     }
-            //     insertStyle.setInt(1, accountId);
-            //     insertStyle.setString(2, style);
-            //     insertStyle.addBatch();
+            // if (style == null || style.isBlank()) {
+            // continue;
+            // }
+            // insertStyle.setInt(1, accountId);
+            // insertStyle.setString(2, style);
+            // insertStyle.addBatch();
             // }
             // if (!styles.isEmpty()) {
-            //     insertStyle.executeBatch();
+            // insertStyle.executeBatch();
             // }
 
             conn.commit();
