@@ -1,5 +1,6 @@
 package app.entity;
 
+import app.util.ImageResolver;
 import javafx.scene.image.Image;
 
 public class Post {
@@ -41,7 +42,7 @@ public class Post {
         if (image == null && !headless && postURL != null && !postURL.isBlank()) {
             try {
                 // backgroundLoading=true; okay when JavaFX runtime is present
-                image = new Image(postURL, true);
+                image = ImageResolver.load(postURL, true);
             } catch (Exception _) {
                 // leave image null
             }

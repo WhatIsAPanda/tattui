@@ -3,6 +3,7 @@ package app.boundary;
 import app.controller.RootController;
 import app.controller.WorkspaceController;
 import app.controller.explore.ExploreControl;
+import app.util.ImageResolver;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -266,19 +267,8 @@ public final class ExploreBoundary
         if (view == null || rawThumb == null || rawThumb.isBlank()) {
             return;
         }
-        String thumb = rawThumb.trim();
-        String lc = thumb.toLowerCase(java.util.Locale.ROOT);
         try {
-            if (lc.startsWith("http://") || lc.startsWith("https://")) {
-                view.setImage(new Image(thumb, 220, 0, true, true));
-            } else if (!thumb.contains(" ") && thumb.contains(".") && !thumb.contains("://")) {
-                view.setImage(new Image("https://" + thumb, 220, 0, true, true));
-            } else {
-                var res = getClass().getResourceAsStream(thumb);
-                if (res != null) {
-                    view.setImage(new Image(res, 220, 0, true, true));
-                }
-            }
+            view.setImage(ImageResolver.load(rawThumb, 220, 0, true, true));
         } catch (IllegalArgumentException _) {
             // Leave blank if the provided URL is invalid
         }
@@ -435,14 +425,7 @@ public final class ExploreBoundary
 
     private void applyAvatarImage(javafx.scene.image.ImageView avatar, String photo) {
         try {
-            if (photo.startsWith("http://") || photo.startsWith("https://")) {
-                avatar.setImage(new javafx.scene.image.Image(photo, 160, 160, true, true));
-            } else {
-                var in = getClass().getResourceAsStream(photo);
-                if (in != null) {
-                    avatar.setImage(new javafx.scene.image.Image(in, 160, 160, true, true));
-                }
-            }
+            avatar.setImage(ImageResolver.load(photo, 160, 160, true, true));
         } catch (Exception _) {
             // leave as-is
         }
@@ -492,17 +475,16 @@ public final class ExploreBoundary
         ImageView avatar = new ImageView();
         try {
             app.entity.Profile p = app.entity.DatabaseConnector.getProfileByUsername(artistName);
-            if (p != null && p.getProfilePictureURL() != null && !p.getProfilePictureURL().isBlank()) {
-                avatar.setImage(new Image(p.getProfilePictureURL(), 56, 56, true, true));
-            } else {
-                var ares = getClass().getResourceAsStream(DEFAULT_ARTIST_PHOTO);
-                if (ares != null)
-                    avatar.setImage(new Image(ares, 56, 56, true, true));
-            }
+            String primary = (p == null) ? null : p.getProfilePictureURL();
+            avatar.setImage(ImageResolver.loadAny(56, 56, true, true, false,
+                    primary,
+                    DEFAULT_ARTIST_PHOTO));
         } catch (Exception _) {
-            var ares = getClass().getResourceAsStream(DEFAULT_ARTIST_PHOTO);
-            if (ares != null)
-                avatar.setImage(new Image(ares, 56, 56, true, true));
+            try {
+                avatar.setImage(ImageResolver.load(DEFAULT_ARTIST_PHOTO, 56, 56, true, true));
+            } catch (Exception ignored) {
+                // keep empty if fallback also fails
+            }
         }
         avatar.setFitWidth(56);
         avatar.setFitHeight(56);

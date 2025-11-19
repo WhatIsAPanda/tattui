@@ -1,5 +1,6 @@
 package app.entity;
 
+import app.util.ImageResolver;
 import javafx.scene.image.Image;
 
 import java.util.List;
@@ -23,7 +24,13 @@ public class Account {
         this.homeLatitude = homeLatitude;
         this.homeLongitude = homeLongitude;
         this.stylePreferences = stylePreferences;
-        this.profilePicture = new Image(getClass().getResourceAsStream("/db/db_resources/" + profilePictureUrl));
+        try {
+            this.profilePicture = ImageResolver.loadAny(
+                    profilePictureUrl,
+                    "/db/db_resources/" + profilePictureUrl);
+        } catch (IllegalArgumentException _) {
+            this.profilePicture = null;
+        }
     }
 
     public int getAccountId() {

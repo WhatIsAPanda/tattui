@@ -1,10 +1,10 @@
 package app;
 
+import app.util.ImageResolver;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -22,8 +22,7 @@ public class Main extends Application {
         );
         scene.getRoot().lookupAll("*").forEach(n -> n.setFocusTraversable(false));
 
-
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/icons/code.png")));
+        stage.getIcons().add(ImageResolver.load("/icons/code.png"));
         stage.setTitle("Tattui");
         stage.setScene(scene);
         stage.show();

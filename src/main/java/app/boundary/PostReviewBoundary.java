@@ -3,6 +3,7 @@ package app.boundary;
 import app.entity.DatabaseConnector;
 import app.entity.LoggedInAccount;
 import app.entity.Profile;
+import app.util.ImageResolver;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -70,9 +71,9 @@ public final class PostReviewBoundary {
         }
         if (artistAvatar != null) {
             String avatarUrl = profile.getProfilePictureURL();
-            Image avatarImg = (avatarUrl == null || avatarUrl.isBlank())
-                    ? new Image(DEFAULT_AVATAR)
-                    : new Image(avatarUrl, 80, 80, true, true);
+            Image avatarImg = ImageResolver.loadAny(80, 80, true, true, false,
+                    avatarUrl,
+                    DEFAULT_AVATAR);
             artistAvatar.setFill(new ImagePattern(avatarImg));
         }
     }

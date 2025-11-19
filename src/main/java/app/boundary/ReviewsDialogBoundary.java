@@ -2,6 +2,7 @@ package app.boundary;
 
 import app.entity.Profile;
 import app.entity.Review;
+import app.util.ImageResolver;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -85,12 +86,9 @@ public class ReviewsDialogBoundary {
             avatarCircle.setStroke(Color.WHITE);
             avatarCircle.setStrokeWidth(1.0);
             String picture = review.getReviewerPicture();
-            Image avatarImg;
-            if (picture != null && !picture.isBlank()) {
-                avatarImg = new Image(picture, 96, 96, true, true);
-            } else {
-                avatarImg = new Image(DEFAULT_AVATAR, 96, 96, true, true);
-            }
+            Image avatarImg = ImageResolver.loadAny(96, 96, true, true, false,
+                    picture,
+                    DEFAULT_AVATAR);
             avatarCircle.setFill(new ImagePattern(avatarImg));
 
             VBox content = new VBox(4);
@@ -106,12 +104,17 @@ public class ReviewsDialogBoundary {
             content.getChildren().addAll(nameLabel, ratingLabel, textLabel);
 
             if (review.getPictureUrl() != null && !review.getPictureUrl().isBlank()) {
-                ImageView reviewImage = new ImageView(new Image(review.getPictureUrl(), 220, 220, true, true));
-                reviewImage.setPreserveRatio(true);
-                reviewImage.setFitWidth(220);
-                reviewImage.setSmooth(true);
-                reviewImage.getStyleClass().add("review-photo");
-                content.getChildren().add(reviewImage);
+                try {
+                    ImageView reviewImage = new ImageView(
+                            ImageResolver.load(review.getPictureUrl(), 220, 220, true, true));
+                    reviewImage.setPreserveRatio(true);
+                    reviewImage.setFitWidth(220);
+                    reviewImage.setSmooth(true);
+                    reviewImage.getStyleClass().add("review-photo");
+                    content.getChildren().add(reviewImage);
+                } catch (IllegalArgumentException _) {
+                    // ignore invalid review images
+                }
             }
             HBox.setHgrow(content, Priority.ALWAYS);
 

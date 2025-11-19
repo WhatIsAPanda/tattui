@@ -3,6 +3,7 @@ package app.controller;
 import app.entity.LoggedInAccount;
 import app.entity.LoggedInProfile;
 import app.entity.Profile;
+import app.util.ImageResolver;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -109,8 +110,12 @@ public class TaskbarController implements RootController.PageAware, RootControll
             return;
         }
         if (hasProfile && profile.getProfilePictureURL() != null && !profile.getProfilePictureURL().isBlank()) {
-            Image image = new Image(profile.getProfilePictureURL(), 48, 48, true, true);
-            settingsProfileImage.setFill(new ImagePattern(image));
+            try {
+                Image image = ImageResolver.load(profile.getProfilePictureURL(), 48, 48, true, true);
+                settingsProfileImage.setFill(new ImagePattern(image));
+            } catch (IllegalArgumentException _) {
+                settingsProfileImage.setFill(null);
+            }
         } else {
             settingsProfileImage.setFill(null);
         }
