@@ -29,7 +29,7 @@ public class Profile {
         }
         this.stylesList = stylesList == null ? Collections.emptyList() : List.copyOf(stylesList);
         this.profilePictureUrl = profilePictureUrl;
-        this.profilePicture = new Image(profilePictureUrl);
+        this.profilePicture = new Image(getClass().getResourceAsStream("/db/db_resources/" + profilePictureUrl));
     }
 
     public int getAccountId() {

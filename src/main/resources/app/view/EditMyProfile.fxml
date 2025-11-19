@@ -86,11 +86,11 @@
                         </HBox>
                         <HBox alignment="CENTER">
                            <children>
-                              <BorderPane prefHeight="55.0" prefWidth="303.0">
+                              <BorderPane prefHeight="55.0">
                                  <left>
                                     <HBox alignment="CENTER" prefHeight="35.0" prefWidth="40.0" BorderPane.alignment="CENTER">
                                        <children>
-                                          <Label text="Styles: " />
+                                          <Label maxWidth="-Infinity" prefWidth="40.0" text="Styles: " />
                                           <Label fx:id="styles" />
                                        </children>
                                        <BorderPane.margin>
