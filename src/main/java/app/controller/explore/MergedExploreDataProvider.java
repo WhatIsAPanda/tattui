@@ -31,15 +31,16 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
     public List<ExploreControl.SearchItem> fetch(String q, ExploreControl.Kind filter) {
         String needle = (q == null ? "" : q).trim();
         List<ExploreControl.SearchItem> out = new ArrayList<>();
+        List<PostWithAuthor> posts = needsPosts(filter) ? queryPosts(needle) : List.of();
 
         if (handlesArtists(filter)) {
             out.addAll(fetchArtists(needle));
         }
         if (handlesCompleted(filter)) {
-            out.addAll(fetchCompletedPosts(needle));
+            out.addAll(fetchCompletedPosts(posts));
         }
         if (handlesDesigns(filter)) {
-            out.addAll(fetchDesigns(needle));
+            out.addAll(fetchDesigns(posts));
         }
 
         return out;
@@ -55,6 +56,10 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
 
     private boolean handlesDesigns(ExploreControl.Kind filter) {
         return filter == ExploreControl.Kind.DESIGNS || filter == ExploreControl.Kind.ALL;
+    }
+
+    private boolean needsPosts(ExploreControl.Kind filter) {
+        return handlesCompleted(filter) || handlesDesigns(filter);
     }
 
     private List<ExploreControl.SearchItem> fetchArtists(String needle) {
@@ -88,9 +93,9 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
                 styles.stream().filter(s -> s != null && !s.isBlank()).toList()));
     }
 
-    private List<ExploreControl.SearchItem> fetchCompletedPosts(String needle) {
+    private List<ExploreControl.SearchItem> fetchCompletedPosts(List<PostWithAuthor> rows) {
         List<ExploreControl.SearchItem> items = new ArrayList<>();
-        for (PostWithAuthor row : queryPosts(needle)) {
+        for (PostWithAuthor row : rows) {
             var post = row.post();
             var author = row.author();
             String authorName = author.getUsername() == null ? UNKNOW_STRING : author.getUsername();
@@ -117,8 +122,7 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
         }
     }
 
-    private List<ExploreControl.SearchItem> fetchDesigns(String needle) {
-        List<PostWithAuthor> rows = queryPosts(needle);
+    private List<ExploreControl.SearchItem> fetchDesigns(List<PostWithAuthor> rows) {
         List<PostWithAuthor> designish = rows.stream()
                 .filter(this::looksLikeDesign)
                 .toList();

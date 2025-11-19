@@ -91,8 +91,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 }
             } catch (IllegalArgumentException _) {
                 showAlert(Alert.AlertType.ERROR, "Invalid Image", "Unable to load image from that URL.");
-            } catch (SQLException e) {
-                showAlert(Alert.AlertType.ERROR, "Update failed", "Unable to save profile picture: " + e.getMessage());
+            } catch (SQLException _) {
+                showAlert(Alert.AlertType.ERROR, "Update failed", "Unable to save profile picture");
             }
         });
     }
@@ -178,8 +178,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 updatedPosts.add(0, newPost);
                 profile.setArtistPosts(updatedPosts);
                 populatePosts(postsPanel, updatedPosts);
-            } catch (SQLException e) {
-                showAlert(Alert.AlertType.ERROR, "Unable to add post", e.getMessage());
+            } catch (SQLException _) {
+                showAlert(Alert.AlertType.ERROR, "Unable to add post", "");
             }
         });
 
