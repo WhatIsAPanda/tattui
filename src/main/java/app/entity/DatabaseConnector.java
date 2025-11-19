@@ -427,4 +427,99 @@ public class DatabaseConnector {
             }
         }
     }
+
+    public static List<PostWithAuthor> fetchPostsWithAuthors(int limit, int offset) throws SQLException {
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT
+                    p.post_id            AS id,
+                    p.caption            AS caption,
+                    p.post_picture_url   AS postURL,
+                    acc.account_id       AS acc_id,
+                    acc.username         AS username,
+                    acc.profile_picture_url AS profile_picture_url,
+                    art.biography        AS biography,
+                    art.work_address     AS work_address,
+                    art.work_longitude   AS work_longitude,
+                    art.work_latitude    AS work_latitude
+                FROM Posts2 p
+                LEFT JOIN Accounts acc ON acc.account_id = p.account_id
+                LEFT JOIN Artists art  ON art.account_id = acc.account_id
+                ORDER BY p.post_id DESC
+                LIMIT ? OFFSET ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            stmt.setInt(2, offset);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapPostsWithAuthors(rs);
+            }
+        }
+    }
+
+    public static List<PostWithAuthor> searchPostsWithAuthors(String q, int limit, int offset) throws SQLException {
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT
+                    p.post_id            AS id,
+                    p.caption            AS caption,
+                    p.post_picture_url   AS postURL,
+                    acc.account_id       AS acc_id,
+                    acc.username         AS username,
+                    acc.profile_picture_url AS profile_picture_url,
+                    art.biography        AS biography,
+                    art.work_address     AS work_address,
+                    art.work_longitude   AS work_longitude,
+                    art.work_latitude    AS work_latitude
+                FROM Posts2 p
+                LEFT JOIN Accounts acc ON acc.account_id = p.account_id
+                LEFT JOIN Artists art  ON art.account_id = acc.account_id
+                WHERE LOWER(p.caption) LIKE LOWER(?) OR LOWER(acc.username) LIKE LOWER(?)
+                ORDER BY p.post_id DESC
+                LIMIT ? OFFSET ?
+                """;
+        String like = "%" + (q == null ? "" : q) + "%";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, like);
+            stmt.setString(2, like);
+            stmt.setInt(3, limit);
+            stmt.setInt(4, offset);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapPostsWithAuthors(rs);
+            }
+        }
+    }
+
+    private static List<PostWithAuthor> mapPostsWithAuthors(ResultSet rs) throws SQLException {
+        List<PostWithAuthor> posts = new ArrayList<>();
+        while (rs.next()) {
+            Post post = new Post(
+                    rs.getInt("id"),
+                    rs.getString("caption"),
+                    rs.getString("postURL"));
+
+            Profile author = new Profile(
+                    rs.getInt("acc_id"),
+                    rs.getString("username"),
+                    rs.getString("profile_picture_url"),
+                    rs.getString("biography"),
+                    java.util.List.of(),
+                    new Profile.WorkLocation(
+                            rs.getString("work_address"),
+                            safeDouble(rs, "work_longitude"),
+                            safeDouble(rs, "work_latitude")));
+
+            posts.add(new PostWithAuthor(post, author));
+        }
+        return posts;
+    }
+
+    private static double safeDouble(ResultSet rs, String column) throws SQLException {
+        double value = rs.getDouble(column);
+        return rs.wasNull() ? 0.0 : value;
+    }
 }
