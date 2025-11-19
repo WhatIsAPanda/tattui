@@ -191,12 +191,14 @@ public class DatabaseConnector {
             List<String> styles = new ArrayList<>();
             String style = rs.getString("style_name");
             if (style != null) {
+                style = rs.getString("style_name");
                 styles.add(style);
             }
             while (rs.next()) {
                 if (rs.getInt(ACCOUNT_ID_STRING) != accountId) {
                     break;
                 }
+                style = rs.getString("style_name");
                 styles.add(style);
             }
             Profile.WorkLocation location = new Profile.WorkLocation(workAddress, workLongitude, workLatitude);
