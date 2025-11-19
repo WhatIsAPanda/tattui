@@ -412,14 +412,15 @@ public class DatabaseConnector {
                                SET profile_picture_url = ?
                              WHERE account_id = ?
                         """);
-                PreparedStatement deleteStyles = conn.prepareStatement("""
-                            DELETE FROM ArtistTaggedStyles
-                             WHERE account_id = ?
-                        """);
-                PreparedStatement insertStyle = conn.prepareStatement("""
-                            INSERT INTO ArtistTaggedStyles (account_id, style_name)
-                            VALUES (?, ?)
-                        """)) {
+                // PreparedStatement deleteStyles = conn.prepareStatement("""
+                //             DELETE FROM ArtistTaggedStyles
+                //              WHERE account_id = ?
+                //         """);
+                // PreparedStatement insertStyle = conn.prepareStatement("""
+                //             INSERT INTO ArtistTaggedStyles (account_id, style_name)
+                //             VALUES (?, ?)
+                        // """
+                ) {
 
             updateArtist.setString(1, bio);
             updateArtist.setDouble(2, latitude);
@@ -431,20 +432,20 @@ public class DatabaseConnector {
             updateAccount.setInt(2, accountId);
             updateAccount.executeUpdate();
 
-            deleteStyles.setInt(1, accountId);
-            deleteStyles.executeUpdate();
+            // deleteStyles.setInt(1, accountId);
+            // deleteStyles.executeUpdate();
 
-            for (String style : styles) {
-                if (style == null || style.isBlank()) {
-                    continue;
-                }
-                insertStyle.setInt(1, accountId);
-                insertStyle.setString(2, style);
-                insertStyle.addBatch();
-            }
-            if (!styles.isEmpty()) {
-                insertStyle.executeBatch();
-            }
+            // for (String style : styles) {
+            //     if (style == null || style.isBlank()) {
+            //         continue;
+            //     }
+            //     insertStyle.setInt(1, accountId);
+            //     insertStyle.setString(2, style);
+            //     insertStyle.addBatch();
+            // }
+            // if (!styles.isEmpty()) {
+            //     insertStyle.executeBatch();
+            // }
 
             conn.commit();
         } catch (SQLException ex) {
