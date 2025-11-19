@@ -14,6 +14,8 @@ public class DatabaseConnector {
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
     private static final String ACCOUNT_ID_STRING = "account_id";
+    private static final String USERNAME_STRING = "username";
+    private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
 
     private DatabaseConnector() {
     }
@@ -85,23 +87,43 @@ public class DatabaseConnector {
     }
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
-        PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
-                """
-                        SELECT *
-                          FROM Artists AS A
-                          LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                         WHERE ACC.username = ?;
-                        """);
-        preparedStatement.setString(1, profileSkeleton.getUsername());
-        ResultSet resultSet = preparedStatement.executeQuery();
-        // Temporarily skip loading posts from the database.
-        profileSkeleton.setArtistPosts(Collections.emptyList());
-        return profileSkeleton;
-
+        Profile fullProfile = getProfileByUsername(profileSkeleton.getUsername());
+        if (fullProfile == null) {
+            return profileSkeleton;
+        }
+        fullProfile.setArtistPosts(loadPostsForAccount(fullProfile.getAccountId()));
+        return fullProfile;
     }
 
-    public static Post addArtistPost(int accountId, String caption, String imageUrl, boolean isDesign) throws SQLException {
-        throw new SQLException("Post submission is temporarily unavailable.");
+    public static Post addArtistPost(int accountId, String caption, String imageUrl, String keywords)
+            throws SQLException {
+        if (accountId <= 0) {
+            throw new SQLException("Account id must be positive");
+        }
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new SQLException("Image URL is required");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                INSERT INTO Posts2 (account_id, caption, post_picture_url, keywords)
+                VALUES (?, ?, ?, ?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, accountId);
+            stmt.setString(2, caption);
+            stmt.setString(3, imageUrl);
+            stmt.setString(4, keywords);
+            stmt.executeUpdate();
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int postId = keys.getInt(1);
+                    return new Post(postId, caption, imageUrl, accountId, keywords);
+                }
+            }
+        }
+        throw new SQLException("Failed to create post record");
     }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
@@ -122,9 +144,9 @@ public class DatabaseConnector {
         }
         List<String> stylesList = new ArrayList<>();
         int id = rs.getInt(ACCOUNT_ID_STRING);
-        String username = rs.getString("username");
+        String username = rs.getString(USERNAME_STRING);
         String password = rs.getString("password");
-        String profilePictureUrl = rs.getString("profile_picture_url");
+        String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
         double homeLatitude = rs.getDouble("home_latitude");
         double homeLongitude = rs.getDouble("home_longitude");
         String style = rs.getString("style_name");
@@ -145,7 +167,11 @@ public class DatabaseConnector {
         profileQueryStatement.setString(1, queryUsername);
         ResultSet rs = profileQueryStatement.executeQuery();
         List<Profile> artistProfilesList = convertToArtistProfiles(rs);
-        return artistProfilesList.isEmpty() ? null : artistProfilesList.getFirst();
+        Profile profile = artistProfilesList.isEmpty() ? null : artistProfilesList.getFirst();
+        if (profile != null) {
+            profile.setArtistPosts(loadPostsForAccount(profile.getAccountId()));
+        }
+        return profile;
     }
 
     private static List<Profile> convertToArtistProfiles(ResultSet rs) throws SQLException {
@@ -155,8 +181,8 @@ public class DatabaseConnector {
         List<Profile> artistProfiles = new ArrayList<>();
         while (!rs.isAfterLast()) {
             int accountId = rs.getInt(ACCOUNT_ID_STRING);
-            String username = rs.getString("username");
-            String profilePictureUrl = rs.getString("profile_picture_url");
+            String username = rs.getString(USERNAME_STRING);
+            String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
             String biography = rs.getString("biography");
             String workAddress = rs.getString("work_address");
             double workLongitude = rs.getDouble("work_longitude");
@@ -173,8 +199,8 @@ public class DatabaseConnector {
                 }
                 styles.add(style);
             }
-            artistProfiles.add(new Profile(accountId, username, profilePictureUrl, biography, workAddress,
-                    workLongitude, workLatitude, styles));
+            Profile.WorkLocation location = new Profile.WorkLocation(workAddress, workLongitude, workLatitude);
+            artistProfiles.add(new Profile(accountId, username, profilePictureUrl, biography, styles, location));
         }
         return artistProfiles;
 
@@ -195,24 +221,20 @@ public class DatabaseConnector {
 
     public static List<Profile> getProfilesWithinBounds(double latitudeFrom, double latitudeTo, double longitudeFrom,
             double longitudeTo) throws SQLException {
-        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
-                SELECT *
-                  FROM Artists AS A
-                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
-                  LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
-                 WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
-                """);
+        PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement(
+                """
+                        SELECT *
+                          FROM Artists AS A
+                          LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                          LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
+                         WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
+                        """);
         profileQueryStatement.setDouble(1, latitudeFrom);
         profileQueryStatement.setDouble(2, latitudeTo);
         profileQueryStatement.setDouble(3, longitudeFrom);
         profileQueryStatement.setDouble(4, longitudeTo);
         ResultSet rs = profileQueryStatement.executeQuery();
-        List<Profile> profileList = convertToArtistProfiles(rs);
-        if (profileList.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            return profileList;
-        }
+        return convertToArtistProfiles(rs);
     }
 
     public static void createUser(String username, String password, boolean isArtist) throws SQLException {
@@ -238,12 +260,42 @@ public class DatabaseConnector {
         }
     }
 
+    private static List<Post> loadPostsForAccount(int accountId) throws SQLException {
+        if (accountId <= 0) {
+            return Collections.emptyList();
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT post_id, account_id, caption, post_picture_url, keywords
+                  FROM Posts2
+                 WHERE account_id = ?
+                 ORDER BY post_id DESC
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Post> posts = new ArrayList<>();
+                while (rs.next()) {
+                    posts.add(new Post(
+                            rs.getInt("post_id"),
+                            rs.getString("caption"),
+                            rs.getString("post_picture_url"),
+                            rs.getInt(ACCOUNT_ID_STRING),
+                            rs.getString("keywords")));
+                }
+                return posts;
+            }
+        }
+    }
+
     public static void modifyUser(Profile p) throws SQLException {
         String username = p.getUsername();
-        String bio = p.biography;
-        double longitude = p.work_longitude;
-        double lattitude = p.work_latitude;
-        String profile_picture_url = p.getProfilePictureURL();
+        String bio = p.getBiography();
+        double longitude = p.getWorkLongitude();
+        double lattitude = p.getWorkLatitude();
+        String profilePictureUrl = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {
             throw new SQLException("Username is required to modify user data");
@@ -283,7 +335,7 @@ public class DatabaseConnector {
             updateArtist.setInt(4, accountId);
             updateArtist.executeUpdate();
 
-            updateAccount.setString(1, profile_picture_url);
+            updateAccount.setString(1, profilePictureUrl);
             updateAccount.setInt(2, accountId);
             updateAccount.executeUpdate();
 
@@ -312,18 +364,20 @@ public class DatabaseConnector {
         }
 
         String sql = """
-                INSERT INTO Reviews (reviewer_id, reviewee_id, review_text, rating)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO Reviews (reviewer_id, reviewee_id, review_text, rating, review_picture_url)
+                VALUES (?, ?, ?, ?, ?)
                 """;
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, reviewerId);
             stmt.setInt(2, revieweeId);
             stmt.setString(3, reviewText);
             stmt.setInt(4, rating);
+            stmt.setString(5, pictureUrl);
             stmt.executeUpdate();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return new Review(keys.getInt(1), reviewerId, revieweeId, pictureUrl, reviewText, rating);
+                    Review.Reviewer reviewer = new Review.Reviewer(reviewerId, null, null);
+                    return new Review(keys.getInt(1), revieweeId, pictureUrl, reviewText, rating, reviewer);
                 }
             }
         }
@@ -342,9 +396,13 @@ public class DatabaseConnector {
                        r.reviewer_id,
                        r.reviewee_id,
                        r.review_text,
-                       r.rating
+                       r.rating,
+                       r.review_picture_url,
+                       acc.username,
+                       acc.profile_picture_url
                   FROM Reviews r
                   JOIN Artists a ON a.artist_id = r.reviewee_id
+                  JOIN Accounts acc ON acc.account_id = r.reviewer_id
                  WHERE a.account_id = ?
                  ORDER BY r.review_id DESC
                 """;
@@ -353,13 +411,17 @@ public class DatabaseConnector {
             try (ResultSet rs = stmt.executeQuery()) {
                 List<Review> reviews = new ArrayList<>();
                 while (rs.next()) {
+                    Review.Reviewer reviewer = new Review.Reviewer(
+                            rs.getInt("reviewer_id"),
+                            rs.getString(USERNAME_STRING),
+                            rs.getString(PROFILE_PICTURE_URL_STRING));
                     reviews.add(new Review(
                             rs.getInt("review_id"),
-                            rs.getInt("reviewer_id"),
                             rs.getInt("reviewee_id"),
-                            null,
+                            rs.getString("review_picture_url"),
                             rs.getString("review_text"),
-                            rs.getInt("rating")));
+                            rs.getInt("rating"),
+                            reviewer));
                 }
                 return reviews;
             }

@@ -8,16 +8,24 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
-import javafx.stage.FileChooser;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.sql.SQLException;
 
 public final class PostReviewBoundary {
 
+    private static final String DEFAULT_AVATAR = "/icons/artist_raven.jpg";
+
     @FXML
     private Label artistNameLabel;
+    @FXML
+    private Label artistBioLabel;
+    @FXML
+    private Circle artistAvatar;
     @FXML
     private Slider ratingSlider;
     @FXML
@@ -29,7 +37,7 @@ public final class PostReviewBoundary {
 
     private Profile profile;
     private Stage dialogStage;
-    private File selectedImage;
+    private String selectedImageUrl;
     private Runnable onReviewPosted;
 
     @FXML
@@ -47,8 +55,25 @@ public final class PostReviewBoundary {
 
     public void setProfile(Profile profile) {
         this.profile = profile;
-        if (artistNameLabel != null && profile != null) {
+        if (profile == null) {
+            return;
+        }
+        if (artistNameLabel != null) {
             artistNameLabel.setText("@" + profile.getUsername());
+        }
+        if (artistBioLabel != null) {
+            String rawBio = profile.getBiography();
+            String bio = (rawBio == null || rawBio.isBlank())
+                    ? "No biography yet."
+                    : rawBio;
+            artistBioLabel.setText(bio);
+        }
+        if (artistAvatar != null) {
+            String avatarUrl = profile.getProfilePictureURL();
+            Image avatarImg = (avatarUrl == null || avatarUrl.isBlank())
+                    ? new Image(DEFAULT_AVATAR)
+                    : new Image(avatarUrl, 80, 80, true, true);
+            artistAvatar.setFill(new ImagePattern(avatarImg));
         }
     }
 
@@ -62,22 +87,34 @@ public final class PostReviewBoundary {
 
     @FXML
     private void handleUpload() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Select review photo");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg"));
-        File file = chooser.showOpenDialog(dialogStage);
-        if (file != null) {
-            selectedImage = file;
-            if (uploadStatusLabel != null) {
-                uploadStatusLabel.setText(file.getName());
-            }
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Review Photo");
+        dialog.setHeaderText("Enter the URL to the image you want to attach");
+        dialog.setContentText("Image URL:");
+        if (dialogStage != null) {
+            dialog.initOwner(dialogStage);
         }
+        dialog.showAndWait().ifPresent(url -> {
+            String trimmed = url == null ? null : url.trim();
+            if (trimmed == null || trimmed.isEmpty()) {
+                selectedImageUrl = null;
+                if (uploadStatusLabel != null) {
+                    uploadStatusLabel.setText("No photo selected");
+                }
+            } else {
+                selectedImageUrl = trimmed;
+                if (uploadStatusLabel != null) {
+                    uploadStatusLabel.setText(trimmed);
+                }
+            }
+        });
     }
 
     @FXML
     private void handlePostReview() {
         if (profile == null) {
-            alert(Alert.AlertType.ERROR, "No artist selected", "Unable to post review because no artist profile was provided.");
+            alert(Alert.AlertType.ERROR, "No artist selected",
+                    "Unable to post review because no artist profile was provided.");
             return;
         }
         if (LoggedInAccount.getInstance() == null) {
@@ -85,18 +122,18 @@ public final class PostReviewBoundary {
             return;
         }
         String text = reviewTextArea != null ? reviewTextArea.getText() : "";
-        if (text == null || text.trim().length() < 1 || text.trim().length() > 100) {
-            alert(Alert.AlertType.WARNING, "Invalid length", "Reviews must be between 1 and 100 characters.");
+        if (text == null || text.trim().isEmpty() || text.trim().length() > 200) {
+            alert(Alert.AlertType.WARNING, "Invalid length", "Reviews must be between 1 and 200 characters.");
             return;
         }
         int rating = ratingSlider != null ? (int) Math.round(ratingSlider.getValue()) : 0;
-        rating = Math.max(0, Math.min(5, rating));
+        rating = Math.clamp(rating, 0, 5);
 
-        String photoPath = selectedImage != null ? selectedImage.toURI().toString() : null;
+        String photoPath = (selectedImageUrl != null && !selectedImageUrl.isBlank()) ? selectedImageUrl : null;
 
         try {
             DatabaseConnector.submitReview(
-                    LoggedInAccount.getInstance().getAccount_id(),
+                    LoggedInAccount.getInstance().getAccountId(),
                     profile.getAccountId(),
                     photoPath,
                     text.trim(),
@@ -109,7 +146,6 @@ public final class PostReviewBoundary {
                 dialogStage.close();
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
             alert(Alert.AlertType.ERROR, "Failed to post review", ex.getMessage());
         }
     }

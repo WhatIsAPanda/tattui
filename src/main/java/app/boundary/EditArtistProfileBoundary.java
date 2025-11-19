@@ -12,7 +12,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -54,14 +53,9 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         try {
             this.profile = DatabaseConnector.getFullProfile(profile);
             loadProfile();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
+            // Leave view empty if the backend profile lookup fails.
         }
-    }
-
-    @FXML
-    private void handleBack() {
-        System.out.println("Back clicked");
     }
 
     @FXML
@@ -95,10 +89,9 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 if (profilePicture != null) {
                     profilePicture.setFill(new ImagePattern(image));
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
                 showAlert(Alert.AlertType.ERROR, "Invalid Image", "Unable to load image from that URL.");
             } catch (SQLException e) {
-                e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Update failed", "Unable to save profile picture: " + e.getMessage());
             }
         });
@@ -107,16 +100,16 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     @FXML
     private void handleSaveChanges() {
         try {
-            profile.biography = biographyField.getText();
-            profile.work_latitude = Double.parseDouble(latitudeField.getText());
-            profile.work_longitude = Double.parseDouble(longitudeField.getText());
+            profile.setBiography(biographyField.getText());
+            profile.setWorkLatitude(Double.parseDouble(latitudeField.getText()));
+            profile.setWorkLongitude(Double.parseDouble(longitudeField.getText()));
             DatabaseConnector.modifyUser(profile);
             showAlert(Alert.AlertType.INFORMATION, "Profile Saved", "Your profile has been saved.");
         } catch (SQLException e) {
-            e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Save failed", "Unable to save profile: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Invalid Coordinates", "Please enter valid numbers for latitude and longitude.");
+        } catch (NumberFormatException _) {
+            showAlert(Alert.AlertType.ERROR, "Invalid Coordinates",
+                    "Please enter valid numbers for latitude and longitude.");
         }
 
     }
@@ -146,13 +139,15 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         urlField.setPromptText("Image URL");
         TextField captionField = new TextField();
         captionField.setPromptText("Caption (optional)");
-        CheckBox designCheckBox = new CheckBox("Is design?");
+        TextField keywordsField = new TextField();
+        keywordsField.setPromptText("Keywords (optional)");
 
         grid.add(new Label("Image URL"), 0, 0);
         grid.add(urlField, 1, 0);
         grid.add(new Label("Caption"), 0, 1);
         grid.add(captionField, 1, 1);
-        grid.add(designCheckBox, 1, 2);
+        grid.add(new Label("Keywords"), 0, 2);
+        grid.add(keywordsField, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -167,7 +162,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 return new PostFormData(
                         trimToNull(urlField.getText()),
                         trimToNull(captionField.getText()),
-                        designCheckBox.isSelected());
+                        trimToNull(keywordsField.getText()));
             }
             return null;
         });
@@ -178,49 +173,20 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                         profile.getAccountId(),
                         form.caption(),
                         form.imageUrl(),
-                        form.isDesign());
+                        form.keywords());
                 List<Post> updatedPosts = new ArrayList<>(profile.getArtistPosts());
                 updatedPosts.add(0, newPost);
                 profile.setArtistPosts(updatedPosts);
                 populatePosts(postsPanel, updatedPosts);
             } catch (SQLException e) {
-                e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Unable to add post", e.getMessage());
             }
         });
 
     }
 
-    @FXML
-    private void openReviewPage() {
-        if (profile == null) {
-            showAlert(Alert.AlertType.WARNING, NO_PROFILE_SELECTED_TITLE, "Load a profile before viewing reviews.");
-            return;
-        }
-        try {
-            List<Review> reviews = DatabaseConnector.loadReviews(profile.getAccountId());
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/ReviewsDialog.fxml"));
-            Parent root = loader.load();
-            ReviewsDialogBoundary dialogController = loader.getController();
-            dialogController.setData(profile, reviews);
-
-            Stage stage = new Stage();
-            stage.setTitle("Reviews - @" + profile.getUsername());
-            stage.initModality(Modality.APPLICATION_MODAL);
-            if (profilePicture != null && profilePicture.getScene() != null) {
-                stage.initOwner(profilePicture.getScene().getWindow());
-            }
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Unable to open reviews", e.getMessage());
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Unable to load reviews", e.getMessage());
-        }
-    }
-
     private void loadProfile() {
-        populateProfileCommon(profile, profilePicture, biographyField, artistNameField);
+        populateProfileCommon(profile, profilePicture, biographyField, artistNameField, longitudeField, latitudeField);
         populatePosts(postsPanel, profile.getArtistPosts());
     }
 
@@ -229,7 +195,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        if (postsPanel != null && postsPanel.getScene() != null && postsPanel.getScene().getWindow() instanceof Stage stage) {
+        if (postsPanel != null && postsPanel.getScene() != null
+                && postsPanel.getScene().getWindow() instanceof Stage stage) {
             alert.initOwner(stage);
         }
         alert.showAndWait();
@@ -243,6 +210,6 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private record PostFormData(String imageUrl, String caption, boolean isDesign) {
+    private record PostFormData(String imageUrl, String caption, String keywords) {
     }
 }

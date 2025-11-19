@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
+<?import javafx.scene.shape.Circle?>
 
 <VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black; -fx-border-width: 0 1 0 0; -fx-border-color: white;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
 
@@ -82,24 +83,24 @@
             <padding><Insets top="10.0" /></padding>
             <children>
 
+                <Button id="settingsButton" fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                    <graphic>
+                        <Circle fx:id="settingsProfileImage" radius="15.0" stroke="WHITE" strokeWidth="1.0" />
+                    </graphic>
+                    <tooltip><Tooltip text="Edit Profile" /></tooltip>
+                    <padding><Insets bottom="15.0" /></padding>
+                </Button>
+
                 <Button id="loginButton" fx:id="loginButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
                     <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
                             <image><Image url="@/icons/login.png" /></image>
                         </ImageView>
                     </graphic>
-                    <tooltip><Tooltip text="Login" /></tooltip>
+                    <tooltip>
+                        <Tooltip fx:id="loginTooltip" text="Login" />
+                    </tooltip>
                     <padding><Insets bottom="12.0" top="12.0" /></padding>
-                </Button>
-
-                <Button id="settingsButton" fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
-                    <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image><Image url="@/icons/settings.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Settings" /></tooltip>
-                    <padding><Insets bottom="15.0" /></padding>
                 </Button>
 
             </children>

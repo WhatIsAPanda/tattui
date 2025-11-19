@@ -14,17 +14,19 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-            prefHeight="400.0" prefWidth="600.0"
+            prefHeight="520.0" prefWidth="780.0"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="app.boundary.PostReviewBoundary">
+            fx:controller="app.boundary.PostReviewBoundary"
+            stylesheets="@../css/main.css"
+            styleClass="dialog-root">
    <children>
-      <VBox prefHeight="400.0" prefWidth="600.0">
+      <VBox prefHeight="520.0" prefWidth="750.0">
          <children>
             <VBox>
                <children>
                   <HBox prefHeight="67.0" prefWidth="560.0">
                      <children>
-                        <Circle fill="DODGERBLUE" radius="30.0" stroke="BLACK" strokeType="INSIDE" />
+                        <Circle fx:id="artistAvatar" radius="30.0" stroke="#ffffff44" strokeType="INSIDE" />
                         <VBox prefHeight="150.0" prefWidth="203.0">
                            <children>
                               <Label fx:id="artistNameLabel" text="\@someTattooArtist">
@@ -32,7 +34,7 @@
                                     <Font size="16.0" />
                                  </font>
                               </Label>
-                              <Label maxWidth="1.7976931348623157E308" prefHeight="17.0" prefWidth="198.0" text="some tattoo shop?" />
+                              <Label fx:id="artistBioLabel" maxWidth="1.7976931348623157E308" prefHeight="17.0" prefWidth="198.0" wrapText="true" text="some tattoo shop?" />
                            </children>
                            <HBox.margin>
                               <Insets left="10.0" />
@@ -74,12 +76,13 @@
                   <Insets />
                </VBox.margin>
             </VBox>
-            <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Tell us about your experience">
+            <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Tell us about your experience"
+                   styleClass="title">
                <font>
                   <Font size="16.0" />
                </font>
             </Label>
-            <Button mnemonicParsing="false" text="Upload Photos" onAction="#handleUpload">
+            <Button mnemonicParsing="false" text="Upload Photos" onAction="#handleUpload" styleClass="primary-button">
                <VBox.margin>
                   <Insets top="5.0" />
                </VBox.margin>
@@ -93,17 +96,18 @@
             <Slider fx:id="ratingSlider" min="0" max="5" value="5" majorTickUnit="1" minorTickCount="0"
                     snapToTicks="true" showTickLabels="true" showTickMarks="true" />
             <Label fx:id="ratingValueLabel" text="5 / 5" />
-            <TextArea fx:id="reviewTextArea" maxWidth="-Infinity" prefHeight="143.0" prefWidth="504.0">
+            <TextArea fx:id="reviewTextArea" maxWidth="-Infinity" prefHeight="143.0" prefWidth="504.0"
+                      styleClass="dark-text-area">
                <VBox.margin>
                   <Insets top="10.0" />
                </VBox.margin>
             </TextArea>
-            <Label text="Reviews must be between 85 and 2000 characters">
+            <Label text="Reviews must be between 1 and 200 characters">
                <padding>
                   <Insets bottom="10.0" />
                </padding>
             </Label>
-            <Button mnemonicParsing="false" text="Post Review" onAction="#handlePostReview" />
+            <Button mnemonicParsing="false" text="Post Review" onAction="#handlePostReview" styleClass="primary-button" />
          </children>
          <padding>
             <Insets left="40.0" top="30.0" />

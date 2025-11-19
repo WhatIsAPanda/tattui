@@ -6,32 +6,34 @@ import java.util.Collections;
 import java.util.List;
 
 public class Profile {
-    private int account_id;
+    private int accountId;
     private String username;
-    public String biography;
-    private String profile_picture_url;
-    public Image profile_picture;
-    private String work_address;
-    public double work_longitude;
-    public double work_latitude;
-    private List<String> styles_list;
+    private String biography;
+    private String profilePictureUrl;
+    private Image profilePicture;
+    private String workAddress;
+    private double workLongitude;
+    private double workLatitude;
+    private List<String> stylesList;
     private List<Post> artistPosts;
 
-    public Profile(int account_id, String username, String profile_picture_url, String biography, String work_address,
-            double work_longitude, double work_latitude, List<String> styles_list) {
-        this.account_id = account_id;
+    public Profile(int accountId, String username, String profilePictureUrl, String biography,
+            List<String> stylesList, WorkLocation workLocation) {
+        this.accountId = accountId;
         this.username = username;
         this.biography = biography;
-        this.work_address = work_address;
-        this.work_longitude = work_longitude;
-        this.work_latitude = work_latitude;
-        this.styles_list = styles_list;
-        this.profile_picture_url = profile_picture_url;
-        this.profile_picture = new Image(profile_picture_url);
+        if (workLocation != null) {
+            this.workAddress = workLocation.address;
+            this.workLongitude = workLocation.longitude;
+            this.workLatitude = workLocation.latitude;
+        }
+        this.stylesList = stylesList == null ? Collections.emptyList() : List.copyOf(stylesList);
+        this.profilePictureUrl = profilePictureUrl;
+        this.profilePicture = new Image(profilePictureUrl);
     }
 
     public int getAccountId() {
-        return account_id;
+        return accountId;
     }
 
     public String getUsername() {
@@ -39,20 +41,40 @@ public class Profile {
     }
 
     public String getProfilePictureURL() {
-        return profile_picture_url;
+        return profilePictureUrl;
+    }
+
+    public Image getProfilePicture() {
+        return profilePicture;
     }
 
     public void setProfilePicture(String profilePictureUrl, Image image) {
-        this.profile_picture_url = profilePictureUrl;
-        this.profile_picture = image;
+        this.profilePictureUrl = profilePictureUrl;
+        this.profilePicture = image;
+    }
+
+    public double getWorkLongitude() {
+        return workLongitude;
+    }
+
+    public void setWorkLongitude(double workLongitude) {
+        this.workLongitude = workLongitude;
+    }
+
+    public double getWorkLatitude() {
+        return workLatitude;
+    }
+
+    public void setWorkLatitude(double workLatitude) {
+        this.workLatitude = workLatitude;
     }
 
     public String getAddress() {
-        return work_address;
+        return workAddress;
     }
 
     public List<String> getStylesList() {
-        return styles_list;
+        return stylesList;
     }
 
     public void setArtistPosts(List<Post> artistPosts) {
@@ -64,19 +86,28 @@ public class Profile {
         return artistPosts != null ? artistPosts : Collections.emptyList();
     }
 
-    // TEMP shim to satisfy legacy probe tests (DbProfilesProbeTest etc.).
-    // TODO(Adnan): remove once probe tests are updated to new data model.
-    // public java.util.List<app.entity.Post> getPosts() { return null; }
-
-    // ---- Legacy compatibility shims (safe to keep; remove later if not needed) ----
     public String getBiography() {
         return biography;
     }
 
+    public void setBiography(String biography) {
+        this.biography = biography;
+    }
+
     public java.util.List<app.entity.Post> getPosts() {
-        // Older probes used getPosts(); our model uses getArtistPosts()
         return getArtistPosts();
     }
 
+    public static final class WorkLocation {
+        private final String address;
+        private final double longitude;
+        private final double latitude;
+
+        public WorkLocation(String address, double longitude, double latitude) {
+            this.address = address;
+            this.longitude = longitude;
+            this.latitude = latitude;
+        }
+    }
 
 }

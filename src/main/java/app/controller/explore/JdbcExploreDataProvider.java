@@ -36,8 +36,7 @@ public final class JdbcExploreDataProvider implements ExploreDataProvider {
                 ));
             }
             return items.stream().filter(it -> filter == ExploreControl.Kind.ALL || it.kind() == filter).toList();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException _) {
             return List.of();
         }
     }

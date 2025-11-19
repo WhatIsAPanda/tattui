@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class BaseProfileBoundary {
 
     protected void populateProfileCommon(Profile profile, Circle profilePicture, Object biographyField,
-            Object artistNameField) {
+            Object artistNameField, Object longitudeField, Object latitudeField) {
         if (profile == null)
             return;
 
@@ -28,15 +28,28 @@ public abstract class BaseProfileBoundary {
         else if (artistNameField instanceof javafx.scene.control.TextField tf)
             tf.setText(profile.getUsername());
 
-        Image image = profile.profile_picture;
+        Image image = profile.getProfilePicture();
         if (image != null && profilePicture != null)
             profilePicture.setFill(new ImagePattern(image));
 
-        String bio = profile.biography;
+        String bio = profile.getBiography();
         if (biographyField instanceof Text t)
             t.setText(bio);
         else if (biographyField instanceof TextArea ta)
             ta.setText(bio);
+        else if (biographyField instanceof Label l)
+            l.setText(bio);
+
+        double longitude = profile.getWorkLongitude();
+        double latitude = profile.getWorkLatitude();
+        if (longitudeField instanceof javafx.scene.control.TextField lonField)
+            lonField.setText(Double.toString(longitude));
+        else if (longitudeField instanceof Label lonLabel)
+            lonLabel.setText(Double.toString(longitude));
+        if (latitudeField instanceof javafx.scene.control.TextField latField)
+            latField.setText(Double.toString(latitude));
+        else if (latitudeField instanceof Label latLabel)
+            latLabel.setText(Double.toString(latitude));
     }
 
     protected void populatePosts(GridPane postsPanel, List<Post> posts) {

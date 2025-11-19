@@ -1,17 +1,15 @@
 package app.controller;
 
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javafx.concurrent.Task;
-import java.util.ArrayList;
 import java.util.List;
-import javafx.application.Platform;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import app.entity.Profile;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 
-import app.controller.MapController.DotLayer;
 import app.controller.RootController.PageAware;
 import app.controller.RootController.ProfileAware;
 import javafx.event.ActionEvent;
@@ -28,12 +26,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Pair;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 import app.entity.ProfileCell;
 import app.entity.DatabaseConnector;
@@ -42,12 +35,11 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Map;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MapController implements PageAware, ProfileAware {
+    private static final Logger LOGGER = Logger.getLogger(MapController.class.getName());
 
     @FXML
     private TextField searchField;
@@ -82,7 +74,6 @@ public class MapController implements PageAware, ProfileAware {
         MapPoint center = new MapPoint(41.892718, 12.476259);
         map.setCenter(center);
         map.setZoom(10);
-        // map.addLayer(new DotLayer(center));
         mapContainer.getChildren().add(map);
 
         resultsList.setCellFactory(listView -> new ProfileCell(this::handleProfileSelection));
@@ -127,7 +118,9 @@ public class MapController implements PageAware, ProfileAware {
         if (!foundCity) {
             usernameSearch(query);
             populateMapAsync();
-        } else {populateMapAsync();}
+        } else {
+            populateMapAsync();
+        }
         if (allResults == null || allResults.isEmpty())
             return;
         resultsList.getItems().setAll(allResults);
@@ -167,11 +160,11 @@ public class MapController implements PageAware, ProfileAware {
         return new Task<>() {
             @Override
             protected DotLayer call() {
-                List<MapPoint> points = new ArrayList<>();
+                List<MapPoint> points = new java.util.ArrayList<>();
                 int count = allResults.size();
                 for (int i = 0; i < count; i++) {
                     Profile target = allResults.get(i);
-                    points.add(new MapPoint(target.work_latitude, target.work_longitude));
+                    points.add(new MapPoint(target.getWorkLatitude(), target.getWorkLongitude()));
                 }
                 return new DotLayer(points);
             }
@@ -179,12 +172,14 @@ public class MapController implements PageAware, ProfileAware {
     }
 
     private void adjustViewport() {
-        double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
-        double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
+        double minLat = Double.MAX_VALUE;
+        double maxLat = -Double.MAX_VALUE;
+        double minLon = Double.MAX_VALUE;
+        double maxLon = -Double.MAX_VALUE;
 
         for (Profile p : allResults) {
-            double lat = p.work_latitude;
-            double lon = p.work_longitude;
+            double lat = p.getWorkLatitude();
+            double lon = p.getWorkLongitude();
             minLat = Math.min(minLat, lat);
             maxLat = Math.max(maxLat, lat);
             minLon = Math.min(minLon, lon);
@@ -213,8 +208,9 @@ public class MapController implements PageAware, ProfileAware {
 
     private void logTaskError(Task<DotLayer> task) {
         Throwable ex = task.getException();
-        if (ex != null)
-            ex.printStackTrace();
+        if (ex != null) {
+            LOGGER.log(Level.SEVERE, "Map task failed", ex);
+        }
     }
 
     private void depopulateMap() {
@@ -225,7 +221,7 @@ public class MapController implements PageAware, ProfileAware {
     }
 
     private void tagSearch(String query) {
-        System.out.println("unhandled");
+        // TODO: implement tag search
     }
 
     private boolean citySearch(String query) {
@@ -257,8 +253,7 @@ public class MapController implements PageAware, ProfileAware {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error searching by city: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error searching by city: " + query, e);
         }
         return false;
     }
@@ -286,7 +281,7 @@ public class MapController implements PageAware, ProfileAware {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to geocode city: " + city, e);
         }
         return null;
     }
@@ -300,12 +295,11 @@ public class MapController implements PageAware, ProfileAware {
                 allResults = new LinkedList<>();
                 allResults.add(profile);
             } else {
-                System.out.println("No matching profiles found.");
+                LOGGER.info("No matching profiles found.");
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error retrieving profiles: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving profiles for query: " + query, e);
         }
     }
 
@@ -332,7 +326,7 @@ public class MapController implements PageAware, ProfileAware {
         resultsList.getItems().setAll(
                 allResults.stream()
                         .filter(item -> item.getStylesList().contains(tag))
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     private void handleProfileSelection(Profile profile) {

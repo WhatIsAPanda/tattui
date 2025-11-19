@@ -5,6 +5,7 @@ import app.entity.*;
 
 
 public class LoginController {
+    private LoginController() {}
 
     public static boolean verifyUser(String username, String password) throws SQLException {
         Account account = DatabaseConnector.getAccountByUsername(username);
@@ -18,6 +19,11 @@ public class LoginController {
             return true;
         }
         return false;
+    }
+
+    public static void logout() {
+        LoggedInAccount.setInstance(null);
+        LoggedInProfile.setInstance(null);
     }
 
 

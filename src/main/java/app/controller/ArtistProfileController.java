@@ -41,7 +41,7 @@ public class ArtistProfileController {
                 }
             }
             artistImage.setImage(img);
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             // no crash; just keep whatever was there
         }
 
