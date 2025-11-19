@@ -85,7 +85,7 @@ public class ViewArtistProfileBoundary extends BaseProfileBoundary implements Ro
             return;
         }
         double average = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
-        averageRatingLabel.setText(String.format("%.1f / 5", average));
+        averageRatingLabel.setText(String.format("%.1f / 5.0", average));
     }
 
     @FXML

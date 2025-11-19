@@ -327,6 +327,7 @@ public class MapController implements PageAware, ProfileAware {
                 allResults.stream()
                         .filter(item -> item.getStylesList().contains(tag.substring(1)))
                         .toList());
+        populateMapAsync();
     }
 
     private void handleProfileSelection(Profile profile) {
