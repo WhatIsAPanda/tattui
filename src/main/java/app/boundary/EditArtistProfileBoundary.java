@@ -10,16 +10,20 @@ import javafx.scene.Scene;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
@@ -121,15 +125,31 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             return;
         }
 
-        Dialog<PostFormData> dialog = new Dialog<>();
-        dialog.setTitle("Add Post");
-        dialog.setHeaderText("Share a new completed tattoo");
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Share Your Work");
+        dialog.setHeaderText("Submit a completed piece or upload a flash design");
         if (postsPanel != null && postsPanel.getScene() != null) {
             dialog.initOwner(postsPanel.getScene().getWindow());
         }
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
+        TabPane tabPane = new TabPane();
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        Tab postsTab = new Tab("Posts");
+        postsTab.setClosable(false);
+        postsTab.setContent(buildPostSubmissionForm());
+
+        Tab designsTab = new Tab("Designs");
+        designsTab.setClosable(false);
+        designsTab.setContent(buildDesignSubmissionForm());
+
+        tabPane.getTabs().addAll(postsTab, designsTab);
+        dialog.getDialogPane().setContent(tabPane);
+        dialog.showAndWait();
+    }
+
+    private Node buildPostSubmissionForm() {
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -149,25 +169,22 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         grid.add(new Label("Keywords"), 0, 2);
         grid.add(keywordsField, 1, 2);
 
-        dialog.getDialogPane().setContent(grid);
+        Button submitPostButton = new Button("Submit Post");
+        submitPostButton.setDisable(true);
+        urlField.textProperty().addListener((obs, oldVal, newVal) -> submitPostButton
+                .setDisable(newVal == null || newVal.trim().isEmpty()));
 
-        Node addButton = dialog.getDialogPane().lookupButton(addButtonType);
-        addButton.setDisable(true);
-        urlField.textProperty().addListener((obs, oldVal, newVal) -> {
-            addButton.setDisable(newVal == null || newVal.trim().isEmpty());
-        });
+        Label feedbackLabel = new Label();
 
-        dialog.setResultConverter(button -> {
-            if (button == addButtonType) {
-                return new PostFormData(
-                        trimToNull(urlField.getText()),
-                        trimToNull(captionField.getText()),
-                        trimToNull(keywordsField.getText()));
+        submitPostButton.setOnAction(_ -> {
+            PostFormData form = new PostFormData(
+                    trimToNull(urlField.getText()),
+                    trimToNull(captionField.getText()),
+                    trimToNull(keywordsField.getText()));
+            if (form.imageUrl() == null) {
+                displayFormMessage(feedbackLabel, "Image URL is required.", false);
+                return;
             }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(form -> {
             try {
                 Post newPost = DatabaseConnector.addArtistPost(
                         profile.getAccountId(),
@@ -178,11 +195,71 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 updatedPosts.add(0, newPost);
                 profile.setArtistPosts(updatedPosts);
                 populatePosts(postsPanel, updatedPosts);
+                urlField.clear();
+                captionField.clear();
+                keywordsField.clear();
+                submitPostButton.setDisable(true);
+                displayFormMessage(feedbackLabel, "Post submitted!", true);
             } catch (SQLException _) {
-                showAlert(Alert.AlertType.ERROR, "Unable to add post", "");
+                displayFormMessage(feedbackLabel, "Unable to add post.", false);
             }
         });
 
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(grid, submitPostButton, feedbackLabel);
+        return container;
+    }
+
+    private Node buildDesignSubmissionForm() {
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+
+        TextField designUrlField = new TextField();
+        designUrlField.setPromptText("Design Picture URL");
+        TextField designNameField = new TextField();
+        designNameField.setPromptText("Design Name");
+
+        grid.add(new Label("Picture URL"), 0, 0);
+        grid.add(designUrlField, 1, 0);
+        grid.add(new Label("Design Name"), 0, 1);
+        grid.add(designNameField, 1, 1);
+
+        Button submitDesignButton = new Button("Submit Design");
+        Label feedbackLabel = new Label();
+        Runnable toggleDesignButton = () -> submitDesignButton
+                .setDisable(trimToNull(designUrlField.getText()) == null || trimToNull(designNameField.getText()) == null);
+        designUrlField.textProperty().addListener((obs, oldVal, newVal) -> toggleDesignButton.run());
+        designNameField.textProperty().addListener((obs, oldVal, newVal) -> toggleDesignButton.run());
+        toggleDesignButton.run();
+
+        submitDesignButton.setOnAction(_ -> {
+            String imageUrl = trimToNull(designUrlField.getText());
+            String designName = trimToNull(designNameField.getText());
+            if (imageUrl == null || designName == null) {
+                displayFormMessage(feedbackLabel, "Both fields are required.", false);
+                return;
+            }
+            try {
+                DatabaseConnector.addArtistDesign(
+                        profile.getAccountId(),
+                        designName,
+                        imageUrl);
+                designUrlField.clear();
+                designNameField.clear();
+                toggleDesignButton.run();
+                displayFormMessage(feedbackLabel, "Design submitted!", true);
+            } catch (SQLException _) {
+                displayFormMessage(feedbackLabel, "Unable to add design.", false);
+            }
+        });
+
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(grid, submitDesignButton, feedbackLabel);
+        return container;
     }
 
     private void loadProfile() {
@@ -200,6 +277,14 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             alert.initOwner(stage);
         }
         alert.showAndWait();
+    }
+
+    private void displayFormMessage(Label label, String message, boolean success) {
+        if (label == null) {
+            return;
+        }
+        label.setText(message);
+        label.setStyle(success ? "-fx-text-fill: #2e7d32;" : "-fx-text-fill: #c62828;");
     }
 
     private static String trimToNull(String value) {

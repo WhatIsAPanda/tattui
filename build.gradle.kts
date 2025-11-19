@@ -30,6 +30,7 @@ javafx {
 dependencies {
     implementation("de.javagl:obj:0.4.0")
     implementation("mysql:mysql-connector-java:8.0.33")
+    implementation("org.xerial:sqlite-jdbc:3.45.1.0")
     implementation("com.gluonhq:maps:2.0.0-ea+6")
     implementation("org.json:json:20240303")
     testImplementation(platform("org.junit:junit-bom:5.10.2"))

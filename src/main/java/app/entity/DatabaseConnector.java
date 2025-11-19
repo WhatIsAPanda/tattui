@@ -13,6 +13,9 @@ public class DatabaseConnector {
     private static final String URL = System.getenv("DATABASE_URL");
     private static final String USER = System.getenv("DATABASE_USER");
     private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
+    private static final String SQLITE_DB_FILENAME = "tattui.db";
+    private static final String SQLITE_DB_URL = "jdbc:sqlite:" + SQLITE_DB_FILENAME;
+    private static final String CREDENTIALS_FILE_PATH = "C:\\SchoolProjects\\keys.txt";
     private static final String ACCOUNT_ID_STRING = "account_id";
     private static final String USERNAME_STRING = "username";
     private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
@@ -65,25 +68,58 @@ public class DatabaseConnector {
     }
 
     private static Connection createConnection() throws SQLException {
-        String dbUrl = URL;
-        String dbUser = USER;
+        String dbUrl = firstNonBlank(URL, null);
+        String dbUser = firstNonBlank(USER, null);
         String dbPassword = PASSWORD;
 
-        if (dbUrl == null || dbUser == null || dbPassword == null) {
-            Properties props = new Properties();
-            try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
-                props.load(fis);
-                dbUrl = props.getProperty("url");
-                dbUser = props.getProperty("user");
-                dbPassword = props.getProperty("password");
-            } catch (IOException e) {
-                throw new SQLException("Failed to load database credentials", e);
+        if (isMissingJdbcDetails(dbUrl, dbUser, dbPassword)) {
+            Properties props = loadCredentialsFromFile();
+            if (props != null) {
+                dbUrl = firstNonBlank(dbUrl, props.getProperty("url"));
+                dbUser = firstNonBlank(dbUser, props.getProperty("user"));
+                dbPassword = dbPassword != null ? dbPassword : props.getProperty("password");
             }
         }
-        if (dbUrl == null || dbUser == null || dbPassword == null) {
+
+        // USE LOCAL FOR TESTING
+        // if (dbUrl == null || dbUrl.isBlank()) {
+        dbUrl = SQLITE_DB_URL;
+        // }
+
+        if (dbUrl.startsWith("jdbc:sqlite:")) {
+            Connection sqliteConnection = DriverManager.getConnection(dbUrl);
+            try (Statement pragmaStmt = sqliteConnection.createStatement()) {
+                pragmaStmt.execute("PRAGMA foreign_keys = ON;");
+            }
+            return sqliteConnection;
+        }
+
+        if (dbUser == null || dbUser.isBlank() || dbPassword == null) {
             throw new SQLException("Database credentials are not configured.");
         }
+
         return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+    }
+
+    private static boolean isMissingJdbcDetails(String url, String user, String password) {
+        return url == null || url.isBlank() || user == null || user.isBlank() || password == null;
+    }
+
+    private static String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        return (fallback == null || fallback.isBlank()) ? null : fallback;
+    }
+
+    private static Properties loadCredentialsFromFile() {
+        Properties props = new Properties();
+        try (FileInputStream fis = new FileInputStream(CREDENTIALS_FILE_PATH)) {
+            props.load(fis);
+            return props;
+        } catch (IOException _) {
+            return null;
+        }
     }
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
@@ -124,6 +160,43 @@ public class DatabaseConnector {
             }
         }
         throw new SQLException("Failed to create post record");
+    }
+
+    public static int addArtistDesign(int accountId, String designName, String designPictureUrl) throws SQLException {
+        if (accountId <= 0) {
+            throw new SQLException("Account id must be positive");
+        }
+        if (designName == null || designName.isBlank()) {
+            throw new SQLException("Design name is required");
+        }
+        if (designPictureUrl == null || designPictureUrl.isBlank()) {
+            throw new SQLException("Design picture URL is required");
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+
+        Integer artistId = findArtistIdForAccount(accountId);
+        if (artistId == null) {
+            throw new SQLException("Artist profile not found for account: " + accountId);
+        }
+
+        String sql = """
+                INSERT INTO Designs (artist_id, design_name, design_picture_url)
+                VALUES (?, ?, ?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, artistId);
+            stmt.setString(2, designName);
+            stmt.setString(3, designPictureUrl);
+            stmt.executeUpdate();
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to create design record");
     }
 
     public static Account getAccountByUsername(String queryUsername) throws SQLException {
@@ -290,6 +363,24 @@ public class DatabaseConnector {
                 return posts;
             }
         }
+    }
+
+    private static Integer findArtistIdForAccount(int accountId) throws SQLException {
+        if (accountId <= 0) {
+            return null;
+        }
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        try (PreparedStatement stmt = conn.prepareStatement("SELECT artist_id FROM Artists WHERE account_id = ?")) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("artist_id");
+                }
+            }
+        }
+        return null;
     }
 
     public static void modifyUser(Profile p) throws SQLException {
