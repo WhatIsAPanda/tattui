@@ -54,7 +54,7 @@ public class ProfileCell extends ListCell<Profile> {
             List<String> stylesList = profile.getStylesList();
             StringBuilder styles = new StringBuilder();
             for (String style : stylesList) {
-                styles.append(style);
+                styles.append("#").append(style).append(" ");
             }
             tag.setText(styles.toString());
 

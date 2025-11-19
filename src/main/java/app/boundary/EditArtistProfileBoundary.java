@@ -4,6 +4,7 @@ import app.entity.DatabaseConnector;
 import app.entity.Post;
 import app.entity.Profile;
 import app.entity.Review;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -13,6 +14,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -28,7 +31,6 @@ import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -49,8 +51,51 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     private TextField longitudeField;
     @FXML
     private TextField latitudeField;
+    @FXML
+    private ComboBox<String> styleComboBox;
+    @FXML
+    private Label styles;
+    @FXML
+    private Button deleteTagButton;
+    @FXML
+    private Button addTagButton;
 
     private Profile profile;
+    private List<String> currentStyles;
+
+    @FXML
+    public void initialize() {
+        styleComboBox.getItems().addAll(
+                "#Blackwork", "#Script", "#NeoTraditional",
+                "#Japanese", "#Minimalist", "#Geometric",
+                "#Watercolor", "#Tribal");
+    }
+
+    @FXML
+    private void addTag() {
+        String selectedStyle = styleComboBox.getValue();
+        if (selectedStyle == null || profile == null) {
+            return;
+        }
+        String style = selectedStyle.substring(1); // Remove the '#' character
+        if (!currentStyles.contains(style)) {
+            currentStyles.add(style);
+            styles.setText(String.join(" ", currentStyles.stream().map(s -> "#" + s).toList()));
+        }
+    }
+
+    @FXML
+    private void deleteTag() {
+        String selectedStyle = styleComboBox.getValue();
+        if (selectedStyle == null || profile == null) {
+            return;
+        }
+        String style = selectedStyle.substring(1); // Remove the '#' character
+        if (currentStyles.contains(style)) {
+            currentStyles.remove(style);
+            styles.setText(String.join(" ", currentStyles.stream().map(s -> "#" + s).toList()));
+        }
+    }
 
     @FXML
     public void setProfile(Profile profile) {
@@ -107,6 +152,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
             profile.setBiography(biographyField.getText());
             profile.setWorkLatitude(Double.parseDouble(latitudeField.getText()));
             profile.setWorkLongitude(Double.parseDouble(longitudeField.getText()));
+            profile.setStylesList(currentStyles);
             DatabaseConnector.modifyUser(profile);
             showAlert(Alert.AlertType.INFORMATION, "Profile Saved", "Your profile has been saved.");
         } catch (SQLException e) {
@@ -230,7 +276,8 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
         Button submitDesignButton = new Button("Submit Design");
         Label feedbackLabel = new Label();
         Runnable toggleDesignButton = () -> submitDesignButton
-                .setDisable(trimToNull(designUrlField.getText()) == null || trimToNull(designNameField.getText()) == null);
+                .setDisable(
+                        trimToNull(designUrlField.getText()) == null || trimToNull(designNameField.getText()) == null);
         designUrlField.textProperty().addListener((obs, oldVal, newVal) -> toggleDesignButton.run());
         designNameField.textProperty().addListener((obs, oldVal, newVal) -> toggleDesignButton.run());
         toggleDesignButton.run();
@@ -263,7 +310,9 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
     }
 
     private void loadProfile() {
-        populateProfileCommon(profile, profilePicture, biographyField, artistNameField, longitudeField, latitudeField);
+        populateProfileCommon(profile, profilePicture, biographyField, artistNameField, longitudeField, latitudeField,
+                styles);
+        currentStyles = new ArrayList<>(profile.getStylesList());
         populatePosts(postsPanel, profile.getArtistPosts());
     }
 
@@ -297,4 +346,5 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
 
     private record PostFormData(String imageUrl, String caption, String keywords) {
     }
+
 }

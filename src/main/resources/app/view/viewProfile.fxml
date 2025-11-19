@@ -80,19 +80,31 @@
                                        <left>
                                           <Label fx:id="latitudeField" text="latitude" BorderPane.alignment="CENTER" />
                                        </left>
-                                       <right>
+                                       <center>
                                           <Label fx:id="longitudeField" text="longitude" BorderPane.alignment="CENTER" />
-                                       </right>
+                                       </center>
+                                       <top>
+                                          <Label text="Latitude, Longitude" BorderPane.alignment="TOP_LEFT">
+                                             <BorderPane.margin>
+                                                <Insets bottom="5.0" top="5.0" />
+                                             </BorderPane.margin>
+                                          </Label>
+                                       </top>
                                     </BorderPane>
                                  </bottom>
                               </BorderPane>
                            </children>
                            <padding>
-                              <Insets bottom="70.0" top="40.0" />
+                              <Insets bottom="30.0" top="40.0" />
                            </padding>
                            <VBox.margin>
                               <Insets />
                            </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER">
+                           <children>
+                              <Label fx:id="styles" text="Styles:" />
+                           </children>
                         </HBox>
                         <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-border-color: white; -fx-border-width: 0 0 1 0;">
                            <children>
