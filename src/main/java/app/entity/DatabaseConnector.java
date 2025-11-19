@@ -296,7 +296,7 @@ public class DatabaseConnector {
         String username = p.getUsername();
         String bio = p.getBiography();
         double longitude = p.getWorkLongitude();
-        double lattitude = p.getWorkLatitude();
+        double latitude = p.getWorkLatitude();
         String profilePictureUrl = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {
@@ -332,7 +332,7 @@ public class DatabaseConnector {
                         """)) {
 
             updateArtist.setString(1, bio);
-            updateArtist.setDouble(2, lattitude);
+            updateArtist.setDouble(2, latitude);
             updateArtist.setDouble(3, longitude);
             updateArtist.setInt(4, accountId);
             updateArtist.executeUpdate();
