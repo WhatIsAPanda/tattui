@@ -1,5 +1,6 @@
 package app.controller;
 
+import app.util.ImageResolver;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,20 +27,7 @@ public class ArtistProfileController {
         }
 
         try {
-            Image img;
-            if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-                // Load directly from the web (Cloudinary). Background loading = true.
-                img = new Image(imagePath, 320, 320, true, true, true);
-            } else {
-                // Try as classpath resource
-                var in = getClass().getResourceAsStream(imagePath);
-                if (in != null) {
-                    img = new Image(in, 320, 320, true, true);
-                } else {
-                    // As a last resort, try treating it as a file/URL string anyway
-                    img = new Image(imagePath, 320, 320, true, true, true);
-                }
-            }
+            Image img = ImageResolver.load(imagePath, 320, 320, true, true, true);
             artistImage.setImage(img);
         } catch (Exception _) {
             // no crash; just keep whatever was there

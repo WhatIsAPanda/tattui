@@ -1,5 +1,6 @@
 package app.entity;
 
+import app.util.ImageResolver;
 import javafx.scene.image.Image;
 
 import java.util.Collections;
@@ -29,7 +30,13 @@ public class Profile {
         }
         this.stylesList = stylesList == null ? Collections.emptyList() : List.copyOf(stylesList);
         this.profilePictureUrl = profilePictureUrl;
-        this.profilePicture = new Image(getClass().getResourceAsStream("/db/db_resources/" + profilePictureUrl));
+        try {
+            this.profilePicture = ImageResolver.loadAny(
+                    profilePictureUrl,
+                    "/db/db_resources/" + profilePictureUrl);
+        } catch (IllegalArgumentException _) {
+            this.profilePicture = null;
+        }
     }
 
     public int getAccountId() {

@@ -5,6 +5,7 @@ import app.entity.Post;
 import app.entity.Profile;
 import app.entity.Review;
 
+import app.util.ImageResolver;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -129,7 +130,7 @@ public class EditArtistProfileBoundary extends BaseProfileBoundary {
                 return;
             }
             try {
-                Image image = new Image(imageUrl, false);
+                Image image = ImageResolver.load(imageUrl, false);
                 if (image.isError()) {
                     throw new IllegalArgumentException("Unable to load image");
                 }

@@ -1,5 +1,6 @@
 package app.entity;
 
+import app.util.ImageResolver;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
@@ -61,7 +62,7 @@ public class ProfileCell extends ListCell<Profile> {
             String profilePictureUrl = profile.getProfilePictureURL();
             if (profilePictureUrl != null && !profilePictureUrl.isBlank()) {
                 try {
-                    Image img = new Image(profilePictureUrl, 0, 0, true, true, true);
+                    Image img = ImageResolver.load(profilePictureUrl, 0, 0, true, true, true);
                     image.setImage(img);
 
                     img.progressProperty().addListener((obs, oldVal, newVal) -> {
