@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class BaseProfileBoundary {
 
     protected void populateProfileCommon(Profile profile, Circle profilePicture, Object biographyField,
-            Object artistNameField, Object longitudeField, Object latitudeField) {
+            Object artistNameField, Object longitudeField, Object latitudeField, Object styles) {
         if (profile == null)
             return;
 
@@ -50,6 +50,15 @@ public abstract class BaseProfileBoundary {
             latField.setText(Double.toString(latitude));
         else if (latitudeField instanceof Label latLabel)
             latLabel.setText(Double.toString(latitude));
+
+        List<String> stylesList = profile.getStylesList();
+        StringBuilder stylesbuilder = new StringBuilder();
+        for (String style : stylesList) {
+            stylesbuilder.append("#").append(style).append(" ");
+        }
+        if (styles instanceof Label stylesLabel)
+            stylesLabel.setText(stylesbuilder.toString().trim());
+
     }
 
     protected void populatePosts(GridPane postsPanel, List<Post> posts) {

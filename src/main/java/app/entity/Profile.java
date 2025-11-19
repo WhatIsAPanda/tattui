@@ -76,6 +76,9 @@ public class Profile {
     public List<String> getStylesList() {
         return stylesList;
     }
+    public void setStylesList(List<String> stylesList) {
+        this.stylesList = stylesList != null ? List.copyOf(stylesList) : Collections.emptyList();
+    }
 
     public void setArtistPosts(List<Post> artistPosts) {
 
