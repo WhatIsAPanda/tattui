@@ -4,6 +4,7 @@ import app.controller.RootController;
 import app.controller.WorkspaceController;
 import app.controller.explore.ExploreControl;
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -15,10 +16,14 @@ import javafx.util.Duration;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public final class ExploreBoundary implements RootController.WorkspaceAware, RootController.PageAware, RootController.ProfileAware {
+public final class ExploreBoundary
+        implements RootController.WorkspaceAware, RootController.PageAware, RootController.ProfileAware {
 
     // ---- lightweight debug helper ----
     private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
@@ -46,11 +51,17 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     private final ExploreControl control = new ExploreControl();
 
     // ---- Explore provider selection ----
-// Priority:
-// 1) EXPLORE_MOCK => force mock
-// 2) EXPLORE_LIVE => force live
-// 3) Else: try live; if DB not configured/reachable, fall back to mock.
+    // Priority:
+    // 1) EXPLORE_MOCK => force mock
+    // 2) EXPLORE_LIVE => force live
+    // 3) Else: try live; if DB not configured/reachable, fall back to mock.
     private final app.controller.explore.ExploreDataProvider provider = selectProvider();
+    private final ExecutorService searchExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "explore-search");
+        t.setDaemon(true);
+        return t;
+    });
+    private final AtomicLong refreshToken = new AtomicLong();
 
     private app.controller.explore.ExploreDataProvider selectProvider() {
         try {
@@ -77,7 +88,8 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
     }
 
     // Tiny probe: attempt to open/close a DB connection.
-// Uses DbConnectionProvider to share the same credential paths teammates already use.
+    // Uses DbConnectionProvider to share the same credential paths teammates
+    // already use.
     private boolean canConnectToDb() {
         try (java.sql.Connection c = app.db.DbConnectionProvider.open()) {
             return c != null && !c.isClosed();
@@ -85,7 +97,6 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
             return false;
         }
     }
-
 
     @Override
     public void setWorkspaceProvider(Supplier<WorkspaceController> provider) {
@@ -124,17 +135,42 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         if (filterBox == null || searchField == null || resultsPane == null) {
             return;
         }
-        String q = (searchField.getText() == null ? "" : searchField.getText())
-                .trim().toLowerCase(Locale.ROOT);
-        ExploreControl.Kind kind = switch (filterBox.getSelectionModel().getSelectedItem()) {
+        String rawQuery = (searchField.getText() == null ? "" : searchField.getText()).trim();
+        String normalizedQuery = rawQuery.toLowerCase(Locale.ROOT);
+        ExploreControl.Kind kind = selectedKind();
+        long token = refreshToken.incrementAndGet();
+
+        searchExecutor.submit(() -> {
+            List<ExploreControl.SearchItem> items;
+            try {
+                items = provider.fetch(normalizedQuery, kind);
+            } catch (Exception _) {
+                items = List.of();
+            }
+            List<ExploreControl.SearchItem> finalItems = items;
+            Platform.runLater(() -> {
+                if (refreshToken.get() != token || resultsPane == null) {
+                    return;
+                }
+                applyResults(finalItems, normalizedQuery, kind);
+            });
+        });
+    }
+
+    private ExploreControl.Kind selectedKind() {
+        String selection = filterBox.getSelectionModel().getSelectedItem();
+        if (selection == null) {
+            return ExploreControl.Kind.ALL;
+        }
+        return switch (selection) {
             case "Artists" -> ExploreControl.Kind.ARTISTS;
             case "Designs" -> ExploreControl.Kind.DESIGNS;
             case "Completed Tattoos" -> ExploreControl.Kind.COMPLETED_TATTOOS;
             default -> ExploreControl.Kind.ALL;
         };
+    }
 
-        List<ExploreControl.SearchItem> items = provider.fetch(q, kind);
-
+    private void applyResults(List<ExploreControl.SearchItem> items, String query, ExploreControl.Kind kind) {
         resultsPane.getChildren().setAll(
                 items.isEmpty()
                         ? List.of(new Label("No results. Try a different search or filter."))
@@ -142,20 +178,12 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
 
         dbg("[ExploreBoundary] results=" + items.size()
                 + " filter=" + filterBox.getSelectionModel().getSelectedItem()
-                + " q=\"" + q + "\"");
+                + " q=\"" + query + "\"");
     }
 
     private Node card(ExploreControl.SearchItem item) {
         ImageView iv = new ImageView();
-        String thumb = item.thumbnail();
-
-        if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://"))) {
-            iv.setImage(new Image(thumb, 220, 0, true, true)); // Cloudinary URL
-        } else {
-            var res = getClass().getResourceAsStream(thumb);
-            if (res != null)
-                iv.setImage(new Image(res, 220, 0, true, true));
-        }
+        loadThumbnail(iv, item.thumbnail());
         iv.setFitWidth(220);
         iv.setPreserveRatio(true);
 
@@ -234,6 +262,28 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         return box;
     }
 
+    private void loadThumbnail(ImageView view, String rawThumb) {
+        if (view == null || rawThumb == null || rawThumb.isBlank()) {
+            return;
+        }
+        String thumb = rawThumb.trim();
+        String lc = thumb.toLowerCase(java.util.Locale.ROOT);
+        try {
+            if (lc.startsWith("http://") || lc.startsWith("https://")) {
+                view.setImage(new Image(thumb, 220, 0, true, true));
+            } else if (!thumb.contains(" ") && thumb.contains(".") && !thumb.contains("://")) {
+                view.setImage(new Image("https://" + thumb, 220, 0, true, true));
+            } else {
+                var res = getClass().getResourceAsStream(thumb);
+                if (res != null) {
+                    view.setImage(new Image(res, 220, 0, true, true));
+                }
+            }
+        } catch (IllegalArgumentException _) {
+            // Leave blank if the provided URL is invalid
+        }
+    }
+
     // ------- helpers (UI-side) -------
 
     private void exportToWorkspace(Image img, String title) {
@@ -278,19 +328,6 @@ public final class ExploreBoundary implements RootController.WorkspaceAware, Roo
         } catch (Exception _) {
             new Alert(Alert.AlertType.ERROR, "Save failed for \"" + name + "\".").showAndWait();
         }
-    }
-
-    private void enlargeImage(Image img, String title) {
-        if (img == null)
-            return;
-        ImageView iv = new ImageView(img);
-        iv.setPreserveRatio(true);
-        iv.setFitWidth(600);
-        var scene = new javafx.scene.Scene(new StackPane(iv), 700, 700);
-        var stage = new javafx.stage.Stage();
-        stage.setTitle(title);
-        stage.setScene(scene);
-        stage.show();
     }
 
     private void openArtistPage(String artistName) {

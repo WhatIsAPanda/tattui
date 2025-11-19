@@ -2,7 +2,10 @@ package app.controller.explore;
 
 import app.entity.Profile;
 import app.entity.PostWithAuthor;
+import app.entity.DesignWithAuthor;
+import app.entity.jdbc.JdbcDesignRepository;
 import app.entity.jdbc.JdbcPostRepository;
+import app.entity.DesignRepository;
 import app.entity.PostRepository;
 import app.entity.DatabaseConnector;
 
@@ -23,6 +26,7 @@ import java.util.List;
 public final class MergedExploreDataProvider implements ExploreDataProvider {
 
     private final PostRepository posts = new JdbcPostRepository();
+    private final DesignRepository designs = new JdbcDesignRepository();
     private static final int FETCH_LIMIT = 60;
     private static final String DEFAULT_THUMB = "/icons/artist_raven.jpg";
     private static final String UNKNOW_STRING = "unknown";
@@ -31,16 +35,17 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
     public List<ExploreControl.SearchItem> fetch(String q, ExploreControl.Kind filter) {
         String needle = (q == null ? "" : q).trim();
         List<ExploreControl.SearchItem> out = new ArrayList<>();
-        List<PostWithAuthor> posts = needsPosts(filter) ? queryPosts(needle) : List.of();
+        List<PostWithAuthor> completedRows = handlesCompleted(filter) ? queryPosts(needle) : List.of();
+        List<DesignWithAuthor> designRows = handlesDesigns(filter) ? queryDesigns(needle) : List.of();
 
         if (handlesArtists(filter)) {
             out.addAll(fetchArtists(needle));
         }
         if (handlesCompleted(filter)) {
-            out.addAll(fetchCompletedPosts(posts));
+            out.addAll(fetchCompletedPosts(completedRows));
         }
         if (handlesDesigns(filter)) {
-            out.addAll(fetchDesigns(posts));
+            out.addAll(fetchDesigns(designRows));
         }
 
         return out;
@@ -56,10 +61,6 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
 
     private boolean handlesDesigns(ExploreControl.Kind filter) {
         return filter == ExploreControl.Kind.DESIGNS || filter == ExploreControl.Kind.ALL;
-    }
-
-    private boolean needsPosts(ExploreControl.Kind filter) {
-        return handlesCompleted(filter) || handlesDesigns(filter);
     }
 
     private List<ExploreControl.SearchItem> fetchArtists(String needle) {
@@ -122,37 +123,37 @@ public final class MergedExploreDataProvider implements ExploreDataProvider {
         }
     }
 
-    private List<ExploreControl.SearchItem> fetchDesigns(List<PostWithAuthor> rows) {
-        List<PostWithAuthor> designish = rows.stream()
-                .filter(this::looksLikeDesign)
-                .toList();
-
-        List<PostWithAuthor> source = designish.isEmpty()
-                ? rows.stream().limit(4).toList()
-                : designish;
-
+    private List<ExploreControl.SearchItem> fetchDesigns(List<DesignWithAuthor> rows) {
         List<ExploreControl.SearchItem> items = new ArrayList<>();
-        for (PostWithAuthor row : source) {
-            var post = row.post();
+        for (DesignWithAuthor row : rows) {
+            var design = row.design();
             var author = row.author();
-            String caption = post.getCaption();
+            String authorName = author.getUsername() == null ? UNKNOW_STRING : author.getUsername();
+            String title = (design.name() == null || design.name().isBlank())
+                    ? "Design by " + authorName
+                    : design.name();
             items.add(new ExploreControl.SearchItem(
-                    (caption == null || caption.isBlank()) ? "Design" : caption,
+                    title,
                     ExploreControl.Kind.DESIGNS,
-                    post.getPostURL(),
+                    resolveDesignThumbnail(design.pictureUrl()),
                     List.of("design",
-                            "artist:" + (author.getUsername() == null ? UNKNOW_STRING : author.getUsername())),
-                    caption == null ? "" : caption));
+                            "artist:" + authorName),
+                    "Design by " + authorName));
         }
         return items;
     }
 
-    private boolean looksLikeDesign(PostWithAuthor row) {
-        String caption = row.post().getCaption();
-        if (caption == null) {
-            return false;
+    private List<DesignWithAuthor> queryDesigns(String needle) {
+        try {
+            return needle.isEmpty()
+                    ? designs.findLatest(FETCH_LIMIT, 0)
+                    : designs.search(needle, FETCH_LIMIT, 0);
+        } catch (SQLException _) {
+            return List.of();
         }
-        String lc = caption.toLowerCase();
-        return lc.contains("design") || lc.contains("sketch");
+    }
+
+    private String resolveDesignThumbnail(String url) {
+        return (url == null || url.isBlank()) ? DEFAULT_THUMB : url.trim();
     }
 }

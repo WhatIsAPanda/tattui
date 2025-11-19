@@ -19,6 +19,7 @@ public class DatabaseConnector {
     private static final String ACCOUNT_ID_STRING = "account_id";
     private static final String USERNAME_STRING = "username";
     private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
+    private static final String STYLE_NAME_STRING = "style_name";
 
     private DatabaseConnector() {
     }
@@ -222,7 +223,7 @@ public class DatabaseConnector {
         String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
         double homeLatitude = rs.getDouble("home_latitude");
         double homeLongitude = rs.getDouble("home_longitude");
-        String style = rs.getString("style_name");
+        String style = rs.getString(STYLE_NAME_STRING);
         do {
             stylesList.add(style);
         } while (rs.next());
@@ -233,7 +234,7 @@ public class DatabaseConnector {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
                   FROM Artists AS A
-                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.account_id
                   LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id
                  WHERE username = ? ;
                 """);
@@ -262,16 +263,16 @@ public class DatabaseConnector {
             double workLatitude = rs.getDouble("work_latitude");
 
             List<String> styles = new ArrayList<>();
-            String style = rs.getString("style_name");
+            String style = rs.getString(STYLE_NAME_STRING);
             if (style != null) {
-                style = rs.getString("style_name");
+                style = rs.getString(STYLE_NAME_STRING);
                 styles.add(style);
             }
             while (rs.next()) {
                 if (rs.getInt(ACCOUNT_ID_STRING) != accountId) {
                     break;
                 }
-                style = rs.getString("style_name");
+                style = rs.getString(STYLE_NAME_STRING);
                 styles.add(style);
             }
             Profile.WorkLocation location = new Profile.WorkLocation(workAddress, workLongitude, workLatitude);
@@ -285,7 +286,7 @@ public class DatabaseConnector {
         PreparedStatement stmt = conn.prepareStatement("""
                 SELECT *
                   FROM Artists AS A
-                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                  LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.account_id
                   LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
                  WHERE username LIKE ?
                 """);
@@ -300,7 +301,7 @@ public class DatabaseConnector {
                 """
                         SELECT *
                           FROM Artists AS A
-                          LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                          LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.account_id
                           LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
                          WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
                         """);
@@ -388,6 +389,8 @@ public class DatabaseConnector {
         String bio = p.getBiography();
         double longitude = p.getWorkLongitude();
         double latitude = p.getWorkLatitude();
+        int accountId = p.getAccountId();
+        List<String> styles = p.getStylesList() == null ? List.of() : p.getStylesList();
         String profilePictureUrl = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {
@@ -395,18 +398,6 @@ public class DatabaseConnector {
         }
         if (!ensureConnection()) {
             throw new SQLException("Unable to obtain database connection");
-        }
-
-        int accountId;
-        try (PreparedStatement findAccount = conn
-                .prepareStatement("SELECT account_id FROM Accounts WHERE username = ?")) {
-            findAccount.setString(1, username);
-            try (ResultSet rs = findAccount.executeQuery()) {
-                if (!rs.next()) {
-                    throw new SQLException("Account not found for username: " + username);
-                }
-                accountId = rs.getInt(ACCOUNT_ID_STRING);
-            }
         }
 
         boolean previousAutoCommit = conn.getAutoCommit();
@@ -420,6 +411,14 @@ public class DatabaseConnector {
                             UPDATE Accounts
                                SET profile_picture_url = ?
                              WHERE account_id = ?
+                        """);
+                PreparedStatement deleteStyles = conn.prepareStatement("""
+                            DELETE FROM ArtistTaggedStyles
+                             WHERE account_id = ?
+                        """);
+                PreparedStatement insertStyle = conn.prepareStatement("""
+                            INSERT INTO ArtistTaggedStyles (account_id, style_name)
+                            VALUES (?, ?)
                         """)) {
 
             updateArtist.setString(1, bio);
@@ -431,6 +430,21 @@ public class DatabaseConnector {
             updateAccount.setString(1, profilePictureUrl);
             updateAccount.setInt(2, accountId);
             updateAccount.executeUpdate();
+
+            deleteStyles.setInt(1, accountId);
+            deleteStyles.executeUpdate();
+
+            for (String style : styles) {
+                if (style == null || style.isBlank()) {
+                    continue;
+                }
+                insertStyle.setInt(1, accountId);
+                insertStyle.setString(2, style);
+                insertStyle.addBatch();
+            }
+            if (!styles.isEmpty()) {
+                insertStyle.executeBatch();
+            }
 
             conn.commit();
         } catch (SQLException ex) {
@@ -587,6 +601,72 @@ public class DatabaseConnector {
         }
     }
 
+    public static List<DesignWithAuthor> fetchDesignsWithAuthors(int limit, int offset) throws SQLException {
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT
+                    d.design_id          AS id,
+                    d.design_name        AS name,
+                    d.design_picture_url AS picture_url,
+                    acc.account_id       AS acc_id,
+                    acc.username         AS username,
+                    acc.profile_picture_url AS profile_picture_url,
+                    art.biography        AS biography,
+                    art.work_address     AS work_address,
+                    art.work_longitude   AS work_longitude,
+                    art.work_latitude    AS work_latitude
+                FROM Designs d
+                JOIN Artists art ON art.artist_id = d.artist_id
+                JOIN Accounts acc ON acc.account_id = art.account_id
+                ORDER BY d.design_id DESC
+                LIMIT ? OFFSET ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            stmt.setInt(2, offset);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapDesignsWithAuthors(rs);
+            }
+        }
+    }
+
+    public static List<DesignWithAuthor> searchDesignsWithAuthors(String q, int limit, int offset) throws SQLException {
+        if (!ensureConnection()) {
+            throw new SQLException("Unable to obtain database connection");
+        }
+        String sql = """
+                SELECT
+                    d.design_id          AS id,
+                    d.design_name        AS name,
+                    d.design_picture_url AS picture_url,
+                    acc.account_id       AS acc_id,
+                    acc.username         AS username,
+                    acc.profile_picture_url AS profile_picture_url,
+                    art.biography        AS biography,
+                    art.work_address     AS work_address,
+                    art.work_longitude   AS work_longitude,
+                    art.work_latitude    AS work_latitude
+                FROM Designs d
+                JOIN Artists art ON art.artist_id = d.artist_id
+                JOIN Accounts acc ON acc.account_id = art.account_id
+                WHERE LOWER(d.design_name) LIKE LOWER(?) OR LOWER(acc.username) LIKE LOWER(?)
+                ORDER BY d.design_id DESC
+                LIMIT ? OFFSET ?
+                """;
+        String like = "%" + (q == null ? "" : q) + "%";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, like);
+            stmt.setString(2, like);
+            stmt.setInt(3, limit);
+            stmt.setInt(4, offset);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapDesignsWithAuthors(rs);
+            }
+        }
+    }
+
     private static List<PostWithAuthor> mapPostsWithAuthors(ResultSet rs) throws SQLException {
         List<PostWithAuthor> posts = new ArrayList<>();
         while (rs.next()) {
@@ -597,8 +677,8 @@ public class DatabaseConnector {
 
             Profile author = new Profile(
                     rs.getInt("acc_id"),
-                    rs.getString("username"),
-                    rs.getString("profile_picture_url"),
+                    rs.getString("USERNAME_STRING"),
+                    rs.getString("PROFILE_PICTURE_URL_STRING"),
                     rs.getString("biography"),
                     java.util.List.of(),
                     new Profile.WorkLocation(
@@ -609,6 +689,30 @@ public class DatabaseConnector {
             posts.add(new PostWithAuthor(post, author));
         }
         return posts;
+    }
+
+    private static List<DesignWithAuthor> mapDesignsWithAuthors(ResultSet rs) throws SQLException {
+        List<DesignWithAuthor> designs = new ArrayList<>();
+        while (rs.next()) {
+            Design design = new Design(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("picture_url"));
+
+            Profile author = new Profile(
+                    rs.getInt("acc_id"),
+                    rs.getString("USERNAME_STRING"),
+                    rs.getString("PROFILE_PICTURE_URL_STRING"),
+                    rs.getString("biography"),
+                    java.util.List.of(),
+                    new Profile.WorkLocation(
+                            rs.getString("work_address"),
+                            safeDouble(rs, "work_longitude"),
+                            safeDouble(rs, "work_latitude")));
+
+            designs.add(new DesignWithAuthor(design, author));
+        }
+        return designs;
     }
 
     private static double safeDouble(ResultSet rs, String column) throws SQLException {
