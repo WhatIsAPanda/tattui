@@ -23,7 +23,7 @@ public class Account {
         this.homeLatitude = homeLatitude;
         this.homeLongitude = homeLongitude;
         this.stylePreferences = stylePreferences;
-        this.profilePicture = new Image(profilePictureUrl);
+        this.profilePicture = new Image(getClass().getResourceAsStream("/db/db_resources/" + profilePictureUrl));
     }
 
     public int getAccountId() {
