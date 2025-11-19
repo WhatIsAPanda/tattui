@@ -629,8 +629,8 @@ public class DatabaseConnector {
 
             Profile author = new Profile(
                     rs.getInt("acc_id"),
-                    rs.getString("USERNAME_STRING"),
-                    rs.getString("PROFILE_PICTURE_URL_STRING"),
+                    rs.getString(USERNAME_STRING),
+                    rs.getString(PROFILE_PICTURE_URL_STRING),
                     rs.getString("biography"),
                     java.util.List.of(),
                     new Profile.WorkLocation(
@@ -653,8 +653,8 @@ public class DatabaseConnector {
 
             Profile author = new Profile(
                     rs.getInt("acc_id"),
-                    rs.getString("USERNAME_STRING"),
-                    rs.getString("PROFILE_PICTURE_URL_STRING"),
+                    rs.getString(USERNAME_STRING),
+                    rs.getString(PROFILE_PICTURE_URL_STRING),
                     rs.getString("biography"),
                     java.util.List.of(),
                     new Profile.WorkLocation(
