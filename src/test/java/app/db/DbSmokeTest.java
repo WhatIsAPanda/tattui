@@ -12,16 +12,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DbSmokeTest {
-    final String SQLITE_DB_FILENAME = "tattui.db";
-    final String SQLITE_DB_URL = "jdbc:sqlite:" + SQLITE_DB_FILENAME;
+    final String sqliteDbFilename = "tattui.db";
+    final String sqliteDbUrl = "jdbc:sqlite:" + sqliteDbFilename;
 
     /** Probe 1: print database, tables, and peek a few rows from common tables. */
     @Test
     public void probeTablesAndRows() throws Exception {
 
-        String dbUrl = SQLITE_DB_URL;
+        String dbUrl = sqliteDbUrl;
         Assumptions.assumeTrue(
-                Files.exists(Path.of(SQLITE_DB_FILENAME)),
+                Files.exists(Path.of(
+                        sqliteDbUrl)),
                 "Skipping smoke test: local SQLite database not found");
 
         try (Connection conn = DriverManager.getConnection(dbUrl)) {

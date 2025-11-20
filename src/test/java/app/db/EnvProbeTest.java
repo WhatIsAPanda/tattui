@@ -20,7 +20,7 @@ public class EnvProbeTest {
         System.out.println("ENV DATABASE_USER length=" + (user == null ? "null" : user.length()));
         System.out.println("ENV DATABASE_PASSWORD length=" + (pass == null ? "null" : pass.length()));
 
-        boolean allPopulated = (url.length() > 0) && (user.length() > 0) && (pass.length() > 0);
+        boolean allPopulated = (!url.isEmpty()) && (!user.isEmpty()) && (!pass.isEmpty());
 
         Assertions.assertTrue(allPopulated, "Expected all three env vars to be set and non-empty");
     }

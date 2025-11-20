@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Profile {
-    private static final boolean headless = Boolean.getBoolean("HEADLESS_TESTS");
+    private static final boolean HEADLESS = Boolean.getBoolean("HEADLESS_TESTS");
 
     private int accountId;
     private String username;
@@ -32,7 +32,7 @@ public class Profile {
         }
         this.stylesList = stylesList == null ? Collections.emptyList() : List.copyOf(stylesList);
         this.profilePictureUrl = profilePictureUrl;
-        if (!headless) {
+        if (!HEADLESS) {
             try {
                 this.profilePicture = ImageResolver.loadAny(
                         profilePictureUrl,
