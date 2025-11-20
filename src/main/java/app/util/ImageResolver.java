@@ -12,8 +12,10 @@ import java.util.Locale;
 /**
  * Central place for resolving image paths.
  * <p>
- * Supports http(s) URLs, classpath resources, {@code file:} URLs, Windows/Unix paths,
- * {@code ~/}-relative paths, and hostnames without schemes. Backslashes are normalized
+ * Supports http(s) URLs, classpath resources, {@code file:} URLs, Windows/Unix
+ * paths,
+ * {@code ~/}-relative paths, and hostnames without schemes. Backslashes are
+ * normalized
  * so strings such as {@code src\main\resources\...} work on every platform.
  */
 public final class ImageResolver {
@@ -34,7 +36,7 @@ public final class ImageResolver {
     }
 
     public static Image load(String candidate, double width, double height,
-                             boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
+            boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
         return load(width, height, preserveRatio, smooth, backgroundLoading, candidate);
     }
 
@@ -43,14 +45,14 @@ public final class ImageResolver {
     }
 
     public static Image loadAny(double width, double height,
-                                boolean preserveRatio, boolean smooth, boolean backgroundLoading,
-                                String... candidates) {
+            boolean preserveRatio, boolean smooth, boolean backgroundLoading,
+            String... candidates) {
         return load(width, height, preserveRatio, smooth, backgroundLoading, candidates);
     }
 
     private static Image load(double width, double height,
-                              boolean preserveRatio, boolean smooth, boolean backgroundLoading,
-                              String... candidates) {
+            boolean preserveRatio, boolean smooth, boolean backgroundLoading,
+            String... candidates) {
         String resolved = resolveAny(candidates);
         if (resolved == null) {
             throw new IllegalArgumentException("Unable to resolve image from provided sources.");
@@ -128,6 +130,7 @@ public final class ImageResolver {
                 }
             }
         } catch (InvalidPathException ignored) {
+            // Ignore invalid paths
         }
         return null;
     }

@@ -16,6 +16,10 @@ public class DatabaseConnector {
     private static final String USERNAME_STRING = "username";
     private static final String PROFILE_PICTURE_URL_STRING = "profile_picture_url";
     private static final String STYLE_NAME_STRING = "style_name";
+    private static final String BIOGRAPHY_STRING = "biography";
+    private static final String WORK_ADDRESS_STRING = "work_address";
+    private static final String WORK_LONGITUDE_STRING = "work_longitude";
+    private static final String WORK_LATITUDE_STRING = "work_latitude";
 
     private DatabaseConnector() {
     }
@@ -208,10 +212,10 @@ public class DatabaseConnector {
             int accountId = rs.getInt(ACCOUNT_ID_STRING);
             String username = rs.getString(USERNAME_STRING);
             String profilePictureUrl = rs.getString(PROFILE_PICTURE_URL_STRING);
-            String biography = rs.getString("biography");
-            String workAddress = rs.getString("work_address");
-            double workLongitude = rs.getDouble("work_longitude");
-            double workLatitude = rs.getDouble("work_latitude");
+            String biography = rs.getString(BIOGRAPHY_STRING);
+            String workAddress = rs.getString(WORK_ADDRESS_STRING);
+            double workLongitude = rs.getDouble(WORK_LONGITUDE_STRING);
+            double workLatitude = rs.getDouble(WORK_LATITUDE_STRING);
 
             List<String> styles = new ArrayList<>();
             String style = rs.getString(STYLE_NAME_STRING);
@@ -362,16 +366,7 @@ public class DatabaseConnector {
                             UPDATE Accounts
                                SET profile_picture_url = ?
                              WHERE account_id = ?
-                        """);
-        // PreparedStatement deleteStyles = conn.prepareStatement("""
-        // DELETE FROM ArtistTaggedStyles
-        // WHERE account_id = ?
-        // """);
-        // PreparedStatement insertStyle = conn.prepareStatement("""
-        // INSERT INTO ArtistTaggedStyles (account_id, style_name)
-        // VALUES (?, ?)
-        // """
-        ) {
+                        """);) {
 
             updateArtist.setString(1, bio);
             updateArtist.setDouble(2, latitude);
@@ -382,21 +377,6 @@ public class DatabaseConnector {
             updateAccount.setString(1, profilePictureUrl);
             updateAccount.setInt(2, accountId);
             updateAccount.executeUpdate();
-
-            // deleteStyles.setInt(1, accountId);
-            // deleteStyles.executeUpdate();
-
-            // for (String style : styles) {
-            // if (style == null || style.isBlank()) {
-            // continue;
-            // }
-            // insertStyle.setInt(1, accountId);
-            // insertStyle.setString(2, style);
-            // insertStyle.addBatch();
-            // }
-            // if (!styles.isEmpty()) {
-            // insertStyle.executeBatch();
-            // }
 
             conn.commit();
         } catch (SQLException ex) {
@@ -631,12 +611,12 @@ public class DatabaseConnector {
                     rs.getInt("acc_id"),
                     rs.getString(USERNAME_STRING),
                     rs.getString(PROFILE_PICTURE_URL_STRING),
-                    rs.getString("biography"),
+                    rs.getString(BIOGRAPHY_STRING),
                     java.util.List.of(),
                     new Profile.WorkLocation(
-                            rs.getString("work_address"),
-                            safeDouble(rs, "work_longitude"),
-                            safeDouble(rs, "work_latitude")));
+                            rs.getString(WORK_ADDRESS_STRING),
+                            safeDouble(rs, WORK_LONGITUDE_STRING),
+                            safeDouble(rs, WORK_LATITUDE_STRING)));
 
             posts.add(new PostWithAuthor(post, author));
         }
@@ -655,12 +635,12 @@ public class DatabaseConnector {
                     rs.getInt("acc_id"),
                     rs.getString(USERNAME_STRING),
                     rs.getString(PROFILE_PICTURE_URL_STRING),
-                    rs.getString("biography"),
+                    rs.getString(BIOGRAPHY_STRING),
                     java.util.List.of(),
                     new Profile.WorkLocation(
-                            rs.getString("work_address"),
-                            safeDouble(rs, "work_longitude"),
-                            safeDouble(rs, "work_latitude")));
+                            rs.getString(WORK_ADDRESS_STRING),
+                            safeDouble(rs, WORK_LONGITUDE_STRING),
+                            safeDouble(rs, WORK_LATITUDE_STRING)));
 
             designs.add(new DesignWithAuthor(design, author));
         }

@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -22,27 +23,36 @@ public class ExploreLiveAcceptanceProbe {
     private static boolean envPresent(String... keys) {
         for (String k : keys) {
             String v = System.getenv(k);
-            if (v == null || v.isBlank()) return false;
+            if (v == null || v.isBlank())
+                return false;
         }
         return true;
     }
 
     private static Connection openEnvConn() throws Exception {
-        String url  = System.getenv("DATABASE_URL");
+        String url = System.getenv("DATABASE_URL");
         String user = System.getenv("DATABASE_USER");
         String pass = System.getenv("DATABASE_PASSWORD");
         return DriverManager.getConnection(url, user, pass);
     }
 
     private static boolean dbRoundTripReady(int attempts, long delayMs) {
-        if (!envPresent("DATABASE_URL", "DATABASE_USER", "DATABASE_PASSWORD")) return false;
+        if (!envPresent("DATABASE_URL", "DATABASE_USER", "DATABASE_PASSWORD"))
+            return false;
         for (int i = 0; i < attempts; i++) {
             try (Connection c = openEnvConn();
-                 Statement s = c.createStatement();
-                 ResultSet rs = s.executeQuery("SELECT 1")) {
-                if (rs.next()) return true;
-            } catch (Exception ignored) { }
-            try { Thread.sleep(delayMs); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    Statement s = c.createStatement();
+                    ResultSet rs = s.executeQuery("SELECT 1")) {
+                if (rs.next())
+                    return true;
+            } catch (Exception ignored) {
+                // ignore and retry
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(delayMs);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
         }
         return false;
     }
@@ -57,8 +67,8 @@ public class ExploreLiveAcceptanceProbe {
         var items = provider.fetch("", ExploreControl.Kind.ALL);
         assertNotNull(items);
 
-        long artists   = items.stream().filter(i -> i.kind() == ExploreControl.Kind.ARTISTS).count();
-        long designs   = items.stream().filter(i -> i.kind() == ExploreControl.Kind.DESIGNS).count();
+        long artists = items.stream().filter(i -> i.kind() == ExploreControl.Kind.ARTISTS).count();
+        long designs = items.stream().filter(i -> i.kind() == ExploreControl.Kind.DESIGNS).count();
         long completed = items.stream().filter(i -> i.kind() == ExploreControl.Kind.COMPLETED_TATTOOS).count();
 
         System.out.println("[ExploreLiveAcceptanceProbe] counts => " +

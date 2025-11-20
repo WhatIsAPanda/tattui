@@ -19,8 +19,14 @@ import javafx.scene.layout.StackPane;
 import javafx.animation.FadeTransition;
 import javafx.util.Duration;
 
-// public class ExploreController {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import app.boundary.ExploreBoundary;
+
 public class ExploreController implements RootController.WorkspaceAware, RootController.PageAware {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreController.class);
 
     private java.util.function.Supplier<WorkspaceController> workspaceProvider;
     private java.util.function.Consumer<String> pageRequest;
@@ -55,7 +61,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
     @Override
     public void setWorkspaceProvider(java.util.function.Supplier<WorkspaceController> provider) {
         this.workspaceProvider = provider;
-        System.out.println("[Explore] workspaceProvider injected? " + (provider != null));
+        LOGGER.info("[Explore] workspaceProvider injected? " + (provider != null));
     }
 
     private void exportToWorkspace(Image img, String title) {
@@ -105,7 +111,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
     private void initialize() {
 
         // Sanity prints help catch fx:id/paths issues quickly
-        System.out.println("[Explore] init: searchField=" + searchField
+        LOGGER.info("[Explore] init: searchField=" + searchField
                 + ", filterBox=" + filterBox + ", resultsPane=" + resultsPane);
 
         // Populate filters
@@ -137,14 +143,14 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
                 .filter(it -> q.isEmpty()
                         || it.title.toLowerCase(Locale.ROOT).contains(q)
                         || it.tags.stream().anyMatch(t -> t.toLowerCase(Locale.ROOT).contains(q)))
-                .collect(Collectors.toList());
+                .toList();
 
         resultsPane.getChildren().setAll(
                 filtered.isEmpty()
                         ? List.of(new Label("No results. Try a different search or filter."))
                         : filtered.stream().map(this::card).collect(Collectors.toList()));
 
-        System.out.println("[Explore] results=" + filtered.size()
+        LOGGER.info("[Explore] results=" + filtered.size()
                 + " filter=" + filterBox.getSelectionModel().getSelectedItem()
                 + " q=\"" + q + "\"");
     }
@@ -233,7 +239,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
 
                 case COMPLETED_TATTOOS -> enlargeImage(iv.getImage(), item.title);
                 case ARTISTS -> openArtistPage(item.title);
-                default -> System.out.println("[Explore] clicked " + item.title);
+                default -> LOGGER.info("[Explore] clicked " + item.title);
             }
         });
 
@@ -306,7 +312,7 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             alert.setContentText("The design \"" + name + "\" has been saved to:\n" + file.getAbsolutePath());
             alert.showAndWait();
 
-            System.out.println("[Explore] Saved to " + file.getAbsolutePath());
+            LOGGER.info("[Explore] Saved to " + file.getAbsolutePath());
         } catch (Exception _) {
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
                     javafx.scene.control.Alert.AlertType.ERROR);

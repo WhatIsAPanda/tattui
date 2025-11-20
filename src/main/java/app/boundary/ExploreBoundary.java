@@ -22,9 +22,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ExploreBoundary
         implements RootController.WorkspaceAware, RootController.PageAware, RootController.ProfileAware {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreBoundary.class);
 
     // ---- lightweight debug helper ----
     private static final boolean DEBUG = Boolean.getBoolean("TATTUI_DEBUG");
@@ -34,7 +38,7 @@ public final class ExploreBoundary
 
     private static void dbg(String msg) {
         if (DEBUG)
-            System.out.println(msg);
+            LOGGER.debug(msg);
     }
 
     @FXML
@@ -153,7 +157,7 @@ public final class ExploreBoundary
                 if (refreshToken.get() != token || resultsPane == null) {
                     return;
                 }
-                applyResults(finalItems, normalizedQuery, kind);
+                applyResults(finalItems, normalizedQuery);
             });
         });
     }
@@ -171,7 +175,7 @@ public final class ExploreBoundary
         };
     }
 
-    private void applyResults(List<ExploreControl.SearchItem> items, String query, ExploreControl.Kind kind) {
+    private void applyResults(List<ExploreControl.SearchItem> items, String query) {
         resultsPane.getChildren().setAll(
                 items.isEmpty()
                         ? List.of(new Label("No results. Try a different search or filter."))
@@ -513,12 +517,6 @@ public final class ExploreBoundary
                 .filter(t -> t.toLowerCase(java.util.Locale.ROOT).startsWith("artist:"))
                 .map(t -> t.substring("artist:".length()).trim())
                 .findFirst();
-    }
-
-    private String avatarForArtist(String artistName) {
-        if ("Raven".equalsIgnoreCase(artistName))
-            return DEFAULT_ARTIST_PHOTO;
-        return DEFAULT_ARTIST_PHOTO; // fallback
     }
 
 }

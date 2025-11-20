@@ -3,8 +3,8 @@ package app.controller;
 import java.util.function.Consumer;
 import javafx.concurrent.Task;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import app.entity.Profile;
 import com.gluonhq.maps.MapPoint;
@@ -39,7 +39,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MapController implements PageAware, ProfileAware {
-    private static final Logger LOGGER = Logger.getLogger(MapController.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapController.class);
 
     @FXML
     private TextField searchField;
@@ -106,9 +106,6 @@ public class MapController implements PageAware, ProfileAware {
         String query = searchField.getText();
         if (query == null || query.trim().isEmpty()) {
             return;
-        }
-        if (query.charAt(0) == '#') {
-            tagSearch(query);
         }
         if (query.charAt(0) == '@') {
             usernameSearch(query.substring(1).trim());
@@ -209,7 +206,7 @@ public class MapController implements PageAware, ProfileAware {
     private void logTaskError(Task<DotLayer> task) {
         Throwable ex = task.getException();
         if (ex != null) {
-            LOGGER.log(Level.SEVERE, "Map task failed", ex);
+            LOGGER.debug("Task failed with an exception.", ex);
         }
     }
 
@@ -218,10 +215,6 @@ public class MapController implements PageAware, ProfileAware {
             map.removeLayer(layer);
         }
         layers.clear();
-    }
-
-    private void tagSearch(String query) {
-        // TODO: implement tag search
     }
 
     private boolean citySearch(String query) {
@@ -253,7 +246,7 @@ public class MapController implements PageAware, ProfileAware {
             }
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error searching by city: " + query, e);
+            LOGGER.debug("Task failed with an exception.", e);
         }
         return false;
     }
@@ -281,7 +274,7 @@ public class MapController implements PageAware, ProfileAware {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to geocode city: " + city, e);
+            LOGGER.debug("Task failed with an exception.", e);
         }
         return null;
     }
@@ -299,7 +292,7 @@ public class MapController implements PageAware, ProfileAware {
             }
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving profiles for query: " + query, e);
+            LOGGER.debug("Task failed with an exception.", e);
         }
     }
 
@@ -319,7 +312,6 @@ public class MapController implements PageAware, ProfileAware {
         Button clickedButton = (Button) event.getSource();
         String filterTag = clickedButton.getText(); // e.g. "#Blackwork"
         applyFilter(filterTag);
-        tagSearch(filterTag);
     }
 
     private void applyFilter(String tag) {
