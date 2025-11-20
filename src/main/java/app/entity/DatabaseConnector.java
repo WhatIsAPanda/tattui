@@ -1,12 +1,9 @@
 package app.entity;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 public class DatabaseConnector {
     private static Connection conn;
@@ -345,7 +342,6 @@ public class DatabaseConnector {
         double longitude = p.getWorkLongitude();
         double latitude = p.getWorkLatitude();
         int accountId = p.getAccountId();
-        List<String> styles = p.getStylesList() == null ? List.of() : p.getStylesList();
         String profilePictureUrl = p.getProfilePictureURL();
 
         if (username == null || username.isBlank()) {

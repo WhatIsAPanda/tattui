@@ -61,7 +61,6 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
     @Override
     public void setWorkspaceProvider(java.util.function.Supplier<WorkspaceController> provider) {
         this.workspaceProvider = provider;
-        LOGGER.info("[Explore] workspaceProvider injected? " + (provider != null));
     }
 
     private void exportToWorkspace(Image img, String title) {
@@ -220,19 +219,19 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
         box.setOnMouseClicked(e -> {
             switch (item.kind) {
                 case DESIGNS -> {
-                    var SAVE = new javafx.scene.control.ButtonType("Save Locally");
-                    var SEND = new javafx.scene.control.ButtonType("Send to Workspace");
-                    var CANCEL = javafx.scene.control.ButtonType.CANCEL;
+                    var save = new javafx.scene.control.ButtonType("Save Locally");
+                    var send = new javafx.scene.control.ButtonType("Send to Workspace");
+                    var cancel = javafx.scene.control.ButtonType.CANCEL;
 
                     var alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
                     alert.setHeaderText("What do you want to do?");
                     alert.setContentText("Design: " + item.title);
-                    alert.getButtonTypes().setAll(SEND, SAVE, CANCEL);
+                    alert.getButtonTypes().setAll(send, save, cancel);
 
-                    var choice = alert.showAndWait().orElse(CANCEL);
-                    if (choice == SAVE) {
+                    var choice = alert.showAndWait().orElse(cancel);
+                    if (choice == save) {
                         saveImageToLocal(iv.getImage(), item.title);
-                    } else if (choice == SEND) {
+                    } else if (choice == send) {
                         exportToWorkspace(iv.getImage(), item.title);
                     }
                 }
@@ -311,8 +310,6 @@ public class ExploreController implements RootController.WorkspaceAware, RootCon
             alert.setHeaderText("Saved Successfully!");
             alert.setContentText("The design \"" + name + "\" has been saved to:\n" + file.getAbsolutePath());
             alert.showAndWait();
-
-            LOGGER.info("[Explore] Saved to " + file.getAbsolutePath());
         } catch (Exception _) {
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
                     javafx.scene.control.Alert.AlertType.ERROR);

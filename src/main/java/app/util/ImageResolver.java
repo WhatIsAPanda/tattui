@@ -129,7 +129,7 @@ public final class ImageResolver {
                     return candidate;
                 }
             }
-        } catch (InvalidPathException ignored) {
+        } catch (InvalidPathException _) {
             // Ignore invalid paths
         }
         return null;

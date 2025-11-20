@@ -45,13 +45,8 @@ public class ExploreLiveAcceptanceProbe {
                     ResultSet rs = s.executeQuery("SELECT 1")) {
                 if (rs.next())
                     return true;
-            } catch (Exception ignored) {
+            } catch (Exception _) {
                 // ignore and retry
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(delayMs);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
             }
         }
         return false;

@@ -242,19 +242,19 @@ public final class ExploreBoundary
         box.setOnMouseClicked(e -> {
             switch (item.kind()) {
                 case DESIGNS -> {
-                    var SAVE = new ButtonType("Save Locally");
-                    var SEND = new ButtonType("Send to Workspace");
-                    var CANCEL = ButtonType.CANCEL;
+                    var save = new ButtonType("Save Locally");
+                    var send = new ButtonType("Send to Workspace");
+                    var cancel = ButtonType.CANCEL;
 
                     var alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setHeaderText("What do you want to do?");
                     alert.setContentText("Design: " + item.title());
-                    alert.getButtonTypes().setAll(SEND, SAVE, CANCEL);
+                    alert.getButtonTypes().setAll(send, save, cancel);
 
-                    var choice = alert.showAndWait().orElse(CANCEL);
-                    if (choice == SAVE) {
+                    var choice = alert.showAndWait().orElse(cancel);
+                    if (choice == save) {
                         saveImageToLocal(iv.getImage(), item.title());
-                    } else if (choice == SEND) {
+                    } else if (choice == send) {
                         exportToWorkspace(iv.getImage(), item.title());
                     }
                 }
@@ -486,7 +486,7 @@ public final class ExploreBoundary
         } catch (Exception _) {
             try {
                 avatar.setImage(ImageResolver.load(DEFAULT_ARTIST_PHOTO, 56, 56, true, true));
-            } catch (Exception ignored) {
+            } catch (Exception _) {
                 // keep empty if fallback also fails
             }
         }
