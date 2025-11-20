@@ -4,68 +4,32 @@ import app.controller.explore.ExploreControl;
 import app.controller.explore.ExploreDataProvider;
 import app.controller.explore.MergedExploreDataProvider;
 import app.controller.explore.MockExploreDataProvider;
+import app.entity.Post;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ExploreProviderSmokeTest {
 
-    private static boolean liveEnabled() {
-        return System.getenv("EXPLORE_LIVE") != null;
-    }
+    private static final String SQLITE_DB_FILENAME = "tattui.db";
 
-    private static boolean envPresent(String... keys) {
-        for (String k : keys) {
-            String v = System.getenv(k);
-            if (v == null || v.isBlank())
-                return false;
-        }
-        return true;
-    }
-
-    private static Connection openEnvConn() throws Exception {
-        String url = System.getenv("DATABASE_URL");
-        String user = System.getenv("DATABASE_USER");
-        String pass = System.getenv("DATABASE_PASSWORD");
-        return DriverManager.getConnection(url, user, pass);
-    }
-
-    /**
-     * Round-trip readiness: checks env present and SELECT 1 succeeds (with
-     * retries).
-     */
-    private static boolean dbRoundTripReady(int attempts, long delayMs) {
-        if (!envPresent("DATABASE_URL", "DATABASE_USER", "DATABASE_PASSWORD"))
-            return false;
-        for (int i = 0; i < attempts; i++) {
-            try (Connection c = openEnvConn();
-                    Statement s = c.createStatement();
-                    ResultSet rs = s.executeQuery("SELECT 1")) {
-                if (rs.next())
-                    return true;
-            } catch (Exception _) {
-                /* wait and retry */ }
-            try {
-                Thread.sleep(delayMs);
-            } catch (InterruptedException _) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        return false;
+    @BeforeAll
+    static void headless() {
+        System.setProperty("HEADLESS_TESTS", "true");
+        Post.setHeadless(true);
+        System.out.println("[ExploreProviderSmokeTest] HEADLESS_TESTS enabled");
     }
 
     @Test
-    void liveProvider_returnsSomething_whenLiveEnabled() {
+    void liveProvider_returnsSomething_whenLocalDbPresent() {
         Assumptions.assumeTrue(
-                liveEnabled() && dbRoundTripReady(8, 1500),
-                "Skipping live test: EXPLORE_LIVE not set or DB not ready");
+                Files.exists(Path.of(SQLITE_DB_FILENAME)),
+                "Skipping live test: local SQLite database not found");
 
         ExploreDataProvider provider = new MergedExploreDataProvider();
         var items = provider.fetch("", ExploreControl.Kind.ALL);

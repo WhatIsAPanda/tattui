@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Profile {
+    private static final boolean headless = Boolean.getBoolean("HEADLESS_TESTS");
+
     private int accountId;
     private String username;
     private String biography;
@@ -30,12 +32,14 @@ public class Profile {
         }
         this.stylesList = stylesList == null ? Collections.emptyList() : List.copyOf(stylesList);
         this.profilePictureUrl = profilePictureUrl;
-        try {
-            this.profilePicture = ImageResolver.loadAny(
-                    profilePictureUrl,
-                    "/db/db_resources/" + profilePictureUrl);
-        } catch (IllegalArgumentException _) {
-            this.profilePicture = null;
+        if (!headless) {
+            try {
+                this.profilePicture = ImageResolver.loadAny(
+                        profilePictureUrl,
+                        "/db/db_resources/" + profilePictureUrl);
+            } catch (IllegalArgumentException _) {
+                this.profilePicture = null;
+            }
         }
     }
 
@@ -83,6 +87,7 @@ public class Profile {
     public List<String> getStylesList() {
         return stylesList;
     }
+
     public void setStylesList(List<String> stylesList) {
         this.stylesList = stylesList != null ? List.copyOf(stylesList) : Collections.emptyList();
     }
