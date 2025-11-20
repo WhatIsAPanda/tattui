@@ -40,6 +40,7 @@ import org.json.JSONObject;
 
 public class MapController implements PageAware, ProfileAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapController.class);
+    public static final String TASK_FAILED_STRING = "Task failed with an exception.";
 
     @FXML
     private TextField searchField;
@@ -206,7 +207,7 @@ public class MapController implements PageAware, ProfileAware {
     private void logTaskError(Task<DotLayer> task) {
         Throwable ex = task.getException();
         if (ex != null) {
-            LOGGER.debug("Task failed with an exception.", ex);
+            LOGGER.debug(TASK_FAILED_STRING, ex);
         }
     }
 
@@ -246,7 +247,7 @@ public class MapController implements PageAware, ProfileAware {
             }
 
         } catch (Exception e) {
-            LOGGER.debug("Task failed with an exception.", e);
+            LOGGER.debug(TASK_FAILED_STRING, e);
         }
         return false;
     }
@@ -274,7 +275,7 @@ public class MapController implements PageAware, ProfileAware {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Task failed with an exception.", e);
+            LOGGER.debug(TASK_FAILED_STRING, e);
         }
         return null;
     }
@@ -292,7 +293,7 @@ public class MapController implements PageAware, ProfileAware {
             }
 
         } catch (Exception e) {
-            LOGGER.debug("Task failed with an exception.", e);
+            LOGGER.debug(TASK_FAILED_STRING, e);
         }
     }
 

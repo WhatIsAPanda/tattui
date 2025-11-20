@@ -52,6 +52,11 @@ public class ExploreProviderSmokeTest {
                     return true;
             } catch (Exception _) {
                 /* wait and retry */ }
+            try {
+                Thread.sleep(delayMs);
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+            }
         }
         return false;
     }

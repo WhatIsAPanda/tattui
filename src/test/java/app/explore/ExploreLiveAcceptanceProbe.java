@@ -48,6 +48,11 @@ public class ExploreLiveAcceptanceProbe {
             } catch (Exception _) {
                 // ignore and retry
             }
+            try {
+                Thread.sleep(delayMs);
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+            }
         }
         return false;
     }
