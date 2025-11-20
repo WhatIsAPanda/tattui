@@ -31,7 +31,8 @@ public class DbProfilesProbeTest {
                 for (Profile p : profiles) {
                     int postCount = (p.getPosts() == null ? 0 : p.getPosts().size());
                     System.out.println("  @" + p.getUsername() + " | posts=" + postCount);
-                    if (++count >= 10) break;
+                    if (++count >= 10)
+                        break;
                 }
             }
         } catch (Throwable t) {
@@ -43,7 +44,7 @@ public class DbProfilesProbeTest {
     /** Probe 2: fetch a known user; never fail build. */
     @Test
     public void profileByUsername() {
-        final String username = "william"; // change if needed
+        final String username = "Bad Church Tattoo"; // change if needed
         System.out.println("\n[Probe] profileByUsername('" + username + "')");
         try {
             Profile p = DatabaseConnector.getProfileByUsername(username);
@@ -53,10 +54,8 @@ public class DbProfilesProbeTest {
             }
             System.out.println("  @" + p.getUsername() + " bio=" + p.getBiography());
             if (p.getPosts() != null) {
-                p.getPosts().stream().limit(5).forEach(post ->
-                        System.out.println("    • post #" + post.getId() + " : "
-                                + post.getCaption() + " | " + post.getPostURL())
-                );
+                p.getPosts().stream().limit(5).forEach(post -> System.out.println("    • post #" + post.getId() + " : "
+                        + post.getCaption() + " | " + post.getPostURL()));
             }
         } catch (Throwable t) {
             System.out.println("[Probe] ERROR in profileByUsername:");
