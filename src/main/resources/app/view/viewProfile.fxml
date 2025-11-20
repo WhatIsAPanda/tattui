@@ -84,7 +84,7 @@
                                           <Label fx:id="longitudeField" text="longitude" BorderPane.alignment="CENTER" />
                                        </center>
                                        <top>
-                                          <Label text="Latitude, Longitude" BorderPane.alignment="TOP_LEFT">
+                                          <Label text="Latitude                 Longitude" BorderPane.alignment="TOP_LEFT">
                                              <BorderPane.margin>
                                                 <Insets bottom="5.0" top="5.0" />
                                              </BorderPane.margin>
