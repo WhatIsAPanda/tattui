@@ -41,14 +41,12 @@
   -fx-text-fill: #f8fafc;
 }
 
-.menu-button:hover,
-.menu-button:showing {
+.menu-button:hover {
   -fx-background-color: #c0c0c0;
   -fx-text-fill: #000000;
 }
 
-.menu-button:hover .label,
-.menu-button:showing .label {
+.menu-button:hover .label {
   -fx-text-fill: #000000;
 }
 
@@ -72,8 +70,7 @@
   -fx-background-color: transparent;
 }
 
-.scroll-bar:horizontal .thumb,
-.scroll-bar:vertical .thumb {
+.scroll-bar .thumb {
   -fx-border-color: rgba(255, 255, 255, 0.75);
   -fx-border-width: 1;
   -fx-border-radius: 4;
@@ -102,14 +99,12 @@
   -fx-text-fill: #f8fafc;
 }
 
-.workspace-menu-button:hover,
-.workspace-menu-button:showing {
+.workspace-menu-button:hover {
   -fx-background-color: #d7d7d7;
   -fx-text-fill: #000000;
 }
 
-.workspace-menu-button:hover .label,
-.workspace-menu-button:showing .label {
+.workspace-menu-button:hover .label {
   -fx-text-fill: #000000;
 }
 
