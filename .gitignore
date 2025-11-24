@@ -75,6 +75,3 @@ logs/
 local.properties
 keys.txt
 tattui-*.txt
-
-# ---- Human Model ----
-human.obj
