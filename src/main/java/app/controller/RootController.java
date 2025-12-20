@@ -2,6 +2,7 @@ package app.controller;
 
 import app.boundary.ViewMyProfileBoundary;
 import app.entity.DatabaseConnector;
+import app.entity.LoggedInProfile;
 import app.entity.Profile;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -30,6 +31,7 @@ public class RootController {
     private final Map<String, Parent> pageCache = new HashMap<>();
     private static final String WORKSPACE_PAGE = "workspace";
     private static final String LOGIN_PAGE = "login";
+    private static RootController ctrl = null;
 
     private static final Map<String, String> PAGE_PATHS = Map.of(
         WORKSPACE_PAGE, "/app/view/Workspace.fxml",
@@ -37,26 +39,9 @@ public class RootController {
         "gallery", "/app/view/Gallery.fxml",
         LOGIN_PAGE, "/app/view/Login.fxml",
         "viewProfile", "/app/view/viewMyProfile.fxml",
-        "explore", "/app/view/Explore.fxml",
             "register","/app/view/Register.fxml"
     );
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
-
-    public RootController() {
-        // Default constructor required for JavaFX FXML loader.
-    }
-
-    public interface PageAware {
-        void setOnPageRequest(Consumer<String> pageRequestHandler);
-    }
-
-    public interface WorkspaceAware {
-        void setWorkspaceProvider(Supplier<WorkspaceController> provider);
-    }
-    public interface ProfileAware {
-        void setProfileProvider(Consumer<Profile> provider);
-    }
-
 
     // --- Initialization ---
 
@@ -65,7 +50,9 @@ public class RootController {
         loadView("/app/view/Taskbar.fxml");
         showPage(WORKSPACE_PAGE);
         DatabaseConnector.ensureConnection();
-
+        if(getInstance() == null) {
+            setInstance();
+        }
         rootPane.sceneProperty().addListener((obs, o, n) -> {
             if (n != null && n.getWindow() instanceof Stage stage)
                 notifyWorkspaceStage(stage);
@@ -77,19 +64,23 @@ public class RootController {
         });
     }
 
+    private void setInstance() {
+        ctrl = this;
+    }
     // --- Singleton Accessor ---
-
-    // no global singleton accessor anymore
+    public static RootController getInstance() {
+        return ctrl;
+    }
 
     // --- Navigation ---
 
     /** Displays a page by key. Can be called from any controller. */
     public void showPage(String key) {
-        showPage(key, Optional.empty());
+        showPage(key, null);
     }
 
     /** Displays a page by key. Can be called from any controller. */
-    public void showPage(String key, Optional<Profile> profile) {
+    public void showPage(String key, Profile profile) {
         String path = PAGE_PATHS.get(key);
         if (path == null)
             throw new IllegalArgumentException("Unknown page key: " + key);
@@ -102,11 +93,11 @@ public class RootController {
         }
 
         Parent view = pageCache.computeIfAbsent(key, k ->{
-            if (profile.isPresent()) {
+            if (profile != null) {
                 return loadView(path, profile);
             }
                 else {
-                    return loadView(path, Optional.empty());
+                    return loadView(path, null);
                 }
             });
 
@@ -123,31 +114,27 @@ public class RootController {
     }
 
     private Parent loadView(String path) {
-        return loadView(path, Optional.empty());
+        return loadView(path, null);
     }
 
-    private Parent loadView(String path, Optional<Profile> profile) {
+    private Parent loadView(String path, Profile profile) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             Parent view = loader.load();
-            
 
             Object cntrl = loader.getController();
-            if (cntrl instanceof PageAware aware)
-                aware.setOnPageRequest(this::showPage);
-            if (cntrl instanceof ProfileAware aware) {
-                aware.setProfileProvider((a) -> this.showPage("viewProfile",Optional.of(a)));
-            }
-            if(cntrl instanceof ViewMyProfileBoundary viewBoundary) {
-                profile.ifPresent(viewBoundary::setProfile);
-            }
-
             if ("/app/view/Workspace.fxml".equals(path))
                 workspaceController = loader.getController();
-            if ("/app/view/Taskbar.fxml".equals(path))
+            if ("/app/view/Taskbar.fxml".equals(path)) {
                 attachContent(taskbarContainer, view);
-            if (cntrl instanceof WorkspaceAware aware)
-                aware.setWorkspaceProvider(() -> workspaceController);
+                if(loader.getController() instanceof TaskbarController taskbarController) {
+                    TaskbarController.setInstance(taskbarController);
+                }
+            }
+
+            if(cntrl instanceof ViewMyProfileBoundary viewProfileBoundaryController && profile != null) {
+                viewProfileBoundaryController.setProfile(profile);
+            }
             return view;
         } catch (IOException e) {
             throw new ViewLoadException("Failed to load " + path, e);

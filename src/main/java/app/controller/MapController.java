@@ -13,7 +13,6 @@ import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 
 import app.controller.MapController.DotLayer;
-import app.controller.RootController.PageAware;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -48,7 +47,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 
-public class MapController implements PageAware {
+public class MapController{
     
     @FXML
     private TextField searchField;
@@ -65,11 +64,6 @@ public class MapController implements PageAware {
 
     private final List<MapLayer> layers = new LinkedList<>();
 
-    private Consumer<String> onPageRequest;
-
-    public void setOnPageRequest(Consumer<String> handler) {
-        this.onPageRequest = handler;
-    }
 
     @FXML
     public void initialize() {

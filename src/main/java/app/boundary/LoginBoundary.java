@@ -11,7 +11,7 @@ import javafx.scene.control.TextField;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 
-public class LoginBoundary implements RootController.PageAware {
+public class LoginBoundary {
     @FXML
     private TextField usernameField;
     @FXML
@@ -21,15 +21,13 @@ public class LoginBoundary implements RootController.PageAware {
     @FXML
     private Button registerButton;
 
-    private Consumer<String> onPageRequest;
-
     @FXML
     public void loginButtonClicked() throws SQLException {
         String username = usernameField.getText();
         String password = passwordField.getText();
         boolean success = LoginController.verifyUser(username, password);
         if (success) {
-            onPageRequest.accept("workspace");
+            RootController.getInstance().showPage("workspace");
         } else {
             System.out.println("fail!");
         }
@@ -37,12 +35,6 @@ public class LoginBoundary implements RootController.PageAware {
     //TODO:: implement page navigation for login/sign in
     @FXML
     public void registerButtonClicked(ActionEvent event) {
-        onPageRequest.accept("register");
-    }
-
-
-    @Override
-    public void setOnPageRequest(Consumer<String> pageRequestHandler) {
-        this.onPageRequest = pageRequestHandler;
+        RootController.getInstance().showPage("register");
     }
 }

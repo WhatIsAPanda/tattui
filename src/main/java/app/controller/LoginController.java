@@ -15,6 +15,9 @@ public class LoginController {
             LoggedInAccount.setInstance(account);
             Profile artistProfile = DatabaseConnector.getProfileByUsername(username);
             LoggedInProfile.setInstance(artistProfile);
+            TaskbarController taskbarController = TaskbarController.getInstance();
+            taskbarController.setProfileImage(account.getProfile_picture());
+            taskbarController.showProfileImage(artistProfile != null);
             return true;
         }
         return false;

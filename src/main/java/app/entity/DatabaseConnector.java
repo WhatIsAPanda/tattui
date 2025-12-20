@@ -10,9 +10,7 @@ import java.util.Properties;
 
 public class DatabaseConnector {
     private static Connection conn;
-    private static final String URL = System.getenv("DATABASE_URL");
-    private static final String USER = System.getenv("DATABASE_USER");
-    private static final String PASSWORD = System.getenv("DATABASE_PASSWORD");
+    private static final String URL = "jdbc:sqlite:tattui.db";
     private static final String ACCOUNT_ID_STRING = "account_id";
     private DatabaseConnector() {}
 
@@ -62,32 +60,14 @@ public class DatabaseConnector {
     }
 
     private static Connection createConnection() throws SQLException {
-        String dbUrl = URL;
-        String dbUser = USER;
-        String dbPassword = PASSWORD;
-
-        if (dbUrl == null || dbUser == null || dbPassword == null) {
-            Properties props = new Properties();
-            try (FileInputStream fis = new FileInputStream("C:\\SchoolProjects\\keys.txt")) {
-                props.load(fis);
-                dbUrl = props.getProperty("url");
-                dbUser = props.getProperty("user");
-                dbPassword = props.getProperty("password");
-            } catch (IOException e) {
-                throw new SQLException("Failed to load database credentials", e);
-            }
-        }
-        if (dbUrl == null || dbUser == null || dbPassword == null) {
-            throw new SQLException("Database credentials are not configured.");
-        }
-        return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+        return DriverManager.getConnection(URL);
     }
 
     public static Profile getFullProfile(Profile profileSkeleton) throws SQLException {
         PreparedStatement preparedStatement = DatabaseConnector.conn.prepareStatement(
                 "SELECT * \n" +
                     "FROM Artists AS A\n" +
-                    "LEFT JOIN Posts2 AS P ON P.account_id = A.account_id\n" +
+                    "LEFT JOIN Posts AS P ON P.account_id = A.account_id\n" +
                     "LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id\n" +
                         "WHERE ACC.username = ?;"
         );
@@ -150,8 +130,8 @@ public class DatabaseConnector {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
                 FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Posts AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.artist_id
                 LEFT JOIN Accounts AS Acc ON Acc.account_id = A.account_id
                 WHERE username = ? ;
                 """);
@@ -195,8 +175,8 @@ public class DatabaseConnector {
         PreparedStatement stmt = conn.prepareStatement("""
                 SELECT *
                 FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Posts AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.artist_id
                 LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
                 WHERE username LIKE ?
                 """);
@@ -209,8 +189,8 @@ public class DatabaseConnector {
         PreparedStatement profileQueryStatement = DatabaseConnector.conn.prepareStatement("""
                 SELECT *
                 FROM Artists AS A
-                LEFT JOIN Posts2 AS P ON P.account_id = A.account_id
-                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.artist_id = A.artist_id
+                LEFT JOIN Posts AS P ON P.account_id = A.account_id
+                LEFT JOIN ArtistTaggedStyles AS ATS ON ATS.account_id = A.artist_id
                 LEFT JOIN Accounts AS ACC ON ACC.account_id = A.account_id
                 WHERE A.work_latitude >= ? AND A.work_latitude <= ? AND A.work_longitude >= ? AND A.work_longitude <= ?;
                 """);
