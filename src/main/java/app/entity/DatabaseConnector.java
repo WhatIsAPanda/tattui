@@ -12,7 +12,6 @@ public class DatabaseConnector {
     private static Connection conn;
     private static final String URL = "jdbc:sqlite:tattui.db";
     private static final String ACCOUNT_ID_STRING = "account_id";
-    private DatabaseConnector() {}
 
     static {
         conn = openConnection();
@@ -90,7 +89,8 @@ public class DatabaseConnector {
             int postOwner = rs.getInt("account_id");
             String postPictureURL = rs.getString("post_picture_url");
             String keyWords = rs.getString("keywords");
-            posts.add(new Post(postId,caption,postPictureURL,postOwner,keyWords));
+            String ownerUsername = rs.getString("username");
+            posts.add(new Post(postId,caption,postPictureURL,postOwner,keyWords,ownerUsername));
         }
         while(rs.next());
 
@@ -170,6 +170,14 @@ public class DatabaseConnector {
         return artistProfiles;
 
     }
+    private static List<Post> convertToPosts(ResultSet rs) throws SQLException {
+        List<Post> posts = new ArrayList<>();
+        while(rs.next()) {
+
+        }
+        return Collections.EMPTY_LIST;
+
+    }
 
     public static List<Profile> getProfilesLike(String pattern) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement("""
@@ -231,5 +239,12 @@ public class DatabaseConnector {
                 insertArtistsStmt.executeUpdate();
             }
         }
+    }
+    public static void getLatestPosts() throws SQLException {
+        Statement getLatestPostsStmt = DatabaseConnector.conn.createStatement();
+        String sql = "SELECT * FROM Posts ORDER BY id DESC";
+        ResultSet rs = getLatestPostsStmt.executeQuery(sql);
+
+
     }
 }

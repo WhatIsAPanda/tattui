@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 public class RootController {
 
-    @FXML private BorderPane rootPane;
+    @FXML private StackPane rootPane;
     @FXML private HBox taskbarContainer;
     @FXML private AnchorPane workspaceContainer;
 
@@ -39,7 +39,8 @@ public class RootController {
         "gallery", "/app/view/Gallery.fxml",
         LOGIN_PAGE, "/app/view/Login.fxml",
         "viewProfile", "/app/view/viewMyProfile.fxml",
-            "register","/app/view/Register.fxml"
+            "register","/app/view/Register.fxml",
+            "explore", "/app/view/Explore.fxml"
     );
     private static final Set<String> DATABASE_PAGES = Set.of("map", "explore");
 

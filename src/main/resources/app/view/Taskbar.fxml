@@ -10,100 +10,156 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.Line?>
 
-<VBox alignment="TOP_CENTER" fillWidth="false" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black; -fx-border-width: 0 1 0 0; -fx-border-color: white;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
-
-    <opaqueInsets>
-        <Insets right="1.0" />
-    </opaqueInsets>
-
-    <children>
-
-        <!-- Top logo -->
-        <StackPane prefHeight="50.0" prefWidth="60.0">
-            <children>
-                <Button id="logoButton" fx:id="logoButton" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#handleClick" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" StackPane.alignment="CENTER">
-                    <graphic>
-                        <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
-                            <image><Image url="@/icons/tattui.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Home" /></tooltip>
-                </Button>
-            </children>
-        </StackPane>
-
-        <Line endX="59.0" stroke="WHITE" />
-
-        <!-- Main buttons -->
-        <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
-            <children>
-
-                <Button id="workspaceButton" fx:id="workspaceButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
-                    <graphic>
+<StackPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.TaskbarController">
+   <children>
+       <fx:include fx:id="searchTab" source="SearchPopUp.fxml" translateX="-120.0" />
+      <VBox fx:id="taskbar" alignment="TOP_CENTER" fillWidth="false" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="60" style="-fx-background-color: black; -fx-border-width: 0 1 0 0; -fx-border-color: white;">
+      
+                            <opaqueInsets>
+              <Insets right="1.0" />
+          </opaqueInsets>
+      
+                            <children>
+      
+                                <!-- Top logo -->
+              <StackPane prefHeight="50.0" prefWidth="60.0">
+                  <children>
+                      <Button id="logoButton" fx:id="logoButton" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#handleClick" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" StackPane.alignment="CENTER">
+                          <graphic>
+                              <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
+                                  <image>
+                              <Image url="@/icons/tattui.png" />
+                           </image>
+                              </ImageView>
+                          </graphic>
+                          <tooltip>
+                        <Tooltip text="Home" />
+                     </tooltip>
+                      </Button>
+                  </children>
+              </StackPane>
+      
+                                <Line endX="59.0" stroke="WHITE" />
+      
+                                <!-- Main buttons -->
+              <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+                  <children>
+      
+                                        <Button id="workspaceButton" fx:id="workspaceButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
+                          <graphic>
+                              <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                  <image>
+                              <Image url="@/icons/workspace.png" />
+                           </image>
+                              </ImageView>
+                          </graphic>
+                          <tooltip>
+                        <Tooltip text="Workspace" />
+                     </tooltip>
+                          <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                     </padding>
+                      </Button>
+                  <Button id="searchButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@/icons/workspace.png" /></image>
+                           <image>
+                              <Image url="@/icons/magnifying_glass.png" />
+                           </image>
                         </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Workspace" /></tooltip>
-                    <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
-                </Button>
-
-                <Button id="exploreButton" fx:id="exploreButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
-                    <graphic>
-                        <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@/icons/explore.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Explore" /></tooltip>
-                    <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
-                </Button>
-
-
-                <Button id="mapButton" fx:id="mapButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
-                    <graphic>
-                        <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
-                            <image><Image url="@/icons/map.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip><Tooltip text="Map" /></tooltip>
-                    <padding><Insets bottom="12.0" left="12.0" right="12.0" top="12.0" /></padding>
-                </Button>
-
-            </children>
-            <padding><Insets bottom="10.0" top="10.0" /></padding>
-        </VBox>
-
-        <!-- Center symbol -->
-        <ImageView fitHeight="200.0" fitWidth="40.0" preserveRatio="true" scaleY="2.0" VBox.vgrow="NEVER">
-            <image><Image url="@/icons/sigal.png" /></image>
-        </ImageView>
-
-        <!-- Bottom section -->
-        <VBox alignment="BOTTOM_CENTER" VBox.vgrow="ALWAYS">
-            <padding><Insets top="10.0" /></padding>
-            <children>
-
-                <Button id="settingsButton" fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
-                    <graphic>
-                        <Circle fx:id="settingsProfileImage" radius="15.0" stroke="WHITE" strokeWidth="1.0" visible="false" />
-                    </graphic>
-                    <tooltip><Tooltip text="Edit Profile" /></tooltip>
-                    <padding><Insets bottom="15.0" /></padding>
-                </Button>
-
-                <Button id="loginButton" fx:id="loginButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
-                    <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                            <image><Image url="@/icons/login.png" /></image>
-                        </ImageView>
-                    </graphic>
-                    <tooltip>
-                        <Tooltip fx:id="loginTooltip" text="Login" />
-                    </tooltip>
-                    <padding><Insets bottom="12.0" top="12.0" /></padding>
-                </Button>
-
-            </children>
-        </VBox>
-    </children>
-</VBox>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Search" />
+                     </tooltip>
+                     <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                     </padding>
+                  </Button>
+      
+                        
+                                        <Button id="mapButton" fx:id="mapButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                          <graphic>
+                              <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                  <image>
+                              <Image url="@/icons/map.png" />
+                           </image>
+                              </ImageView>
+                          </graphic>
+                          <tooltip>
+                        <Tooltip text="Map" />
+                     </tooltip>
+                          <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                     </padding>
+                      </Button>
+      
+                                        <Button id="exploreButton" fx:id="exploreButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;" VBox.vgrow="ALWAYS">
+                          <graphic>
+                              <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                  <image>
+                              <Image url="@/icons/explore.png" />
+                           </image>
+                              </ImageView>
+                          </graphic>
+                          <tooltip>
+                        <Tooltip text="Explore" />
+                     </tooltip>
+                          <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                     </padding>
+                      </Button>
+      
+                                    </children>
+                  <padding>
+                  <Insets bottom="10.0" top="10.0" />
+               </padding>
+              </VBox>
+      
+                                <!-- Center symbol -->
+              <ImageView fitHeight="200.0" fitWidth="40.0" preserveRatio="true" scaleY="2.0" VBox.vgrow="NEVER">
+                  <image>
+                  <Image url="@/icons/sigal.png" />
+               </image>
+              </ImageView>
+      
+                                <!-- Bottom section -->
+              <VBox alignment="BOTTOM_CENTER" VBox.vgrow="ALWAYS">
+                  <padding>
+                  <Insets top="10.0" />
+               </padding>
+                  <children>
+      
+                                        <Button id="settingsButton" fx:id="settingsButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                          <graphic>
+                              <Circle fx:id="settingsProfileImage" radius="15.0" stroke="WHITE" strokeWidth="1.0" visible="false" />
+                          </graphic>
+                          <tooltip>
+                        <Tooltip text="Edit Profile" />
+                     </tooltip>
+                          <padding>
+                        <Insets bottom="15.0" />
+                     </padding>
+                      </Button>
+      
+                                        <Button id="loginButton" fx:id="loginButton" mnemonicParsing="false" onAction="#handleClick" prefWidth="60.0" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0 0 1 0;">
+                          <graphic>
+                              <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                                  <image>
+                              <Image url="@/icons/login.png" />
+                           </image>
+                              </ImageView>
+                          </graphic>
+                          <tooltip>
+                              <Tooltip fx:id="loginTooltip" text="Login" />
+                          </tooltip>
+                          <padding>
+                        <Insets bottom="12.0" top="12.0" />
+                     </padding>
+                      </Button>
+      
+                                    </children>
+              </VBox>
+          </children>
+      </VBox>
+   </children>
+</StackPane>

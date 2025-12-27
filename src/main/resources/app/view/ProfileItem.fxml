@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" onMouseClicked="#handleClick" prefHeight="70.0" prefWidth="500.0" style="-fx-border-color: black; -fx-border-width: 3;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.ProfileItemController">
+    <children>
+        <Circle fx:id="profileCircle" fill="DODGERBLUE" radius="30.0" stroke="BLACK" strokeType="INSIDE" />
+        <Label fx:id="usernameText" text="Label">
+            <font>
+                <Font size="20.0" />
+            </font>
+            <HBox.margin>
+                <Insets left="10.0" top="10.0" />
+            </HBox.margin>
+        </Label>
+    </children>
+</HBox>
