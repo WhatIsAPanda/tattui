@@ -1,21 +1,16 @@
-package app.controller;
+package app.boundary;
 
-import app.Main;
+import app.controller.RootController;
 import app.entity.Profile;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class ProfileItemController {
+public class ProfileItemBoundary {
     @FXML
     private Label usernameText;
     @FXML
@@ -32,10 +27,5 @@ public class ProfileItemController {
     @FXML
     private void handleClick(MouseEvent event) throws IOException {
         RootController.getInstance().showPage("viewProfile",profile);
-    }
-
-    private Stage currentStage() {
-        if (profileCircle.getScene() == null) return null;
-        return profileCircle.getScene().getWindow() instanceof Stage s ? s : null;
     }
 }

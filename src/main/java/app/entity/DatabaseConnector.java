@@ -173,9 +173,15 @@ public class DatabaseConnector {
     private static List<Post> convertToPosts(ResultSet rs) throws SQLException {
         List<Post> posts = new ArrayList<>();
         while(rs.next()) {
-
+            int post_id = rs.getInt("post_id");
+            String caption = rs.getString("caption");
+            String postPictureURL = rs.getString("post_picture_url");
+            String keywords = rs.getString("keywords");
+            String ownerUsername = rs.getString("username");
+            int postOwnerId = rs.getInt("account_id");
+            posts.add(new Post(post_id, caption, postPictureURL, postOwnerId, keywords, ownerUsername));
         }
-        return Collections.EMPTY_LIST;
+        return posts;
 
     }
 
@@ -240,11 +246,15 @@ public class DatabaseConnector {
             }
         }
     }
-    public static void getLatestPosts() throws SQLException {
+    public static List<Post> getLatestPosts() throws SQLException {
         Statement getLatestPostsStmt = DatabaseConnector.conn.createStatement();
-        String sql = "SELECT * FROM Posts ORDER BY id DESC";
+        String sql = """
+                SELECT *
+                FROM Posts AS P
+                LEFT JOIN Accounts AS A ON A.account_id = P.account_id
+                ORDER BY post_id DESC;
+               \s""";
         ResultSet rs = getLatestPostsStmt.executeQuery(sql);
-
-
+        return DatabaseConnector.convertToPosts(rs);
     }
 }

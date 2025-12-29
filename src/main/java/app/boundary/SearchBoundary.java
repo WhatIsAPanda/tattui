@@ -1,6 +1,5 @@
 package app.boundary;
 
-import app.controller.ProfileItemController;
 import app.controller.SearchController;
 import app.entity.Profile;
 import javafx.fxml.FXML;
@@ -32,7 +31,7 @@ public class SearchBoundary {
             for(Profile profile : profileList) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/app/view/ProfileItem.fxml"));
                 HBox profileItem = loader.load();
-                ProfileItemController controller = loader.getController();
+                ProfileItemBoundary controller = loader.getController();
                 controller.setData(profile);
                 searchResultsBox.getChildren().add(profileItem);
             }

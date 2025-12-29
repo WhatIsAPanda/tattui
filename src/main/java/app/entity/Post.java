@@ -25,10 +25,8 @@ public class Post {
     public Image getImage() {
         if (image == null && postURL != null && !postURL.isBlank()) {
             try {
-                // backgroundLoading=true; okay when JavaFX runtime is present
                 image = new Image(postURL, true);
             } catch (Exception ignored) {
-                // leave image null
             }
         }
         return image;
