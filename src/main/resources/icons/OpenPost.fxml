@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: grey;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <StackPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="780.0" prefWidth="700.0">
+         <children>
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+               <children>
+                  <Circle fill="DODGERBLUE" radius="59.0" stroke="BLACK" strokeType="INSIDE" />
+                  <VBox alignment="TOP_CENTER" minWidth="-Infinity" prefHeight="782.0" prefWidth="701.0" style="-fx-background-color: black;">
+                     <children>
+                        <HBox prefHeight="100.0" prefWidth="631.0">
+                           <children>
+                              <Circle fill="DODGERBLUE" radius="56.0" stroke="BLACK" strokeType="INSIDE">
+                                 <HBox.margin>
+                                    <Insets bottom="20.0" />
+                                 </HBox.margin>
+                              </Circle>
+                              <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="\@username">
+                                 <font>
+                                    <Font size="55.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets left="10.0" top="20.0" />
+                                 </HBox.margin>
+                              </Text>
+                           </children>
+                           <padding>
+                              <Insets left="30.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <ImageView fitHeight="457.0" fitWidth="637.0" pickOnBounds="true">
+                           <image>
+                              <Image url="@completed_dragon_forearm.jpg" />
+                           </image>
+                           <VBox.margin>
+                              <Insets top="20.0" />
+                           </VBox.margin>
+                        </ImageView>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 30;" text="\@username: Some random text to test out how this looks" wrappingWidth="620.0">
+                           <font>
+                              <Font size="55.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets top="20.0" />
+                           </VBox.margin>
+                        </Text>
+                     </children>
+                  </VBox>
+                  <Circle fill="DODGERBLUE" radius="59.0" stroke="BLACK" strokeType="INSIDE" />
+               </children>
+            </HBox>
+         </children>
+      </StackPane>
+   </children>
+</StackPane>
