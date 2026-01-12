@@ -1,9 +1,4 @@
-# Tattui JavaFX Baseline
 
-This repository is now the **clean baseline** for our JavaFX project.  
-It has been standardized so everyone can clone, build, and run with minimal setup.
-
----
 
 ## Current State
 - Build tool: **Gradle (via wrapper)** -- no Maven
@@ -39,26 +34,5 @@ Use the Gradle wrapper — no need to install Gradle or JavaFX manually.
 ```bash
 gradlew.bat run
 ```
-
----
-## Git Workflow Guidelines
-
-To keep the repo clean and consistent:
-
-- **Do not upload files directly** (no drag‑and‑drop into GitHub).
-- Always use Git commands:
-    - `git pull origin main` before starting work
-    - `git add <files>` to stage changes
-    - `git commit -m "clear, descriptive message"`
-    - `git push origin main` to share your work
-- **Only commit**:
-    - Source code (`src/main/java`)
-    - Resources (`src/main/resources`)
-    - Build scripts (`build.gradle`, `settings.gradle`, etc.)
-    - Documentation (`README.md`, etc.)
-- **Never commit**:
-    - Generated files (`bin/`, `build/`, `.gradle/`)
-    - IDE configs (`.idea/`, `.vscode/`)
-    - OS junk (`.DS_Store`, `Thumbs.db`)
-- Write meaningful commit messages (describe *what* and *why*, not just “changes”).
-- Example: `git commit -m "Add login controller and update FXML for login view"`
+<img width="1914" height="1032" alt="image" src="https://github.com/user-attachments/assets/409fda6d-27ef-472a-8bee-25cc74fb41dc" />
+<img width="1917" height="1030" alt="Screenshot 2026-01-12 121448" src="https://github.com/user-attachments/assets/ea151ab1-3847-46c6-806e-a613a8d42fad" 
