@@ -1,4 +1,4 @@
-Tattui is a tattoo imaging and networking tool designed for none technical users. The intuitive UI lets users model tattoo placement in reference to existing and future tattoos before heading to an artist. Tattui also has accounts for artists to market their work and connect with clients. Users can use the map to find artists in their area and filter by desired art styles. 
+Tattui is a tattoo imaging and networking tool designed for non-technical users. The intuitive UI lets users model tattoo placement in reference to existing and future tattoos before heading to an artist. Tattui also has accounts for artists to market their work and connect with clients. Users can use the map to find artists in their area and filter by desired art styles. 
 
 ## Current State
 - Build tool: **Gradle (via wrapper)** -- no Maven
