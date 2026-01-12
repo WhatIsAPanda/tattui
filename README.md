@@ -35,4 +35,4 @@ Use the Gradle wrapper — no need to install Gradle or JavaFX manually.
 gradlew.bat run
 ```
 <img width="1914" height="1032" alt="image" src="https://github.com/user-attachments/assets/409fda6d-27ef-472a-8bee-25cc74fb41dc" />
-<img width="1917" height="1030" alt="Screenshot 2026-01-12 121448" src="https://github.com/user-attachments/assets/ea151ab1-3847-46c6-806e-a613a8d42fad" 
+<img width="1917" height="1030" alt="Screenshot 2026-01-12 121448" src="https://github.com/user-attachments/assets/ea151ab1-3847-46c6-806e-a613a8d42fad" />
